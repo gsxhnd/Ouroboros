@@ -1,19 +1,24 @@
 {
   "name": "ourboros",
   "version": "0.0.1",
-  "main": "./dist/main/index.js",
+  "main": "./dist/main/main.js",
   "author": "gsxhnd",
   "license": "MIT",
   "private": false,
   "type": "module",
   "scripts": {
     "build:main": "node build.main.js",
-    "build:render": "cd src/renderer && vue-tsc && vite build",
-    "dev:web": "cd renderer && vite",
-    "dev:main": "yarn build:main && electron .",
+    "build:renderer": "cd src/renderer && vue-tsc && vite build",
+    "build": "yarn build:main && yarn build:renderer",
+    "dev:renderer": "cd src/renderer && vite",
+    "dev:main": "NODE_ENV=dev node build.main.js",
+    "start:dev": "NODE_ENV=dev electron .",
+    "start": "electron .",
     "package": "electron-forge package"
   },
   "dependencies": {
+    "@vueuse/core": "^10.9.0",
+    "@vueuse/electron": "^10.9.0",
     "vue": "^3.4.21"
   },
   "devDependencies": {

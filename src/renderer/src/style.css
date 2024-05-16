@@ -63,6 +63,8 @@ button:focus-visible {
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  -webkit-user-select: none;
+  -webkit-app-region: drag;
 }
 
 @media (prefers-color-scheme: light) {

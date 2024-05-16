@@ -2,8 +2,8 @@ export default {
   packagerConfig: {
     asar: false,
     prune: true,
-    platform: ["linux"],
-    arch: ["x64"],
+    platform: ["linux", "macos"],
+    arch: ["x64", "arm64"],
     ignore: [
       "^/src",
       "^/targe",

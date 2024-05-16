@@ -1,20 +1,29 @@
-import { build } from "esbuild";
+import { build, context } from "esbuild";
 
-build({
-  entryPoints: ["./src/main/index.ts"],
+console.log(process.env.NODE_ENV);
+
+let opt = {
+  entryPoints: ["./src/main/main.ts"],
   bundle: true,
-  minify: true,
   platform: "node",
   format: "esm",
-  // outfile: "../dist/main/main.js",
   external: ["path", "electron"],
   outdir: "./dist/main",
-});
+};
 
-// build({
-//   entryPoints: ["./src/index.ts"],
-//   bundle: true,
-//   minify: true,
-//   platform: "neutral",
-//   outfile: "../dist/main.esm.js",
-// });
+async function watch() {
+  let ctx = await context({
+    minify: false,
+    ...opt,
+  });
+  await ctx.watch();
+}
+
+if (process.env.NODE_ENV === "production") {
+  build({
+    bundle: true,
+    ...opt,
+  });
+} else {
+  watch();
+}
