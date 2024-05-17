@@ -1,18 +1,18 @@
 {
   "name": "ouroboros",
   "version": "0.0.1",
-  "main": "./dist/main/main.js",
+  "main": "./dist/main.js",
   "author": "gsxhnd",
   "license": "MIT",
   "private": false,
   "type": "module",
   "scripts": {
-    "dev:electron": "dotenv -e script/.env.dev -- node script/build.electron.js",
-    "dev:renderer": "cd src/renderer && vite",
+    "dev:electron": "dotenv -e script/.env.dev -- node script/dev.electron.js",
+    "dev:renderer": "vite",
     "dev:start": "dotenv -e script/.evn.dev -- electron .",
     "dev": "yarn dev:electron & yarn dev:renderer",
-    "build:main": "node build.main.js",
-    "build:renderer": "cd src/renderer && vue-tsc && vite build",
+    "build:main": "node script/build.electron.js",
+    "build:renderer": "vue-tsc && vite build",
     "build": "yarn build:main && yarn build:renderer",
     "start": "electron .",
     "package": "electron-forge package"

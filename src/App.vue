@@ -6,6 +6,7 @@ import { onMounted } from "vue";
 onMounted(() => {
   console.log("ping");
   // ipcRenderer.send("ping");
+  window.electronAPI.loadPreferences();
 });
 </script>
 
