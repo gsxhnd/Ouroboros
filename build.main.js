@@ -19,11 +19,11 @@ async function watch() {
   await ctx.watch();
 }
 
-if (process.env.NODE_ENV === "production") {
+if (process.env.NODE_ENV === "dev") {
+  watch();
+} else {
   build({
-    bundle: true,
+    minify: true,
     ...opt,
   });
-} else {
-  watch();
 }

@@ -1,8 +1,5 @@
-import { app, BrowserWindow, BaseWindow, ipcMain } from "electron";
-import { contextBridge } from "electron/renderer";
-// import { resolve } from "path";
-
-// import { a } from "./a";
+import { app, BrowserWindow, ipcMain } from "electron";
+import { tray } from "./tray";
 
 const dev: boolean = process.env.NODE_ENV === "dev" && !app.isPackaged;
 const isRelease: boolean = app.isPackaged;
@@ -21,12 +18,6 @@ const createWindow = () => {
     },
   });
 
-  const { width, height } = win.getContentBounds();
-  console.log(width, height);
-  console.log(win.getContentSize());
-  console.log(win.getContentView());
-  // console.log(win.getNativeWindowHandle());
-
   if (dev) {
     win.loadURL("http://localhost:3000");
     win.webContents.openDevTools();
@@ -40,7 +31,7 @@ const createWindow = () => {
 };
 
 app.whenReady().then(() => {
-  console.log("ready");
+  tray();
   app.on("activate", () => {
     console.log("activate");
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
