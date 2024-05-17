@@ -5,19 +5,14 @@ import { resolve } from "path";
 const dev: boolean = process.env.NODE_ENV === "dev" && !app.isPackaged;
 const isRelease: boolean = app.isPackaged;
 
-console.log(process.env.NODE_ENV);
-console.log(process.env.NODE_ENV === "dev");
-console.log(isRelease);
-console.log(dev);
-console.log(resolve("dist/preload.js"));
-console.log(resolve("./extension/vuetool_6.6.1_0"));
-
 async function createWindow() {
   const win = new BrowserWindow({
     width: 800,
     height: 600,
+    minHeight: 600,
+    minWidth: 800,
     frame: false,
-    titleBarStyle: "hiddenInset",
+    titleBarStyle: "hidden",
     titleBarOverlay: true,
     webPreferences: {
       devTools: !isRelease,
