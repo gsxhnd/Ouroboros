@@ -12,6 +12,7 @@
     "build": "yarn build:main && yarn build:renderer",
     "dev:renderer": "cd src/renderer && vite",
     "dev:main": "NODE_ENV=dev node build.main.js",
+    "dev": "yarn dev:main & yarn dev:renderer",
     "start:dev": "NODE_ENV=dev electron .",
     "start": "electron .",
     "package": "electron-forge package"
@@ -26,15 +27,17 @@
   "devDependencies": {
     "@electron-forge/cli": "^7.4.0",
     "@electron/packager": "^18.3.2",
+    "@types/nodemon": "^1.19.6",
     "@vitejs/plugin-vue": "^5.0.4",
     "electron": "30.0.6",
     "esbuild": "^0.21.3",
     "less": "^4.2.0",
+    "nodemon": "^3.1.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.2.2",
     "vite": "^5.2.0",
     "vite-plugin-vuetify": "^2.0.3",
-    "vuetify": "^3.6.6",
-    "vue-tsc": "^2.0.6"
+    "vue-tsc": "^2.0.6",
+    "vuetify": "^3.6.6"
   }
 }

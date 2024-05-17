@@ -9,6 +9,7 @@ lerna-debug.log*
 /node_modules
 /out
 /dist
+/extension
 
 # Editor directories and files
 .vscode/*
