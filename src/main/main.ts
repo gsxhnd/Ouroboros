@@ -5,6 +5,11 @@ import { resolve } from "path";
 const dev: boolean = process.env.NODE_ENV === "dev" && !app.isPackaged;
 const isRelease: boolean = app.isPackaged;
 
+console.log(process.env.NODE_ENV);
+console.log(process.env.NODE_ENV === "dev");
+console.log(isRelease);
+console.log(dev);
+
 async function createWindow() {
   const win = new BrowserWindow({
     width: 800,

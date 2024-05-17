@@ -1,5 +1,5 @@
 {
-  "name": "ourboros",
+  "name": "ouroboros",
   "version": "0.0.1",
   "main": "./dist/main/main.js",
   "author": "gsxhnd",
@@ -7,13 +7,13 @@
   "private": false,
   "type": "module",
   "scripts": {
+    "dev:electron": "dotenv -e script/.env.dev -- node script/build.electron.js",
+    "dev:renderer": "cd src/renderer && vite",
+    "dev:start": "dotenv -e script/.evn.dev -- electron .",
+    "dev": "yarn dev:electron & yarn dev:renderer",
     "build:main": "node build.main.js",
     "build:renderer": "cd src/renderer && vue-tsc && vite build",
     "build": "yarn build:main && yarn build:renderer",
-    "dev:renderer": "cd src/renderer && vite",
-    "dev:main": "NODE_ENV=dev node build.main.js",
-    "dev": "yarn dev:main & yarn dev:renderer",
-    "start:dev": "NODE_ENV=dev electron .",
     "start": "electron .",
     "package": "electron-forge package"
   },
@@ -29,6 +29,8 @@
     "@electron/packager": "^18.3.2",
     "@types/nodemon": "^1.19.6",
     "@vitejs/plugin-vue": "^5.0.4",
+    "dotenv": "^16.4.5",
+    "dotenv-cli": "^7.4.2",
     "electron": "30.0.6",
     "esbuild": "^0.21.3",
     "less": "^4.2.0",

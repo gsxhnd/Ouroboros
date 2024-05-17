@@ -2,7 +2,7 @@ export default {
   packagerConfig: {
     asar: false,
     prune: true,
-    platform: ["linux", "macos"],
+    platform: ["linux", "macos", "windows"],
     arch: ["x64", "arm64"],
     ignore: [
       "^/src",
