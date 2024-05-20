@@ -7,23 +7,45 @@
 </template> -->
 
 <template>
-  <v-app id="inspire">
-    <left-pane></left-pane>
-    <v-main>
-      <router-view></router-view>
-    </v-main>
-    <right-pane></right-pane>
-  </v-app>
+  <!-- <left-pane></left-pane>
+  <content-pane></content-pane>
+  <right-pane></right-pane> -->
+  <Splitter>
+    <SplitterPanel
+      :min-size="15"
+      :size="15"
+      class="flex align-items-center justify-content-center"
+    >
+      <left-pane></left-pane>
+    </SplitterPanel>
+    <SplitterPanel
+      :min-size="0"
+      :size="75"
+      class="flex align-items-center justify-content-center"
+    >
+      Content Pane
+    </SplitterPanel>
+    <SplitterPanel
+      :min-size="15"
+      :size="15"
+      class="flex align-items-center justify-content-center"
+    >
+      Panel 2
+    </SplitterPanel>
+  </Splitter>
 </template>
 
 <script setup lang="ts">
 import LeftPane from "./LeftPane.vue";
 import RightPane from "./RightPane.vue";
-import Content from "./Content.vue";
+import ContentPane from "./ContentPane.vue";
+
+import Splitter from "primevue/splitter";
+import SplitterPanel from "primevue/splitterpanel";
 </script>
 
 <style scoped lang="less">
-.v-app-bar {
-  background-color: #e9ebf2;
+.p-splitter {
+  height: 100vh;
 }
 </style>
