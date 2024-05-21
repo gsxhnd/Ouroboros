@@ -18,6 +18,7 @@
     "package": "electron-forge package"
   },
   "dependencies": {
+    "@electron-forge/maker-zip": "^7.4.0",
     "@vueuse/core": "^10.9.0",
     "@vueuse/electron": "^10.9.0",
     "pinia": "^2.1.7",
