@@ -1,10 +1,23 @@
 import { app, BrowserWindow, ipcMain, session } from "electron";
 import { tray } from "./tray";
 import { resolve } from "path";
+import { JSONFilePreset } from "lowdb/node";
 
 const isDev: boolean = process.env.NODE_ENV === "dev" && !app.isPackaged;
 const isRelease: boolean = app.isPackaged;
 console.log("dev: ", process.env.NODE_ENV);
+console.log("path", app.getAppPath());
+console.log("userData", app.getPath("userData"));
+console.log("appData", app.getPath("appData"));
+console.log("exe", app.getPath("exe"));
+
+async function createDB() {
+  const db = await JSONFilePreset(
+    resolve(app.getPath("userData"), "db.json"),
+    {}
+  );
+  await db.write();
+}
 
 async function createWindow() {
   const win = new BrowserWindow({
@@ -41,6 +54,7 @@ async function createWindow() {
 }
 
 app.whenReady().then(async () => {
+  await createDB();
   tray();
 
   app.on("activate", async () => {

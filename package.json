@@ -21,6 +21,7 @@
     "@electron-forge/maker-zip": "^7.4.0",
     "@vueuse/core": "^10.9.0",
     "@vueuse/electron": "^10.9.0",
+    "lowdb": "^7.0.1",
     "pinia": "^2.1.7",
     "primevue": "^3.52.0",
     "vue": "^3.4.21",
