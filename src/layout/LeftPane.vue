@@ -1,13 +1,12 @@
 <template>
   <div class="left-pane">
-    <div class="left-pane-titlebar">123</div>
+    <left-title-bar></left-title-bar>
     left pane
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import LeftTitleBar from "@/components/titlebar/LeftTitleBar.vue";
+</script>
 
-<style scoped lang="less">
-.left-pane {
-}
-</style>
+<style scoped lang="less"></style>

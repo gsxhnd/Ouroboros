@@ -1,15 +1,4 @@
-<!-- <template>
-  <div class="layout">
-    <left-pane></left-pane>
-    <content></content>
-    <right-pane></right-pane>
-  </div>
-</template> -->
-
 <template>
-  <!-- <left-pane></left-pane>
-  <content-pane></content-pane>
-  <right-pane></right-pane> -->
   <Splitter>
     <SplitterPanel
       :min-size="15"
@@ -23,14 +12,14 @@
       :size="75"
       class="flex align-items-center justify-content-center"
     >
-      Content Pane
+      <content-pane></content-pane>
     </SplitterPanel>
     <SplitterPanel
       :min-size="15"
       :size="15"
       class="flex align-items-center justify-content-center"
     >
-      Panel 2
+      <right-pane></right-pane>
     </SplitterPanel>
   </Splitter>
 </template>
@@ -47,5 +36,6 @@ import SplitterPanel from "primevue/splitterpanel";
 <style scoped lang="less">
 .p-splitter {
   height: 100vh;
+  border: none;
 }
 </style>

@@ -7,13 +7,13 @@
   "private": false,
   "type": "module",
   "scripts": {
-    "dev:electron": "dotenv -e script/.env.dev -- node script/dev.electron.js",
+    "dev:electron": "node script/dev.electron.js",
     "dev:renderer": "vite",
-    "dev:start": "dotenv -e script/.evn.dev -- electron .",
     "dev": "yarn dev:electron & yarn dev:renderer",
-    "build:main": "node script/build.electron.js",
+    "dev:start": "NODE_ENV=dev electron .",
+    "build:electron": "node script/build.electron.js",
     "build:renderer": "vue-tsc && vite build",
-    "build": "yarn build:main && yarn build:renderer",
+    "build": "yarn build:electron && yarn build:renderer",
     "start": "electron .",
     "package": "electron-forge package"
   },
@@ -38,7 +38,7 @@
     "nodemon": "^3.1.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.2.2",
-    "vue-tsc": "^2.0.6",
-    "vuetify": "^3.6.6"
+    "vite": "^5.2.0",
+    "vue-tsc": "^2.0.6"
   }
 }

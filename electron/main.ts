@@ -2,8 +2,9 @@ import { app, BrowserWindow, ipcMain, session } from "electron";
 import { tray } from "./tray";
 import { resolve } from "path";
 
-const dev: boolean = process.env.NODE_ENV === "dev" && !app.isPackaged;
+const isDev: boolean = process.env.NODE_ENV === "dev" && !app.isPackaged;
 const isRelease: boolean = app.isPackaged;
+console.log("dev: ", process.env.NODE_ENV);
 
 async function createWindow() {
   const win = new BrowserWindow({
@@ -21,7 +22,7 @@ async function createWindow() {
     },
   });
 
-  if (dev) {
+  if (isDev) {
     await session.defaultSession.loadExtension(
       resolve("extension/vuetool_6.6.1_0")
     );
@@ -41,6 +42,7 @@ async function createWindow() {
 
 app.whenReady().then(async () => {
   tray();
+
   app.on("activate", async () => {
     console.log("activate");
     if (BrowserWindow.getAllWindows().length === 0) {
