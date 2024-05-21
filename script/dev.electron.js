@@ -1,5 +1,6 @@
 import { build, context } from "esbuild";
-
+import { wasmPlugin } from "./wasm.plugin.js";
+// import watPlugin from "esbuild-plugin-wat";
 console.log(process.env.NODE_ENV);
 
 async function watch() {
@@ -9,8 +10,9 @@ async function watch() {
     bundle: true,
     platform: "node",
     format: "esm",
-    external: ["path", "electron"],
+    external: ["path", "electron", "./pkg"],
     outdir: "./dist/",
+    plugins: [wasmPlugin],
   });
 
   await ctx.watch();

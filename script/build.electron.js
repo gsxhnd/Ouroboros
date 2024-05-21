@@ -1,4 +1,5 @@
 import { build, context } from "esbuild";
+import { wasmPlugin } from "./wasm.plugin.js";
 
 console.log(process.env.NODE_ENV);
 
@@ -10,4 +11,5 @@ build({
   external: ["path", "electron"],
   outdir: "./dist/",
   minify: true,
+  plugins: [wasmPlugin],
 });

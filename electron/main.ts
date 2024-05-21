@@ -2,6 +2,8 @@ import { app, BrowserWindow, ipcMain, session } from "electron";
 import { tray } from "./tray";
 import { resolve } from "path";
 import { JSONFilePreset } from "lowdb/node";
+import wasm from "../pkg/wasm_bg.wasm";
+// import fs from "fs";
 
 const isDev: boolean = process.env.NODE_ENV === "dev" && !app.isPackaged;
 const isRelease: boolean = app.isPackaged;
@@ -11,11 +13,24 @@ console.log("userData", app.getPath("userData"));
 console.log("appData", app.getPath("appData"));
 console.log("exe", app.getPath("exe"));
 
+// console.log(add(1, 2));
+
 async function createDB() {
+  // console.log(wasm.add(1, 2));
   const db = await JSONFilePreset(
     resolve(app.getPath("userData"), "db.json"),
     {}
   );
+  // let buff = fs.readFileSync("../pkg/wasm_bg.wasm");
+  // WebAssembly.instantiate(buff).then((wasm) => {
+  //   const { add } = wasm.instance.exports;
+  //   console.log(add(1, 1));
+  // });
+  // wasm.add(1, 1);
+  // wasm.add(1, 2);
+  console.log(wasm.add(1, 2));
+  // console.log(wasm.add(1, 1));
+  // ad
   await db.write();
 }
 

@@ -1,6 +1,5 @@
-[package]
-name = "Ourboros"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+members = ["wasm"]
+resolver = "2"
 
-[dependencies]
+[workspace.dependencies]

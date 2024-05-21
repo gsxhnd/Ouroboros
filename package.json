@@ -36,6 +36,7 @@
     "dotenv-cli": "^7.4.2",
     "electron": "30.0.6",
     "esbuild": "^0.21.3",
+    "esbuild-plugin-wat": "^0.2.7",
     "less": "^4.2.0",
     "nodemon": "^3.1.0",
     "ts-node": "^10.9.2",
