@@ -10,6 +10,7 @@ lerna-debug.log*
 /out
 /dist
 /extension
+/resources
 
 # Editor directories and files
 .vscode/*

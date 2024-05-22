@@ -10,9 +10,9 @@ async function watch() {
     bundle: true,
     platform: "node",
     format: "esm",
-    external: ["path", "electron", "./pkg"],
+    external: ["path", "electron", "fs"],
     outdir: "./dist/",
-    plugins: [wasmPlugin],
+    plugins: [],
   });
 
   await ctx.watch();

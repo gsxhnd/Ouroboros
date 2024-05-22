@@ -8,7 +8,7 @@ build({
   bundle: true,
   platform: "node",
   format: "esm",
-  external: ["path", "electron"],
+  external: ["path", "electron", "fs"],
   outdir: "./dist/",
   minify: true,
   plugins: [wasmPlugin],
