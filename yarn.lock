@@ -548,11 +548,6 @@
   resolved "https://registry.npmjs.org/@gar/promisify/-/promisify-1.1.3.tgz"
   integrity sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==
 
-"@jbaiter/node-sqlite3-wasm@^0.7.1-with-fts5":
-  version "0.7.1-with-fts5"
-  resolved "https://registry.yarnpkg.com/@jbaiter/node-sqlite3-wasm/-/node-sqlite3-wasm-0.7.1-with-fts5.tgz#b4571b834d527e0fe379787fa5dfb8022b3536c9"
-  integrity sha512-+2MsyYBQyEjCPM8155FQjyIOP6Raeswwkxz6fuSOxoafkjZE/gYCWTlJ/b/P4kpSLn9AjslFEAx5HVQyqiS5EA==
-
 "@jridgewell/resolve-uri@^3.0.3":
   version "3.1.2"
   resolved "https://registry.npmjs.org/@jridgewell/resolve-uri/-/resolve-uri-3.1.2.tgz"
@@ -742,11 +737,6 @@
     "@types/node" "*"
     "@types/responselike" "^1.0.0"
 
-"@types/emscripten@*":
-  version "1.39.12"
-  resolved "https://registry.npmjs.org/@types/emscripten/-/emscripten-1.39.12.tgz"
-  integrity sha512-AQImDBgudQfMqUBfrjZYilRxoHDzTBp+ejh+g1fY67eSMalwIKtBXofjpyI0JBgNpHGzxeGAR2QDya0wxW9zbA==
-
 "@types/estree@1.0.5":
   version "1.0.5"
   resolved "https://registry.npmjs.org/@types/estree/-/estree-1.0.5.tgz"
@@ -783,14 +773,6 @@
   resolved "https://registry.npmjs.org/@types/responselike/-/responselike-1.0.3.tgz"
   integrity sha512-H/+L+UkTV33uf49PH5pCAUBVPNj2nDBXTN+qS1dOwyyg24l3CcicicCA7ca+HMvJBZcFgl5r8e+RR6elsb4Lyw==
   dependencies:
-    "@types/node" "*"
-
-"@types/sql.js@^1.4.9":
-  version "1.4.9"
-  resolved "https://registry.npmjs.org/@types/sql.js/-/sql.js-1.4.9.tgz"
-  integrity sha512-ep8b36RKHlgWPqjNG9ToUrPiwkhwh0AEzy883mO5Xnd+cL6VBH1EvSjBAAuxLUFF2Vn/moE3Me6v9E1Lo+48GQ==
-  dependencies:
-    "@types/emscripten" "*"
     "@types/node" "*"
 
 "@types/web-bluetooth@^0.0.20":
@@ -2650,6 +2632,11 @@ node-gyp@^9.0.0:
     tar "^6.1.2"
     which "^2.0.2"
 
+node-sqlite3-wasm@^0.7.1:
+  version "0.7.1"
+  resolved "https://registry.yarnpkg.com/node-sqlite3-wasm/-/node-sqlite3-wasm-0.7.1.tgz#39b784064d0e9b64647451233a03b518f7ddfc1d"
+  integrity sha512-q7Ln+CUbr6bkip7ZbvWL1IgtQs0fuIsMWSrVB7tKUFNEmAGxGu0ZIpWcyOgyuThkMLXT4oHpnC5fRqrpITtoXQ==
+
 nodemon@^3.1.0:
   version "3.1.0"
   resolved "https://registry.npmjs.org/nodemon/-/nodemon-3.1.0.tgz"
@@ -3348,11 +3335,6 @@ sprintf-js@^1.1.2, sprintf-js@^1.1.3:
   version "1.1.3"
   resolved "https://registry.npmjs.org/sprintf-js/-/sprintf-js-1.1.3.tgz"
   integrity sha512-Oo+0REFV59/rz3gfJNKQiBlwfHaSESl1pcGyABQsnnIfWOFt6JNj5gCog2U6MLZ//IGYD+nA8nI+mTShREReaA==
-
-sql.js@^1.10.3:
-  version "1.10.3"
-  resolved "https://registry.npmjs.org/sql.js/-/sql.js-1.10.3.tgz"
-  integrity sha512-H46aWtQkdyjZwFQgraUruy5h/DyJBbAK3EA/WEMqiqF6PGPfKBSKBj/er3dVyYqVIoYfRf5TFM/loEjtQIrqJg==
 
 ssri@^9.0.0:
   version "9.0.1"

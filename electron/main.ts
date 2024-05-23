@@ -2,8 +2,8 @@ import { app, BrowserWindow, ipcMain, session } from "electron";
 import { tray } from "./tray";
 import { resolve } from "path";
 import { JSONFilePreset } from "lowdb/node";
-import { Database } from "@jbaiter/node-sqlite3-wasm";
-import * as wasm from "../pkg";
+import { Database } from "node-sqlite3-wasm";
+import * as wasm from "./pkg";
 const isDev: boolean = process.env.NODE_ENV === "dev" && !app.isPackaged;
 const isRelease: boolean = app.isPackaged;
 
@@ -29,7 +29,7 @@ async function createDB() {
   await db.write();
   console.log("after: ", db.data);
 
-  // const sqlite = new Database("database.db");
+  const sqlite = new Database("database.db");
   // console.log("dbsql: ", sqlite);
 
   await db.write();
