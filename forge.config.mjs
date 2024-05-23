@@ -15,7 +15,7 @@ import { MakerZIP } from "@electron-forge/maker-zip";
 
 export default {
   packagerConfig: {
-    asar: true,
+    asar: false,
     prune: true,
     // all: true,
     platforms: ["drawin", "linux", "windows"],
