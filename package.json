@@ -5,6 +5,7 @@
   "author": "gsxhnd",
   "license": "MIT",
   "private": false,
+  "type":"module",
   "scripts": {
     "dev:electron": "node script/dev.electron.js",
     "dev:renderer": "vite",
