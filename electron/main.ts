@@ -2,53 +2,36 @@ import { app, BrowserWindow, ipcMain, session } from "electron";
 import { tray } from "./tray";
 import { resolve } from "path";
 import { JSONFilePreset } from "lowdb/node";
-import initSqlJs, { InitSqlJsStatic } from "sql.js";
-// import {} from ""
-// import wasm from "../pkg/wasm_bg.wasm";
-// import wasm from "../node_modules/sql.js/dist/sql-wasm.wasm";
-// import { readFileSynec } from "fs";
-import { readFileSync } from "fs";
-
+import { Database } from "@jbaiter/node-sqlite3-wasm";
+import * as wasm from "../pkg";
 const isDev: boolean = process.env.NODE_ENV === "dev" && !app.isPackaged;
 const isRelease: boolean = app.isPackaged;
-const dbPath = app.getAppPath() + "/db.sqlite";
-const dbWasm = app.getAppPath() + "/resources/sql-wasm.wasm";
-const dbBuf = readFileSync(dbPath);
 
 console.log("dev: ", process.env.NODE_ENV);
 console.log("path", app.getAppPath());
 console.log("userData", app.getPath("userData"));
 console.log("appData", app.getPath("appData"));
 console.log("exe", app.getPath("exe"));
-console.log("dbwasm: ", dbWasm);
-
-// console.log(add(1, 2));
+type Data = {
+  messages: string[];
+};
+const defaultData: Data = { messages: [] };
 
 async function createDB() {
-  // console.log(wasm.add(1, 2));
-  const db = await JSONFilePreset(
+  const db = await JSONFilePreset<Data>(
     resolve(app.getPath("userData"), "db.json"),
-    {}
+    defaultData
   );
-  const dbsql = await initSqlJs({
-    locateFile: (filename) => {
-      console.log(dbWasm);
-      return dbWasm;
-    },
-  });
-  let db02 = new dbsql.Database(dbBuf);
-  let res = db02.exec("select * fom test");
-  console.log(JSON.stringify(res));
-  // let buff = fs.readFileSync("../pkg/wasm_bg.wasm");
-  // WebAssembly.instantiate(buff).then((wasm) => {
-  //   const { add } = wasm.instance.exports;
-  //   console.log(add(1, 1));
-  // });
-  // wasm.add(1, 1);
-  // wasm.add(1, 2);
-  // console.log(wasm.add(1, 2))
-  // console.log(wasm.add(1, 1));
-  // ad
+  await wasm.add_async().then((v) => console.log("async wasm v: ", v));
+  console.log(wasm.add(1, 1));
+  console.log("before: ", db.data);
+  db.data.messages.push("test");
+  await db.write();
+  console.log("after: ", db.data);
+
+  // const sqlite = new Database("database.db");
+  // console.log("dbsql: ", sqlite);
+
   await db.write();
 }
 
@@ -64,7 +47,7 @@ async function createWindow() {
     webPreferences: {
       devTools: !isRelease,
       // sandbox: false,
-      preload: resolve("dist/preload.js"),
+      preload: resolve("dist/preload.cjs"),
     },
   });
 

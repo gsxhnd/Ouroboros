@@ -9,7 +9,7 @@ async function watch() {
     entryPoints: ["./electron/main.ts", "./electron/preload.ts"],
     bundle: true,
     platform: "node",
-    format: "esm",
+    format: "iife",
     external: ["path", "electron", "fs"],
     outdir: "./dist/",
     plugins: [],

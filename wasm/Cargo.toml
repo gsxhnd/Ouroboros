@@ -7,8 +7,8 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-sqlx = { version = "0.7", features = ["runtime-async-std", "sqlite"] }
+# sqlx = { version = "0.7", features = ["runtime-async-std", "sqlite"] }
 # tokio = { version = "1", features = ["full"] }
 "wasm-bindgen" = "0.2"
 "wasm-bindgen-futures" = "0.4"
-getrandom = { version = "0.2", features = ["js"] }
+# getrandom = { version = "0.2", features = ["js"] }
