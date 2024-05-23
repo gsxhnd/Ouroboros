@@ -3,10 +3,18 @@
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::js_sys;
 // use wasm_bindgen_futures::JsFuture;
+use std::fs;
 
 #[wasm_bindgen]
 pub fn add(left: usize, right: usize) -> usize {
     left + right
+}
+
+#[wasm_bindgen]
+pub fn copy_async(from: String, to: String) -> Result<(), JsValue> {
+    println!("from {}", from);
+    let _ = fs::copy(from, to).expect("error");
+    Ok(())
 }
 
 #[wasm_bindgen]
@@ -22,7 +30,12 @@ pub async fn add_async() -> Result<usize, JsValue> {
     // .await
     // .unwrap();
 }
-// pub  fn connect() {
-//     .await
-//     .unwrap();
-// }
+
+#[cfg(test)]
+#[test]
+fn test_copy() {
+    copy_async(
+        "/home/gsxhnd/.config/ouroboros/db.json".to_string(),
+        "./tray.ts".to_string(),
+    );
+}

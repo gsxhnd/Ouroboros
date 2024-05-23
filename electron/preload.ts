@@ -6,4 +6,5 @@ contextBridge.exposeInMainWorld("electronAPI", {
   chrome: () => process.versions.chrome,
   electron: () => process.versions.electron,
   loadPreferences: () => ipcRenderer.invoke("loadPreferences"),
+  copy: ({ from, to }) => ipcRenderer.invoke("copy", from, to),
 });
