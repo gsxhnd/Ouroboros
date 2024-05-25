@@ -29,6 +29,6 @@ jobs:
           node-version: "20.x"
       - run: yarn install
 
-      - run: yarn build
       - run: yarn build:napi
+      - run: yarn build
       - run: ls -al ./dist
