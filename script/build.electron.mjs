@@ -1,5 +1,9 @@
 import { build } from "esbuild";
 import { wasmPlugin } from "./wasm.plugin.mjs";
+import { nativeNodeModulesPlugin } from "./node.plugin.mjs";
+
+// import pkg from "./node.plugin.mjs";
+// const { nativeNodeModulesPlugin } = pkg;
 
 console.log(process.env.NODE_ENV);
 
@@ -14,9 +18,13 @@ build({
   outdir: "./dist/",
   minify: false,
   // splitting: true,
-  plugins: [wasmPlugin],
+  plugins: [nativeNodeModulesPlugin],
   outExtension: {
     ".js": ".cjs",
+  },
+  loader: {
+    ".node": "file",
+    ".wasm": "copy",
   },
 })
   .then(() => {

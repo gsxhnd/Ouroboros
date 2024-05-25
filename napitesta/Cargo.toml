@@ -1,0 +1,21 @@
+[package]
+name = "napitesta"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+napi = { version = "2", default-features = false, features = [
+    "napi8",
+    "async",
+] }
+tokio = { version = "1", features = ["full"] }
+tokio-test = { version = "0.4" }
+napi-derive = "2"
+sqlx = { version = "0.7", features = ["runtime-tokio", "sqlite"] }
+
+
+[build-dependencies]
+napi-build = "2"

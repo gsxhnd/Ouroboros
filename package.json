@@ -4,17 +4,17 @@
   "main": "./dist/main.cjs",
   "author": "gsxhnd",
   "license": "MIT",
-  "private": false,
-  "type":"module",
+  "type": "module",
   "scripts": {
     "dev:electron": "node script/dev.electron.js",
     "dev:renderer": "vite",
     "dev": "yarn dev:electron & yarn dev:renderer",
     "dev:start": "NODE_ENV=dev electron .",
-    "build:electron": "ts-node script/build.electron.mjs",
+    "build:electron": "node script/build.electron.mjs",
     "build:renderer": "vue-tsc && vite build",
     "build": "yarn build:electron && yarn build:renderer",
     "wasm": "wasm-pack build --target nodejs --out-dir ../electron/pkg ./wasm",
+    "build:napi": "napi build --cargo-name napitesta  ./electron/napitesta",
     "start": "electron .",
     "package": "electron-forge package"
   },
@@ -32,6 +32,7 @@
   "devDependencies": {
     "@electron-forge/cli": "^7.4.0",
     "@electron/packager": "^18.3.2",
+    "@napi-rs/cli": "^2.18.3",
     "@types/node": "^20.12.12",
     "@types/nodemon": "^1.19.6",
     "@vitejs/plugin-vue": "^5.0.4",

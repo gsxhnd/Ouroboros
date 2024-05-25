@@ -27,6 +27,16 @@ export const wasmPlugin = {
       if (args.resolveDir === "") {
         return; // Ignore unresolvable paths
       }
+
+      // if (args.namespace === "file") {
+      //   return {
+      //     path: path.isAbsolute(args.path)
+      //       ? args.path
+      //       : path.join(args.resolveDir, args.path),
+      //     namespace: "wasm-file",
+      //   };
+      // }
+
       return {
         path: path.isAbsolute(args.path)
           ? args.path
@@ -57,5 +67,18 @@ export const wasmPlugin = {
       contents: await fs.promises.readFile(args.path),
       loader: "binary",
     }));
+
+    build.onResolve({ filter: /\.wasm$/, namespace: "wasm-file" }, (args) => {
+      console.log("build onResolve namespace wasm-file filter .wasm");
+      // console.log(args);
+      return {
+        path: args.path,
+        namespace: "file",
+      };
+    });
+
+    let opts = build.initialOptions;
+    opts.loader = opts.loader || {};
+    opts.loader[".wasm"] = "file";
   },
 };
