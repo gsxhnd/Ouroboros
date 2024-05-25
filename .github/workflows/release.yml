@@ -23,6 +23,7 @@ jobs:
           node-version: "20.x"
       - run: yarn install
 
+      - uses: actions/checkout@v2
       - name: install rust
         uses: actions-rs/toolchain@v1
       - run: cargo check
