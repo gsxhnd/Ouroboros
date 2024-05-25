@@ -1,5 +1,5 @@
 [workspace]
-members = ["napitesta", "wasm"]
+members = ["napi", "wasm"]
 resolver = "2"
 
 [workspace.dependencies]

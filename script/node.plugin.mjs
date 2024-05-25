@@ -30,8 +30,9 @@ export const nativeNodeModulesPlugin = {
       return {
         contents: `
           console.log("test")
-          try { module.exports = require("${args.path}") }
-          catch {}
+          require("${args.path}") 
+          // try { module.exports = require("${args.path}") }
+          // catch {}
         `,
       };
     });

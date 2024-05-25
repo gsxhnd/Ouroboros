@@ -18,12 +18,12 @@ build({
   outdir: "./dist/",
   minify: false,
   // splitting: true,
-  plugins: [nativeNodeModulesPlugin],
+  // plugins: [nativeNodeModulesPlugin],
   outExtension: {
     ".js": ".cjs",
   },
   loader: {
-    ".node": "file",
+    ".node": "copy",
     ".wasm": "copy",
   },
 })

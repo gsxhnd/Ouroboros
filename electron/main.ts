@@ -2,45 +2,40 @@ import { app, BrowserWindow, ipcMain, session } from "electron";
 import { tray } from "./tray";
 import { resolve } from "path";
 import { JSONFilePreset } from "lowdb/node";
-// import { Database } from "node-sqlite3-wasm";
-
-// .node
-// const test = require("./napitesta/index.node");
-import { sum, sql } from "./napitesta";
+import Database from "libsql";
 
 const isDev: boolean = process.env.NODE_ENV === "dev" && !app.isPackaged;
 const isRelease: boolean = app.isPackaged;
+const userConfig: string = resolve(
+  app.getPath("home"),
+  ".config",
+  app.getName()
+);
 
 console.log("dev: ", process.env.NODE_ENV);
 console.log("path", app.getAppPath());
 console.log("userData", app.getPath("userData"));
 console.log("appData", app.getPath("appData"));
 console.log("exe", app.getPath("exe"));
+console.log("user config", userConfig);
+
 type Data = {
   messages: string[];
 };
 const defaultData: Data = { messages: [] };
+
+// const db2 = new Database("hello.sqlite");
 
 async function createDB() {
   const db = await JSONFilePreset<Data>(
     resolve(app.getPath("userData"), "db.json"),
     defaultData
   );
-  console.log("before: ", db.data);
-  console.log("after: ", db);
-  db.data.messages.push("test");
   await db.write();
-  console.log("after: ", db.data);
 
-  // await wasm.add_async().then((v) => console.log("async wasm v: ", v));
-  console.log(wasm.add(1, 1));
-  // console.log(typeof test);
-  console.log(sum(1, 2));
-  // console.log(sum(1, 3));
-  // await sql().catch((err) => console.log(err));
-
-  // const sqlite = new Database("database.db");
-  // console.log("dbsql: ", sqlite);
+  // await db2.exec(
+  //   "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT)"
+  // );
 }
 
 async function createWindow() {

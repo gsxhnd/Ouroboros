@@ -1,5 +1,5 @@
 [package]
-name = "napitesta"
+name = "napi"
 version = "0.1.0"
 edition = "2021"
 
@@ -10,12 +10,17 @@ crate-type = ["cdylib"]
 napi = { version = "2", default-features = false, features = [
     "napi8",
     "async",
+    "tokio_rt",
 ] }
 tokio = { version = "1", features = ["full"] }
 tokio-test = { version = "0.4" }
 napi-derive = "2"
 sqlx = { version = "0.7", features = ["runtime-tokio", "sqlite"] }
-
+sea-orm = { version = "0.12", features = [
+    "sqlx-sqlite",
+    "runtime-tokio-native-tls",
+    "macros",
+] }
 
 [build-dependencies]
 napi-build = "2"
