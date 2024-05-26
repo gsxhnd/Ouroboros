@@ -21,19 +21,19 @@
     "publisher": "electron-forge publish"
   },
   "dependencies": {
-    "@electron-forge/maker-zip": "^7.4.0",
-    "@electron-forge/publisher-github": "^7.4.0",
+    "libsql": "^0.3.18"
+  },
+  "devDependencies": {
     "@vueuse/core": "^10.9.0",
-    "@vueuse/electron": "^10.9.0",
-    "libsql": "^0.3.18",
     "lowdb": "^7.0.1",
     "node-sqlite3-wasm": "^0.7.1",
     "pinia": "^2.1.7",
     "primevue": "^3.52.0",
     "vue": "^3.4.21",
-    "vue-router": "^4.3.2"
-  },
-  "devDependencies": {
+    "vue-router": "^4.3.2",
+    "@vueuse/electron": "^10.9.0",
+    "@electron-forge/maker-zip": "^7.4.0",
+    "@electron-forge/publisher-github": "^7.4.0",
     "@electron-forge/cli": "^7.4.0",
     "@electron/packager": "^18.3.2",
     "@napi-rs/cli": "^2.18.3",

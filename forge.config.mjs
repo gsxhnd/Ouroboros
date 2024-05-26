@@ -1,53 +1,40 @@
-console.log("use file");
 import { MakerZIP } from "@electron-forge/maker-zip";
 
-// api.package({
-//   platform: "drawin",
-//   arch: "arm64",
-// });
-
-// api.package({
-//   platform: "linux",
-//   arch: "x64",
-// });
-
-// api.make({ platform: "linux" });
+// ignore = [];
 
 export default {
   packagerConfig: {
     asar: false,
     prune: true,
-    // all: true,
     platforms: ["drawin", "linux", "windows"],
     arch: ["x64", "arm64"],
     ignore: [
+      "^/.cargo",
+      "^/.github",
+      "^/electron",
+      "^/napi",
+      "^/script",
       "^/src",
       "^/targe",
+      "^/target",
       "^/Cargo",
-      "^/electron",
       "^/extension",
-      "^/script",
       ".gitignore",
       "tsconfig.json",
       "tsconfig.node.json",
       "vite.config.ts",
       "forge.config.js",
       "build.main.js",
-      "node_modules",
       "yarn.lock",
       "README.md",
+      "node_modules/.vite",
     ],
-    extraResource: ["resources/tray.png"],
-    // ignore: (path) => {
-    //   console.log(path);
-    // },
+    // extraResource: ["resources/tray.png"],
   },
   makers: [new MakerZIP({}, ["darwin", "linux", "win32"])],
   publishers: [
     {
       name: "@electron-forge/publisher-github",
-      platforms: ["darwin", "linux", "win32"],
-      authToken: process.env.GITHUB_TOKEN,
       config: {
         repository: {
           owner: "gsxhnd",

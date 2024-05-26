@@ -24,7 +24,7 @@ type Data = {
 };
 const defaultData: Data = { messages: [] };
 
-// const db2 = new Database("hello.sqlite");
+// const db2 = new Database("test.db");
 
 async function createDB() {
   const db = await JSONFilePreset<Data>(
