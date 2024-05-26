@@ -42,5 +42,5 @@ export default {
     //   console.log(path);
     // },
   },
-  makers: [new MakerZIP({}, ["darwin", "linux", "windows"])],
+  makers: [new MakerZIP({}, ["darwin", "linux", "win32"])],
 };
