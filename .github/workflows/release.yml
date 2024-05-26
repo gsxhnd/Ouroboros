@@ -43,5 +43,7 @@ jobs:
           name: ourobroros-${{ matrix.os }}
           path: |
             out/**/*.zip
-      - name: Release no window
+      - name: Release
         run: yarn publisher
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
