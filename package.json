@@ -17,10 +17,12 @@
     "build:napi": "napi build --cargo-name napitesta --release ./electron/napitesta",
     "start": "electron .",
     "package": "electron-forge package",
-    "make": "electron-forge make"
+    "make": "electron-forge make",
+    "publisher": "electron-forge publish"
   },
   "dependencies": {
     "@electron-forge/maker-zip": "^7.4.0",
+    "@electron-forge/publisher-github": "^7.4.0",
     "@vueuse/core": "^10.9.0",
     "@vueuse/electron": "^10.9.0",
     "libsql": "^0.3.18",

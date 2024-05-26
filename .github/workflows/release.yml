@@ -44,19 +44,4 @@ jobs:
           path: |
             out/**/*.zip
       - name: Release no window
-        uses: softprops/action-gh-release@v2
-        if: ${{ matrix.os }} != windows-latest
-        with:
-          files: |
-            - out/**/*.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: release win
-        uses: softprops/action-gh-release@v1
-        if: ${{ matrix.os}} == "windows-latest"
-        with:
-          files: |
-            - out/**/*.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: yarn publisher

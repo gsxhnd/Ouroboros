@@ -43,4 +43,18 @@ export default {
     // },
   },
   makers: [new MakerZIP({}, ["darwin", "linux", "win32"])],
+  publishers: [
+    {
+      name: "@electron-forge/publisher-github",
+      platforms: ["darwin", "linux", "win32"],
+      authToken: process.env.GITHUB_TOKEN,
+      config: {
+        repository: {
+          owner: "gsxhnd",
+          name: "ouroboros",
+        },
+        prerelease: true,
+      },
+    },
+  ],
 };
