@@ -2,6 +2,8 @@ name: Release
 
 on:
   push:
+    tags:
+      - "v*"
 
 jobs:
   release:
@@ -38,6 +40,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: my-artifact
+          name: ourobroros-${{ matrix.os }}
           path: |
             out/**/*.zip
