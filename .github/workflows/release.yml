@@ -2,6 +2,8 @@ name: Release
 
 on:
   push:
+    tags:
+      - "v*"
 
 jobs:
   release:
@@ -41,3 +43,16 @@ jobs:
           name: ourobroros-${{ matrix.os }}
           path: |
             out/**/*.zip
+      - name: Release no window
+        uses: softprops/action-gh-release@v2
+        if: ${{ matrix.os }} != windows-latest
+        with:
+          files: |
+            - out/**/*.zip
+
+      - name: release win
+        uses: softprops/action-gh-release@v2
+        if: ${{ matrix.os}} == "windows-latest"
+        with:
+          files: |
+            - out/**/*.zip
