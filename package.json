@@ -16,7 +16,8 @@
     "build": "yarn build:electron && yarn build:renderer",
     "build:napi": "napi build --cargo-name napitesta --release ./electron/napitesta",
     "start": "electron .",
-    "package": "electron-forge package"
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
   "dependencies": {
     "@electron-forge/maker-zip": "^7.4.0",
