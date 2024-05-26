@@ -3,6 +3,7 @@ import { tray } from "./tray";
 import { resolve } from "path";
 import { JSONFilePreset } from "lowdb/node";
 import Database from "libsql";
+import { AppConfig } from "./config";
 
 const isDev: boolean = process.env.NODE_ENV === "dev" && !app.isPackaged;
 const isRelease: boolean = app.isPackaged;
@@ -19,19 +20,23 @@ console.log("appData", app.getPath("appData"));
 console.log("exe", app.getPath("exe"));
 console.log("user config", userConfig);
 
-type Data = {
-  messages: string[];
+const defaultData: AppConfig = {
+  libraries: null,
 };
-const defaultData: Data = { messages: [] };
 
 // const db2 = new Database("test.db");
 
 async function createDB() {
-  const db = await JSONFilePreset<Data>(
+  const db = await JSONFilePreset<AppConfig>(
     resolve(app.getPath("userData"), "db.json"),
     defaultData
   );
-  await db.write();
+  await db.write().catch((err) => {
+    console.error(err);
+  });
+  await db.read().then(() => {
+    console.log(db.data);
+  });
 
   // await db2.exec(
   //   "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT)"

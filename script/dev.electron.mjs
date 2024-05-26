@@ -1,18 +1,26 @@
 import { build, context } from "esbuild";
-import { wasmPlugin } from "./wasm.plugin.js";
+// import { wasmPlugin } from "./wasm.plugin.js";
 // import watPlugin from "esbuild-plugin-wat";
 console.log(process.env.NODE_ENV);
 
 async function watch() {
   let ctx = await context({
-    minify: false,
     entryPoints: ["./electron/main.ts", "./electron/preload.ts"],
     bundle: true,
     platform: "node",
-    format: "iife",
+    format: "cjs",
     external: ["path", "electron", "fs"],
     outdir: "./dist/",
-    plugins: [],
+    minify: false,
+    // splitting: true,
+    // plugins: [nativeNodeModulesPlugin],
+    outExtension: {
+      ".js": ".cjs",
+    },
+    loader: {
+      ".node": "copy",
+      ".wasm": "copy",
+    },
   });
 
   await ctx.watch();

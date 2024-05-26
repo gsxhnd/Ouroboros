@@ -6,7 +6,7 @@ export function tray(): void {
   const icon = nativeImage.createFromPath(resolve("./resources/tray.png"));
   let tray = new Tray(icon);
   tray.setToolTip("This is my application");
-  tray.setTitle("This is my title");
+  tray.setTitle("");
   const contextMenu = Menu.buildFromTemplate([
     {
       label: "Quit",
