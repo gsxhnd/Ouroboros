@@ -69,15 +69,12 @@ async function createWindow() {
     win.loadFile("dist/renderer/index.html");
   }
 
-  ipcMain.on("ping", (event) => {
-    console.log("pong");
-  });
   ipcMain.handle("loadPreferences", (event) => {
     console.log("loadPreferences event", event);
   });
+
   ipcMain.handle("copy", (event, ...args) => {
     console.log(args[0], args[1]);
-    // wasm.copy_async(args[0], args[1]);
   });
 }
 

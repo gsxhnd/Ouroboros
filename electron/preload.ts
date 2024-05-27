@@ -1,10 +1,8 @@
-const { contextBridge, ipcRenderer } = require("electron");
-// import { contextBridge, ipcRenderer } from "electron";
+// const { contextBridge, ipcRenderer } = require("electron");
+import { contextBridge, ipcRenderer } from "electron";
 
 contextBridge.exposeInMainWorld("electronAPI", {
-  node: () => process.versions.node,
-  chrome: () => process.versions.chrome,
-  electron: () => process.versions.electron,
   loadPreferences: () => ipcRenderer.invoke("loadPreferences"),
   copy: ({ from, to }) => ipcRenderer.invoke("copy", from, to),
+  useLib: (libPath: string) => ipcRenderer.invoke("useLib", libPath),
 });
