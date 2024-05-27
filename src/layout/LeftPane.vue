@@ -15,7 +15,6 @@
 <script setup lang="ts">
 import LeftTitleBar from "@/components/titlebar/LeftTitleBar.vue";
 import Tree from "primevue/tree";
-import { TreeNode } from "primevue/treenode";
 import ContextMenu from "primevue/contextmenu";
 
 import { ref, onMounted, Ref } from "vue";
@@ -25,7 +24,7 @@ const onImageRightClick = (event: any) => {
   menu.value.show(event);
 };
 
-const nodes: Ref<Array<TreeNode>> | Ref<undefined> = ref([
+const nodes: Ref<Array<object>> | Ref<undefined> = ref([
   {
     key: "a",
     label: "test",

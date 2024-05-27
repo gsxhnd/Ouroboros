@@ -71,6 +71,7 @@ async function createWindow() {
 
   ipcMain.handle("loadPreferences", (event) => {
     console.log("loadPreferences event", event);
+    return "test";
   });
 
   ipcMain.handle("copy", (event, ...args) => {
