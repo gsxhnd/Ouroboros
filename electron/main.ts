@@ -50,7 +50,7 @@ async function createWindow() {
     minHeight: 600,
     minWidth: 800,
     frame: false,
-    titleBarStyle: "hidden",
+    titleBarStyle: "hiddenInset",
     titleBarOverlay: true,
     webPreferences: {
       devTools: !isRelease,

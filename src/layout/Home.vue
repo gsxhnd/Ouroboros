@@ -1,5 +1,5 @@
 <template>
-  <Splitter>
+  <Splitter :pt="{}">
     <SplitterPanel
       :min-size="15"
       :size="15"

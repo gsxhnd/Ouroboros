@@ -1,13 +1,11 @@
 <template>
   <div class="left-pane">
     <left-title-bar></left-title-bar>
-    left pane
     <Draggable
       v-model="data"
       ref="tree"
       virtualization
-      style="height: 500px"
-      class="mtl-tree"
+      class="mtl-tree dirtree"
       treeLine
     >
       <template #default="{ node, stat }">
@@ -216,4 +214,21 @@ function onButtonClick(e: MouseEvent) {
 onMounted(() => {});
 </script>
 
-<style scoped lang="less"></style>
+<style scoped lang="less">
+.left-pane {
+  padding: 2px;
+  .dirtree {
+    height: 500px;
+    :deep(.tree-node:hover) {
+      background-color: rgb(255 255 255 / 10%);
+    }
+    .mtl-ml {
+      width: 100%;
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+}
+</style>

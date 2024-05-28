@@ -6,6 +6,6 @@
 <style scoped>
 .right-title-bar {
   height: 30px;
-  background-color: black;
+  /* background-color: black; */
 }
 </style>
