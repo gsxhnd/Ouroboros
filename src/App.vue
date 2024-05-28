@@ -6,9 +6,16 @@ import { onMounted } from "vue";
 onMounted(() => {
   console.log("ping");
   // ipcRenderer.send("ping");
-  window.electronAPI.loadPreferences().then((data) => {
-    console.log(data);
-  });
+  if (window.electronAPI) {
+    window.electronAPI
+      .loadPreferences()
+      .then((data) => {
+        console.log(data);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }
 });
 </script>
 
