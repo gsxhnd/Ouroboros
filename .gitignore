@@ -10,6 +10,7 @@ lerna-debug.log*
 /out
 /dist
 /extension
+/resources/*.wasm
 
 # Editor directories and files
 .vscode/*

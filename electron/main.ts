@@ -1,9 +1,32 @@
 import { app, BrowserWindow, ipcMain, session } from "electron";
 import { tray } from "./tray";
 import { resolve } from "path";
+import { JSONFilePreset } from "lowdb/node";
+import Database from "libsql";
+import { appDB } from "./preferences";
 
-const dev: boolean = process.env.NODE_ENV === "dev" && !app.isPackaged;
+const isDev: boolean = process.env.NODE_ENV === "dev" && !app.isPackaged;
 const isRelease: boolean = app.isPackaged;
+const userConfig: string = resolve(
+  app.getPath("home"),
+  ".config",
+  app.getName()
+);
+
+console.log("dev: ", process.env.NODE_ENV);
+console.log("path", app.getAppPath());
+console.log("userData", app.getPath("userData"));
+console.log("appData", app.getPath("appData"));
+console.log("exe", app.getPath("exe"));
+console.log("user config", userConfig);
+
+// const db2 = new Database("test.db");
+// let appDB = new AppConfigDB();
+
+app.on("ready", async () => {
+  console.log("app ready");
+  await appDB.init();
+});
 
 async function createWindow() {
   const win = new BrowserWindow({
@@ -12,16 +35,16 @@ async function createWindow() {
     minHeight: 600,
     minWidth: 800,
     frame: false,
-    titleBarStyle: "hidden",
+    titleBarStyle: "hiddenInset",
     titleBarOverlay: true,
     webPreferences: {
       devTools: !isRelease,
       // sandbox: false,
-      preload: resolve("dist/preload.js"),
+      preload: resolve("dist/preload.cjs"),
     },
   });
 
-  if (dev) {
+  if (isDev) {
     await session.defaultSession.loadExtension(
       resolve("extension/vuetool_6.6.1_0")
     );
@@ -31,16 +54,20 @@ async function createWindow() {
     win.loadFile("dist/renderer/index.html");
   }
 
-  ipcMain.on("ping", (event) => {
-    console.log("pong");
-  });
-  ipcMain.handle("loadPreferences", (event) => {
+  ipcMain.handle("loadPreferences", async (event) => {
     console.log("loadPreferences event", event);
+    return await appDB.getPreferences();
+  });
+
+  ipcMain.handle("copy", (event, ...args) => {
+    console.log(args[0], args[1]);
   });
 }
 
 app.whenReady().then(async () => {
+  console.log("app when ready");
   tray();
+
   app.on("activate", async () => {
     console.log("activate");
     if (BrowserWindow.getAllWindows().length === 0) {

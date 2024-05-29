@@ -1,6 +1,5 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 
-import HelloWorld from "@/components/HelloWorld.vue";
 import Home from "@/layout/Home.vue";
 const Login = { template: "<div>Login</div>" };
 
@@ -12,10 +11,9 @@ const RootRoute: RouteRecordRaw = {
     title: "Root",
   },
   children: [
-    {
-      path: "/aaa/",
-      component: HelloWorld,
-    },
+    // {
+    //   path: "/aaa/",
+    // },
   ],
 };
 

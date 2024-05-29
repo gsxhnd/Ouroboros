@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
-// import { useIpcRenderer } from "@vueuse/electron";
-// const ipcRenderer = useIpcRenderer();
+import { onBeforeMount } from "vue";
+import { usePreferencesStore } from "@/stores/preferences";
+const preferencesStore = usePreferencesStore();
 
-onMounted(() => {
-  console.log("ping");
-  // ipcRenderer.send("ping");
-  window.electronAPI.loadPreferences();
+onBeforeMount(() => {
+  preferencesStore.init();
 });
 </script>
 

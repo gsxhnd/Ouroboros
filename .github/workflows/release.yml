@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    name: build and release electron app
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-22.04, macos-latest, macos-13]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v3
+
+      - name: intall rust
+        uses: hecrj/setup-rust-action@v2
+        with:
+          rust-version: stable
+      - run: cargo check
+
+      - name: install node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+      - run: yarn install
+
+      # - run: yarn build:napi
+      - run: yarn build
+      - run: ls ./dist
+      - run: yarn package
+      - run: ls ./out
+      - run: yarn make
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ourobroros-${{ matrix.os }}
+          path: |
+            out/**/*.zip
+      - name: Release
+        run: yarn publisher
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

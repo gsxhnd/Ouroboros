@@ -4,15 +4,17 @@
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
 
   font-synthesis: none;
+
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
 }
+
+@ob-background: #3d3e42;
+@ob-font-color: white;
 
 body {
   margin: 0;
@@ -20,22 +22,62 @@ body {
   place-items: center;
   min-width: 100vw;
   min-height: 100vh;
+  background-color: @ob-background;
+  color: @ob-font-color;
+  user-select: none;
   #app {
     min-width: 100vw;
     min-height: 100vh;
     text-align: center;
+    color: @ob-font-color;
+    .p-splitter {
+      color: @ob-font-color;
+      background-color: @ob-background;
+    }
+    overflow: hidden;
   }
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+.electron-drag {
+  -webkit-app-region: drag;
+}
+
+/* 整个滚动条 */
+::-webkit-scrollbar {
+  width: 6px; /* 对于垂直滚动条，设置宽度 */
+  height: 10px; /* 对于水平滚动条，设置高度 */
+  padding-right: 1px;
+  margin-right: 1px;
+}
+
+/* 滚动条轨道 */
+::-webkit-scrollbar-track {
+  width: 8px; /* 对于垂直滚动条，设置宽度 */
+  background: @ob-background;
+}
+
+::-webkit-scrollbar-thumb {
+  width: 6px;
+  background: #555;
+  border-radius: 20px;
+  margin-right: 1px;
+  padding-right: 1px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94969c;
+  margin-right: 1px;
+  padding-right: 1px;
+}
+
+.p-splitter-gutter {
+  width: 2px;
+  background-color: #868686;
+  .p-splitter-gutter-handle {
+    background-color: #555;
+    height: 0;
   }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
+  &:hover {
+    background-color: #006dff;
   }
 }
