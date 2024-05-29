@@ -3,7 +3,7 @@ import { tray } from "./tray";
 import { resolve } from "path";
 import { JSONFilePreset } from "lowdb/node";
 import Database from "libsql";
-import { AppConfig } from "./config";
+import { appDB } from "./preferences";
 
 const isDev: boolean = process.env.NODE_ENV === "dev" && !app.isPackaged;
 const isRelease: boolean = app.isPackaged;
@@ -20,28 +20,13 @@ console.log("appData", app.getPath("appData"));
 console.log("exe", app.getPath("exe"));
 console.log("user config", userConfig);
 
-const defaultData: AppConfig = {
-  libraries: null,
-};
-
 // const db2 = new Database("test.db");
+// let appDB = new AppConfigDB();
 
-async function createDB() {
-  const db = await JSONFilePreset<AppConfig>(
-    resolve(app.getPath("userData"), "db.json"),
-    defaultData
-  );
-  await db.write().catch((err) => {
-    console.error(err);
-  });
-  await db.read().then(() => {
-    console.log(db.data);
-  });
-
-  // await db2.exec(
-  //   "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT)"
-  // );
-}
+app.on("ready", async () => {
+  console.log("app ready");
+  await appDB.init();
+});
 
 async function createWindow() {
   const win = new BrowserWindow({
@@ -69,9 +54,9 @@ async function createWindow() {
     win.loadFile("dist/renderer/index.html");
   }
 
-  ipcMain.handle("loadPreferences", (event) => {
+  ipcMain.handle("loadPreferences", async (event) => {
     console.log("loadPreferences event", event);
-    return "test";
+    return await appDB.getPreferences();
   });
 
   ipcMain.handle("copy", (event, ...args) => {
@@ -80,7 +65,7 @@ async function createWindow() {
 }
 
 app.whenReady().then(async () => {
-  await createDB();
+  console.log("app when ready");
   tray();
 
   app.on("activate", async () => {
