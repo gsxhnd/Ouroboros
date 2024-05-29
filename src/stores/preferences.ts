@@ -1,8 +1,8 @@
-import { Preference } from "@/vite-env";
+// import { Preference } from "@/vite-env";
 import { defineStore } from "pinia";
 
 interface preferences {
-  p: Preference | null;
+  p: Preferences | null;
 }
 
 export const usePreferencesStore = defineStore("preferences", {
@@ -10,9 +10,9 @@ export const usePreferencesStore = defineStore("preferences", {
     p: null,
   }),
   actions: {
-    init() {
+    async init() {
       if (window.electronAPI) {
-        window.electronAPI
+        await window.electronAPI
           .loadPreferences()
           .then((data) => {
             this.p = data;

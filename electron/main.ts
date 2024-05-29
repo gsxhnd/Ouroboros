@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, session } from "electron";
+import { app, BrowserWindow, ipcMain, session, dialog } from "electron";
 import { tray } from "./tray";
 import { resolve } from "path";
 import { JSONFilePreset } from "lowdb/node";
@@ -57,6 +57,16 @@ async function createWindow() {
   ipcMain.handle("loadPreferences", async (event) => {
     console.log("loadPreferences event", event);
     return await appDB.getPreferences();
+  });
+
+  ipcMain.handle("dialog:selectLibPath", async () => {
+    await dialog
+      .showOpenDialog(win, {
+        properties: ["openDirectory", "createDirectory", "promptToCreate"],
+      })
+      .then(({ filePaths }) => {
+        console.log(filePaths);
+      });
   });
 
   ipcMain.handle("copy", (event, ...args) => {

@@ -1,14 +1,23 @@
 <script setup lang="ts">
-import { onBeforeMount } from "vue";
+import { onBeforeMount, onMounted } from "vue";
 import { usePreferencesStore } from "@/stores/preferences";
 const preferencesStore = usePreferencesStore();
+import { useRoute, useRouter } from "vue-router";
 
-onBeforeMount(() => {
-  preferencesStore.init();
+const router = useRouter();
+// const route = useRoute();
+
+onBeforeMount(async () => {
+  await preferencesStore.init();
+  if (preferencesStore.p?.appConfig.libraries.length === 0) {
+    router.push("/init");
+  }
 });
+
+onMounted(() => {});
 </script>
 
-<template>
+<template v-if="preferences.p">
   <router-view class="router-view" />
 </template>
 

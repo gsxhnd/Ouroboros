@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 
 import Home from "@/layout/Home.vue";
-const Login = { template: "<div>Login</div>" };
+import Init from "@/pages/Init.vue";
 
 const RootRoute: RouteRecordRaw = {
   path: "/",
@@ -17,10 +17,10 @@ const RootRoute: RouteRecordRaw = {
   ],
 };
 
-const LoginRoute: RouteRecordRaw = {
-  path: "/login",
-  name: "Login",
-  component: Login,
+const InitRouter: RouteRecordRaw = {
+  path: "/init",
+  name: "Init",
+  component: Init,
   meta: {
     title: "",
   },
@@ -28,7 +28,7 @@ const LoginRoute: RouteRecordRaw = {
 
 const router = createRouter({
   history: createWebHashHistory(),
-  routes: [RootRoute, LoginRoute],
+  routes: [RootRoute, InitRouter],
   // strict: true,
 });
 
