@@ -2,38 +2,41 @@ use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::{Pool, Sqlite};
 use sqlx::{SqliteConnection, SqlitePool};
 
-pub struct DataPool {
-    pub pool: Pool<Sqlite>,
-}
+// pub struct DataPool {
+//     pub pool:
+// }
 
-// #[napi]
+#[napi]
 // #[derive(Clone)]
 pub struct Database {
-    pool: Option<DataPool>,
+    pool: Option<Pool<Sqlite>>,
 }
 
-// #[napi]
+#[napi]
 impl Database {
-    // #[napi(constructor)]
+    #[napi(constructor)]
     pub fn new() -> Self {
         Database { pool: None }
     }
 
-    // #[napi]
+    #[napi]
     pub async unsafe fn init(&mut self) {
         let pool = SqlitePoolOptions::new()
             .max_connections(5)
             .connect("sqlite:database.db?mode=rwc")
             .await
             .unwrap();
-        self.pool = Some(DataPool { pool });
+
+        self.pool = Some(pool);
     }
 
-    // #[napi]
-    pub async unsafe fn insert(&mut self) {
-        let p = self.pool.unwrap().pool;
-        let x = sqlx::query("select * from test_db;")
-            .execute(p)
+    #[napi]
+    pub async unsafe fn insert(&self) {
+        let p = self.pool.as_ref().unwrap().clone();
+
+        // let p = self.pool.unwrap();
+        let x = sqlx::query(" INSERT INTO test_db DEFAULT VALUES")
+            .execute(&p)
             .await;
         match x {
             Err(e) => println!("{}", e),
@@ -45,6 +48,6 @@ impl Database {
 #[cfg(test)]
 #[tokio::test]
 async fn test_db() {
-    let db = Database::new().await;
-    db.insert().await;
+    // let db = Database::new().await;
+    // db.insert().await;
 }

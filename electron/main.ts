@@ -2,9 +2,9 @@ import { app, BrowserWindow, ipcMain, session, dialog } from "electron";
 import { tray } from "./tray";
 import { resolve } from "path";
 import { JSONFilePreset } from "lowdb/node";
-import Database from "libsql";
+// import Database from "libsql";
 import { appDB } from "./preferences";
-import { a } from "./napi";
+import { db } from "./napi";
 
 const isDev: boolean = process.env.NODE_ENV === "dev" && !app.isPackaged;
 const isRelease: boolean = app.isPackaged;
@@ -44,7 +44,9 @@ async function createWindow() {
       preload: resolve("dist/preload.cjs"),
     },
   });
-  await a();
+
+  await db.init();
+  await db.insert();
 
   if (isDev) {
     await session.defaultSession.loadExtension(
@@ -62,6 +64,7 @@ async function createWindow() {
   });
 
   ipcMain.handle("dialog:selectLibPath", async () => {
+    await db.insert();
     await dialog
       .showOpenDialog(win, {
         properties: ["openDirectory", "createDirectory", "promptToCreate"],

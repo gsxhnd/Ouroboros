@@ -2,7 +2,7 @@
 import { onBeforeMount, onMounted } from "vue";
 import { usePreferencesStore } from "@/stores/preferences";
 const preferencesStore = usePreferencesStore();
-import { useRoute, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
 
 const router = useRouter();
 // const route = useRoute();
