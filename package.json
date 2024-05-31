@@ -21,6 +21,7 @@
     "publisher": "electron-forge publish"
   },
   "dependencies": {
+    "chokidar": "^3.6.0",
     "libsql": "^0.3.18"
   },
   "devDependencies": {

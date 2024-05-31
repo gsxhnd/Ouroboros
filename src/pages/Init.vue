@@ -1,7 +1,8 @@
 <template>
   <init-title-bar></init-title-bar>
   <div class="card">
-    <Button label="Primary" outlined @click="open" />
+    <Button label="NewAssetLib" outlined @click="open" />
+    <Button label="SelectAssetLib" outlined @click="selectPath" />
     <input type="file" webkitdirectory directory />
   </div>
 </template>
@@ -11,7 +12,11 @@ import InitTitleBar from "@/components/titlebar/InitTitleBar.vue";
 import Button from "primevue/button";
 
 async function open() {
-  await window.electronAPI.addLibPath();
+  await window.electronAPI.newAssetLibPath("tet");
+}
+
+async function selectPath() {
+  await window.electronAPI.selectAssetLibPath();
 }
 </script>
 

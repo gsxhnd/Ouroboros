@@ -2,9 +2,9 @@ import { app, BrowserWindow, ipcMain, session, dialog } from "electron";
 import { tray } from "./tray";
 import { resolve } from "path";
 import { JSONFilePreset } from "lowdb/node";
-// import Database from "libsql";
 import { appDB } from "./preferences";
-import { db } from "./napi";
+// import Database from "libsql";
+import { AssetLib } from "./assetlib";
 
 const isDev: boolean = process.env.NODE_ENV === "dev" && !app.isPackaged;
 const isRelease: boolean = app.isPackaged;
@@ -14,15 +14,14 @@ const userConfig: string = resolve(
   app.getName()
 );
 
+let lib: AssetLib | null = null;
+
 console.log("dev: ", process.env.NODE_ENV);
 console.log("path", app.getAppPath());
 console.log("userData", app.getPath("userData"));
 console.log("appData", app.getPath("appData"));
 console.log("exe", app.getPath("exe"));
 console.log("user config", userConfig);
-
-// const db2 = new Database("test.db");
-// let appDB = new AppConfigDB();
 
 app.on("ready", async () => {
   console.log("app ready");
@@ -40,13 +39,9 @@ async function createWindow() {
     titleBarOverlay: true,
     webPreferences: {
       devTools: !isRelease,
-      // sandbox: false,
       preload: resolve("dist/preload.cjs"),
     },
   });
-
-  await db.init();
-  await db.insert();
 
   if (isDev) {
     await session.defaultSession.loadExtension(
@@ -63,24 +58,32 @@ async function createWindow() {
     return await appDB.getPreferences();
   });
 
-  ipcMain.handle("dialog:selectLibPath", async () => {
-    await db.insert();
+  ipcMain.handle("dialog:newAssetLibPath", async (event, libName: string) => {
     await dialog
       .showOpenDialog(win, {
         properties: ["openDirectory", "createDirectory", "promptToCreate"],
       })
-      .then(({ filePaths }) => {
-        console.log(filePaths);
+      .then(({ canceled, filePaths }) => {
+        if (canceled) return null;
+        let libPath = resolve(filePaths[0], libName);
+        console.log(libPath);
+        lib = new AssetLib(libPath);
       });
   });
 
-  ipcMain.handle("copy", (event, ...args) => {
-    console.log(args[0], args[1]);
+  ipcMain.handle("dialog:selectAssetLibPath", async (event) => {
+    await dialog
+      .showOpenDialog(win, {
+        properties: ["openDirectory", "createDirectory", "promptToCreate"],
+      })
+      .then(({ canceled, filePaths }) => {
+        // if canceled return null;
+        console.log(filePaths);
+      });
   });
 }
 
 app.whenReady().then(async () => {
-  console.log("app when ready");
   tray();
 
   app.on("activate", async () => {
