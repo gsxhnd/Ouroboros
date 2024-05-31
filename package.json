@@ -14,7 +14,7 @@
     "build:electron": "node script/build.electron.mjs",
     "build:renderer": "vue-tsc && vite build",
     "build": "yarn build:electron && yarn build:renderer",
-    "build:napi": "napi build --cargo-name napitesta --release ./electron/napitesta",
+    "build:napi": "napi build --cargo-name napi --release ./electron/napi",
     "start": "electron .",
     "package": "electron-forge package",
     "make": "electron-forge make",

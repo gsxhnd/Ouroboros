@@ -24,3 +24,4 @@ lerna-debug.log*
 *.sw?
 
 *.db
+testdata/

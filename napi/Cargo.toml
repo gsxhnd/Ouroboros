@@ -13,15 +13,15 @@ napi = { version = "2", default-features = false, features = [
     "tokio_rt",
 ] }
 tokio = { version = "1", features = ["full"] }
+tokio-stream = { version = "0.1" }
 napi-derive = "2"
 sqlx = { version = "0.7", features = ["runtime-tokio", "sqlite"] }
-sea-orm = { version = "0.12", features = [
-    "sqlx-sqlite",
-    "runtime-tokio-native-tls",
-    "macros",
-] }
 walkdir = "2"
 serde = { version = "1", features = ["derive"] }
+notify = { version = "6", default-features = false, features = [
+    "macos_kqueue",
+] }
+notify-debouncer-full = "0.3"
 
 [dev-dependencies]
 tokio-test = { version = "0.4" }
