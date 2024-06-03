@@ -12,7 +12,10 @@ import InitTitleBar from "@/components/titlebar/InitTitleBar.vue";
 import Button from "primevue/button";
 
 async function open() {
-  await window.electronAPI.newAssetLibPath("tet");
+  await window.electronAPI
+    .newAssetLibPath("tet")
+    .then(() => {})
+    .catch((err) => console.log(err));
 }
 
 async function selectPath() {
