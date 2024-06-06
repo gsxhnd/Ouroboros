@@ -1,14 +1,12 @@
 <template>
   <div class="content-pane">
     <content-title-bar></content-title-bar>
-    <!-- <router-view></router-view> -->
-    <upload></upload>
+    <router-view></router-view>
   </div>
 </template>
 
 <script setup lang="ts">
 import ContentTitleBar from "@/components/titlebar/ContentTitleBar.vue";
-import Upload from "@/components/Upload.vue";
 </script>
 
 <style scoped lang="less">

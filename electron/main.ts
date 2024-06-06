@@ -22,9 +22,11 @@ async function createWindow() {
     frame: false,
     titleBarStyle: "hiddenInset",
     titleBarOverlay: true,
+
     webPreferences: {
       devTools: !isRelease,
       preload: resolve("dist/preload.cjs"),
+      navigateOnDragDrop: true,
     },
   });
 

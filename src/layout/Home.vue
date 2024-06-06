@@ -2,21 +2,21 @@
   <Splitter :pt="{}">
     <SplitterPanel
       :min-size="15"
-      :size="15"
+      :size="20"
       class="flex align-items-center justify-content-center"
     >
       <left-pane></left-pane>
     </SplitterPanel>
     <SplitterPanel
       :min-size="0"
-      :size="75"
+      :size="60"
       class="flex align-items-center justify-content-center"
     >
       <content-pane></content-pane>
     </SplitterPanel>
     <SplitterPanel
       :min-size="15"
-      :size="15"
+      :size="20"
       class="flex align-items-center justify-content-center"
     >
       <right-pane></right-pane>
