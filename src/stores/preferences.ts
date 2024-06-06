@@ -28,7 +28,7 @@ export const usePreferencesStore = defineStore("preferences", {
         // locale.value = "cn";
       }
     },
-    async changeLanuage(l: string) {
+    async changeLanuage(_l: string) {
       if (i18n.locale.value === "en-US") {
         i18n.locale.value = "zh-CN";
       } else {

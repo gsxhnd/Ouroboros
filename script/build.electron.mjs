@@ -14,7 +14,7 @@ build({
   bundle: true,
   platform: "node",
   format: "cjs",
-  external: ["path", "electron", "fs"],
+  external: ["path", "electron", "fs", "chokidar"],
   outdir: "./dist/",
   minify: false,
   // splitting: true,
