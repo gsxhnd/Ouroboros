@@ -10,4 +10,5 @@ interface Libraries {
 
 interface AppConfig {
   libraries: Array<Libraries>;
+  language: string;
 }
