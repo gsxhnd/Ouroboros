@@ -5,10 +5,6 @@ import { wasmPlugin } from "./wasm.plugin.mjs";
 // import pkg from "./node.plugin.mjs";
 // const { nativeNodeModulesPlugin } = pkg;
 
-console.log(process.env.NODE_ENV);
-
-const opt = () => ({});
-
 build({
   entryPoints: ["./electron/main.ts", "./electron/preload.ts"],
   bundle: true,
@@ -16,9 +12,7 @@ build({
   format: "cjs",
   external: ["path", "electron", "fs", "chokidar"],
   outdir: "./dist/",
-  minify: false,
-  // splitting: true,
-  // plugins: [nativeNodeModulesPlugin],
+  minify: true,
   outExtension: {
     ".js": ".cjs",
   },

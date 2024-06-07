@@ -1,7 +1,5 @@
 import { MakerZIP } from "@electron-forge/maker-zip";
 
-// ignore = [];
-
 export default {
   packagerConfig: {
     asar: false,
@@ -23,8 +21,7 @@ export default {
       "tsconfig.json",
       "tsconfig.node.json",
       "vite.config.ts",
-      "forge.config.js",
-      "build.main.js",
+      "forge.config.mjs",
       "yarn.lock",
       "README.md",
       "doc",
@@ -38,6 +35,7 @@ export default {
       "node_modules/@vueuse",
       "node_modules/@volar",
       "node_modules/@tsconfig",
+      "node_modules/@types",
       "node_modules/@rollup",
       "node_modules/@napi-rs",
       "node_modules/@npmcli",

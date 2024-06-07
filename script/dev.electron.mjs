@@ -12,8 +12,6 @@ async function watch() {
     external: ["path", "electron", "fs"],
     outdir: "./dist/",
     minify: false,
-    // splitting: true,
-    // plugins: [nativeNodeModulesPlugin],
     outExtension: {
       ".js": ".cjs",
     },
