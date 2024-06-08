@@ -10,11 +10,15 @@
 <script setup lang="ts">
 import InitTitleBar from "@/components/titlebar/InitTitleBar.vue";
 import Button from "primevue/button";
+import { useRouter } from "vue-router";
+const router = useRouter();
 
 async function open() {
   await window.electronAPI
     .newAssetLibPath("tet")
-    .then(() => {})
+    .then(() => {
+      router.replace({ name: "Root" });
+    })
     .catch((err) => console.log(err));
 }
 

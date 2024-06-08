@@ -11,6 +11,7 @@
     "dev": "yarn dev:electron & yarn dev:renderer",
     "dev:napi": "napi build --cargo-name napi ./electron/napi",
     "dev:start": "NODE_ENV=dev electron .",
+    "check:renderer": "vue-tsc --noEmit",
     "build:electron": "node script/build.electron.mjs",
     "build:renderer": "vue-tsc && vite build",
     "build": "yarn build:electron && yarn build:renderer",

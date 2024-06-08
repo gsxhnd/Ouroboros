@@ -21,12 +21,15 @@ export class IpcMainRegister {
       });
       if (canceled) return canceled;
       let libPath = resolve(filePaths[0], libName);
+
       await appConfigDB.addNewLib(libPath).catch((err) => {
         throw err;
       });
+
       await assetLib.newLibPath(filePaths[0], libName).catch((err) => {
         throw err;
       });
+
       return false;
     });
 
