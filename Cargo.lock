@@ -649,6 +649,7 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "serde",
+ "serde_json",
  "sqlx",
  "tokio",
  "tokio-stream",

@@ -1,4 +1,7 @@
-#[derive(Debug)]
+use serde::{Deserialize, Serialize};
+use serde_json::Result;
+
+#[derive(Debug, Serialize, Deserialize)]
 enum Node {
     Dir(NodeDir),
     File(String),
@@ -13,7 +16,7 @@ impl Node {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 struct NodeDir {
     name: String,
     children: Vec<Node>,
@@ -48,6 +51,14 @@ struct Tree {
     root: NodeDir,
 }
 
+impl Tree {
+    fn new(root: String) -> Self {
+        Tree {
+            root: NodeDir::new(root),
+        }
+    }
+}
+
 #[cfg(test)]
 #[test]
 fn test1() {
@@ -61,5 +72,11 @@ fn test1() {
     fenix.add_child(Node::new_dir("game".to_string()));
     root.add_child(Node::new_file("config".to_string()));
     root.add_child(Node::Dir(fenix));
-    println!("{:?}", root)
+
+    match serde_json::to_string_pretty(&root) {
+        Ok(v) => {
+            println!("{}", v);
+        }
+        Err(err) => panic!("{}", err),
+    }
 }
