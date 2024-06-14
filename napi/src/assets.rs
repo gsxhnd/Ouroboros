@@ -1,6 +1,10 @@
 use walkdir::WalkDir;
 
-pub struct AssetsLib {}
+use crate::tree;
+
+pub struct AssetsLib {
+    tree: tree::Tree,
+}
 
 impl AssetsLib {
     pub fn new(path: String) {
@@ -10,6 +14,8 @@ impl AssetsLib {
             println!("file_name: {}", entry.path().display());
         }
     }
+
+    pub fn change_root(path: String) {}
 }
 
 #[cfg(test)]

@@ -47,7 +47,7 @@ impl NodeFile {
 }
 
 #[derive(Debug)]
-struct Tree {
+pub struct Tree {
     root: NodeDir,
 }
 
