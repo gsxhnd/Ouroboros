@@ -52,7 +52,7 @@ pub struct Tree {
 }
 
 impl Tree {
-    fn new(root: String) -> Self {
+    pub fn new(root: String) -> Self {
         Tree {
             root: NodeDir::new(root),
         }
