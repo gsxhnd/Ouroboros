@@ -6,7 +6,7 @@ import i18nInstance from "./locales/i18n.ts";
 
 // primevue
 import PrimeVue from "primevue/config";
-import "primevue/resources/themes/aura-light-green/theme.css";
+import Aura from "@primevue/themes/aura";
 import "primeicons/primeicons.css";
 
 // context menu
@@ -22,7 +22,11 @@ const app = createApp(App);
 app.use(i18nInstance);
 app.use(pinia);
 app.use(router);
-app.use(PrimeVue);
+app.use(PrimeVue, {
+  theme: {
+    preset: Aura,
+  },
+});
 app.use(ContextMenu);
 
 app.mount("#app");
