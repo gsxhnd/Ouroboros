@@ -1,5 +1,4 @@
 import { watch } from "chokidar";
-// import { db } from "./napi";
 import fs, { constants } from "fs/promises";
 import { appConfigDB } from "./preferences";
 import { resolve } from "path";
