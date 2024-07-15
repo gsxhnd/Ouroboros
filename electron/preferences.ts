@@ -7,6 +7,7 @@ import { userConfigPath, userConfigFile } from "./constants.ts";
 
 const defaultData: AppConfig = {
   libraries: [],
+  language: "zh-CN",
 };
 
 export class AppConfigDB {
@@ -20,7 +21,6 @@ export class AppConfigDB {
         fs.mkdir(userConfigPath);
       }
     });
-    console.log(userConfigFile);
 
     await JSONFilePreset<AppConfig>(userConfigFile, defaultData)
       .then((db) => {
@@ -32,12 +32,17 @@ export class AppConfigDB {
     await this.db.write();
   }
 
-  async existConfigDir() {
+  async existConfigDir(): Promise<boolean> {
     return await fs
       .access(userConfigPath, constants.F_OK)
       .then(() => true)
       .catch(() => false);
   }
+
+  async setUseLibPath() {}
+  async getUseLibPath() {}
+  async setUseLanguage() {}
+  async getUseLanguage() {}
 
   async addNewLib(path: string) {
     let data: Libraries = {

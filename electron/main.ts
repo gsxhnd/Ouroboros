@@ -48,12 +48,11 @@ app.on("ready", async () => {
   console.log("app ready");
   await appConfigDB.init();
   await assetLib.init();
-  // let config = await appConfigDB.getPreferences();
   tray();
 });
 
 app.whenReady().then(async () => {
-  console.log("App is whenready");
+  console.log("App is when ready");
   app.on("activate", async () => {
     console.log("activate");
     if (BrowserWindow.getAllWindows().length === 0) {

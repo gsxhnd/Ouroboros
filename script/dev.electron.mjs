@@ -9,7 +9,7 @@ async function watch() {
     bundle: true,
     platform: "node",
     format: "cjs",
-    external: ["path", "electron", "fs"],
+    external: ["path", "electron", "fs", "chokidar", "rxjs"],
     outdir: "./dist/",
     minify: false,
     outExtension: {

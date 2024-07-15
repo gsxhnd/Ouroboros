@@ -1,16 +1,12 @@
 import { build } from "esbuild";
 import { wasmPlugin } from "./wasm.plugin.mjs";
-// import { nativeNodeModulesPlugin } from "./node.plugin.mjs";
-
-// import pkg from "./node.plugin.mjs";
-// const { nativeNodeModulesPlugin } = pkg;
 
 build({
   entryPoints: ["./electron/main.ts", "./electron/preload.ts"],
   bundle: true,
   platform: "node",
   format: "cjs",
-  external: ["path", "electron", "fs", "chokidar"],
+  external: ["path", "electron", "fs", "chokidar", "rxjs"],
   outdir: "./dist/",
   minify: true,
   outExtension: {

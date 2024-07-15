@@ -1,0 +1,9 @@
+{
+  "extension": ["ts"],
+  "spec": "electron/**/*.spec.ts",
+  "require": "ts-node/register",
+  "node-option": [
+    "loader=ts-node/esm",
+    "experimental-specifier-resolution=node"
+  ]
+}

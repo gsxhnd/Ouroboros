@@ -1,6 +1,5 @@
 import { BrowserWindow, ipcMain, dialog } from "electron";
 import { appConfigDB } from "./preferences";
-import { assetLib } from "./assetlib";
 import { resolve } from "path";
 
 export class IpcMainRegister {
@@ -11,7 +10,6 @@ export class IpcMainRegister {
 
   async register() {
     ipcMain.handle("loadPreferences", async (event) => {
-      console.log("loadPreferences event", event);
       return await appConfigDB.getPreferences();
     });
 
@@ -23,10 +21,6 @@ export class IpcMainRegister {
       let libPath = resolve(filePaths[0], libName);
 
       await appConfigDB.addNewLib(libPath).catch((err) => {
-        throw err;
-      });
-
-      await assetLib.newLibPath(filePaths[0], libName).catch((err) => {
         throw err;
       });
 
