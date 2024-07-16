@@ -35,6 +35,11 @@ export class Watch {
     });
   }
 
+  close() {
+    this.w?.close();
+    this.eventsSubject.complete();
+  }
+
   private startWatch() {
     this.w = chokidar.watch(this.rootPath, {
       ignoreInitial: false,

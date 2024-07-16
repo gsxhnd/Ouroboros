@@ -1,12 +1,16 @@
 // import { equal } from "assert";
 import { Watch } from "./watch";
 
-describe("", () => {
-  it("aaa", () => {
+describe("watch", () => {
+  it("start watch success", () => {
     let w = new Watch("./electron");
 
     setTimeout(() => {
       w.changeRootPath("./doc");
+    }, 3000);
+
+    setTimeout(() => {
+      w.close();
     }, 5000);
 
     w.events$.subscribe({

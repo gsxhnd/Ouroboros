@@ -3,7 +3,7 @@ import { defineStore } from "pinia";
 import { i18n } from "@/locales/i18n";
 
 interface preferences {
-  preference: Preferences | null;
+  preference: PreferencesData | null;
 }
 
 export const usePreferencesStore = defineStore("preferences", {

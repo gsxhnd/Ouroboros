@@ -2,65 +2,67 @@ import "../ouroboros.d.ts";
 import os from "os";
 import { JSONFilePreset, JSONFile } from "lowdb/node";
 import { Low } from "lowdb";
-import fs, { constants } from "fs/promises";
 import { userConfigPath, userConfigFile } from "./constants.ts";
+import { fileExist, createDir } from "./utils/file.ts";
+import { app } from "electron";
 
-const defaultData: AppConfig = {
-  libraries: [],
-  language: "zh-CN",
+const defaultPreferencesData: PreferencesData = {
+  os: os.platform(),
+  appConfig: {
+    libraries: [],
+
+    useLanguage: "",
+  },
 };
 
-export class AppConfigDB {
-  private db: Low<AppConfig>;
+export class Preferences {
+  private db: Low<PreferencesData>;
 
   constructor() {}
 
-  async init(): Promise<void> {
-    await this.existConfigDir().then((exist) => {
-      if (!exist) {
-        fs.mkdir(userConfigPath);
-      }
-    });
+  async init() {
+    const exist = await fileExist(userConfigPath);
+    if (!exist) {
+      await createDir(userConfigPath);
+    }
+    defaultPreferencesData.appConfig.useLanguage = app.getSystemLocale();
 
-    await JSONFilePreset<AppConfig>(userConfigFile, defaultData)
+    await JSONFilePreset<PreferencesData>(
+      userConfigFile,
+      defaultPreferencesData
+    )
       .then((db) => {
         this.db = db;
       })
       .catch((err) => {
         console.error(err);
       });
-    await this.db.write();
+    this.db.write();
   }
 
-  async existConfigDir(): Promise<boolean> {
-    return await fs
-      .access(userConfigPath, constants.F_OK)
-      .then(() => true)
-      .catch(() => false);
-  }
-
-  async setUseLibPath() {}
-  async getUseLibPath() {}
-  async setUseLanguage() {}
-  async getUseLanguage() {}
-
-  async addNewLib(path: string) {
-    let data: Libraries = {
-      path: path,
-      use: true,
-    };
-    this.db.data.libraries.push(data);
-    await this.db.write();
-  }
-
-  async getPreferences(): Promise<Preferences> {
+  async getPreferences(): Promise<PreferencesData> {
     await this.db.read();
-    let data: Preferences = {
-      os: os.platform(),
-      appConfig: this.db.data,
-    };
-    return data;
+    return this.db.data;
+  }
+
+  async setUseLibPath(path: string) {
+    for (const i of this.db.data.appConfig.libraries) {
+      if ((i.path = path)) {
+        i.use = true;
+      } else {
+        i.use = false;
+      }
+    }
+
+    if (!this.db.data.appConfig.libraries.filter((i) => i.path === path)) {
+      console.log("lib not exist");
+      this.db.data.appConfig.libraries.push({
+        name: "123",
+        path: path,
+        use: true,
+      });
+    }
   }
 }
 
-export const appConfigDB = new AppConfigDB();
+export const preferences = new Preferences();

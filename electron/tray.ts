@@ -1,23 +1,30 @@
-import { app, Tray, nativeImage, Menu } from "electron";
+import { app, Tray, nativeImage, Menu, NativeImage } from "electron";
 import { resolve } from "path";
 
-export function tray(): void {
-  console.log("tray icon:", resolve("./resources/tray.png"));
-  const icon = nativeImage.createFromPath(resolve("./resources/tray.png"));
-  let tray = new Tray(icon);
-  tray.setToolTip("This is my application");
-  tray.setTitle("");
-  const contextMenu = Menu.buildFromTemplate([
-    {
-      label: "Quit",
-      type: "normal",
-      checked: true,
-      click: () => {
-        console.log("quit click");
-        app.quit();
-      },
-    },
-  ]);
+class TraySetting {
+  tray?: Tray;
+  icon: NativeImage;
+  constructor() {
+    this.icon = nativeImage.createFromPath(resolve("./resources/tray.png"));
+  }
 
-  tray.setContextMenu(contextMenu);
+  init() {
+    this.tray = new Tray(this.icon);
+    this.tray.setToolTip("This is my application");
+    this.tray.setTitle("");
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: "Quit",
+        type: "normal",
+        checked: true,
+        click: () => {
+          console.log("quit click");
+          app.quit();
+        },
+      },
+    ]);
+    this.tray.setContextMenu(contextMenu);
+  }
 }
+
+export const traySetting = new TraySetting();

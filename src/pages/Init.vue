@@ -23,7 +23,10 @@ async function open() {
 }
 
 async function selectPath() {
-  await window.electronAPI.selectAssetLibPath();
+  await window.electronAPI.selectAssetLibPath().then((path) => {
+    console.log(path);
+    router.replace({ name: "Root" });
+  });
 }
 </script>
 
