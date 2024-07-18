@@ -25,6 +25,11 @@ NAPI watch file or dir change
     - [ ] rebuild tree struct
     - [ ] notify to GUI
 
+## Operate
+
+- Operate From GUI
+- Operate From File System
+
 ### File event
 
 ![](./file_event.png)
