@@ -3,3 +3,4 @@ members = ["ouroboros-core", "ouroboros-api", "ouroboros-napi"]
 resolver = "2"
 
 [workspace.dependencies]
+tokio = { version = "1", features = ["full"] }
