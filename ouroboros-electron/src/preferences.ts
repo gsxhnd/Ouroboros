@@ -1,3 +1,4 @@
+import "./env.d.ts";
 import os from "os";
 import { JSONFilePreset, JSONFile } from "lowdb/node";
 import { Low } from "lowdb";

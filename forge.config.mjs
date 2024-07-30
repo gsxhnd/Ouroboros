@@ -6,6 +6,7 @@ export default {
     prune: true,
     platforms: ["drawin", "linux", "windows"],
     arch: ["x64", "arm64"],
+    dir:"dist2",
     ignore: [
       "^/.cargo",
       "^/.github",

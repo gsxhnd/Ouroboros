@@ -804,6 +804,11 @@ version = "0.1.0"
 [[package]]
 name = "ouroboros-core"
 version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "walkdir",
+]
 
 [[package]]
 name = "parking_lot"
