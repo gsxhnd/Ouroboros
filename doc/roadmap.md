@@ -33,3 +33,8 @@ NAPI watch file or dir change
 ### File event
 
 ![](./file_event.png)
+
+## ouroboros-core
+
+1. init: get data from database, generate tree node
+2. sync: resync data from file system, update data to database, regenerate tree node
