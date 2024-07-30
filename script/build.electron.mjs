@@ -2,7 +2,10 @@ import { build } from "esbuild";
 import { wasmPlugin } from "./wasm.plugin.mjs";
 
 build({
-  entryPoints: ["./electron/main.ts", "./electron/preload.ts"],
+  entryPoints: [
+    "./ouroboros-electron/src/main.ts",
+    "./ouroboros-electron/src/preload.ts",
+  ],
   bundle: true,
   platform: "node",
   format: "cjs",
