@@ -4,5 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+ouroboros-core = { path = "../ouroboros-core" }
+
 axum = { version = "0.7" }
+serde = { workspace = true }
 tokio = { workspace = true }
+toml = { version = "0.8" }

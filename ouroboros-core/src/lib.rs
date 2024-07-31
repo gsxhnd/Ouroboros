@@ -1,3 +1,3 @@
-mod db;
+pub mod db;
 pub mod node;
 pub mod tree;
