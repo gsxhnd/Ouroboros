@@ -1,15 +1,10 @@
-use axum::{
-    extract::{Form, Path, Query, State},
-    response::IntoResponse,
-    routing::{get, post},
-    Json, Router,
-};
-use routes::routes;
 use std::{env, fs};
 
 mod config;
+mod handler;
 mod routes;
 mod state;
+
 use config::Config;
 
 #[tokio::main]
