@@ -1,6 +1,6 @@
 use crate::node::Node;
 
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, fs::FileType, os::unix::fs::FileExt, rc::Rc};
 use walkdir::WalkDir;
 
 #[derive(Debug, Clone)]
@@ -14,7 +14,8 @@ impl Tree {
     }
 
     pub fn walk_dir(&mut self, root: String) {
-        self.root = Some(Rc::new(RefCell::new(Node::new(root.clone()))));
+        let ft = std::fs::metadata(root.clone()).unwrap().file_type();
+        self.root = Some(Rc::new(RefCell::new(Node::new(root.clone(), ft))));
 
         let mut stack = vec![(root.clone(), self.root.clone())];
 
@@ -29,8 +30,11 @@ impl Tree {
                     .unwrap()
                     .to_string();
 
-                println!("{}", entry_path.to_str().unwrap());
-                let child_node = Rc::new(RefCell::new(Node::new(entry_name.clone())));
+                // println!("{}", entry_path.to_str().unwrap());
+                let child_node = Rc::new(RefCell::new(Node::new(
+                    entry_name.clone(),
+                    entry.file_type(),
+                )));
 
                 if entry_path.is_dir() {
                     stack.push((
@@ -41,13 +45,13 @@ impl Tree {
 
                 node.clone().unwrap().borrow_mut().add_child(child_node);
 
-                println!(
-                    "file name: {}, file type: {:?}",
-                    entry_name,
-                    entry.file_type()
-                );
+                // println!(
+                //     "file name: {}, file type: {:?}",
+                //     entry_name,
+                //     entry.file_type()
+                // );
             }
         }
-        println!("node: {:?}", self.root)
+        // println!("node: {:?}", self.root)
     }
 }

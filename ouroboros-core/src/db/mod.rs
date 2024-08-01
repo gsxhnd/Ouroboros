@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use sqlx::{migrate::Migrator, sqlite::SqlitePool, Pool, Sqlite};
 
 #[derive(Debug, Clone)]
@@ -38,6 +39,27 @@ impl Database {
             }
         }
     }
+
+    pub async fn get_folder(&self, name: &str, parent: u32) {
+        println!("get folder sql");
+        let row = sqlx::query_as::<_, Folder>(
+            "SELECT id, name, parent FROM folders WHERE name = ? AND parent = ?",
+        )
+        .bind(name)
+        .bind(parent)
+        .fetch_one(&self.pool)
+        .await
+        .expect("get fold name error");
+
+        println!("{:?}", row.id)
+    }
+}
+
+#[derive(Serialize, Deserialize, sqlx::FromRow)]
+pub struct Folder {
+    pub id: u32,
+    pub name: String,
+    pub parent: u32,
 }
 
 #[tokio::test]
