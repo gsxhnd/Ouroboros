@@ -1,4 +1,4 @@
-use sqlx::{sqlite::SqlitePool, Pool, Sqlite};
+use sqlx::{migrate::Migrator, sqlite::SqlitePool, Pool, Sqlite};
 
 #[derive(Debug, Clone)]
 pub struct Database {
@@ -8,7 +8,23 @@ pub struct Database {
 impl Database {
     pub async fn new(db_path: &str) -> Database {
         let pool = SqlitePool::connect(db_path).await.unwrap();
+        Migrator::new(std::path::Path::new("./migrations"))
+            .await
+            .unwrap()
+            .run(&pool)
+            .await
+            .unwrap();
+
         Database { pool }
+    }
+
+    pub async fn init(&self) {
+        Migrator::new(std::path::Path::new("./migrations"))
+            .await
+            .unwrap()
+            .run(&self.pool)
+            .await
+            .unwrap();
     }
 
     pub async fn get_all(&self) {

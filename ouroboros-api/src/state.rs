@@ -1,16 +1,23 @@
-use ouroboros_core::db::Database;
+use std::sync::Arc;
+
+use ouroboros_core::{db::Database, tree::Tree};
 
 use crate::config::Config;
 
 #[derive(Clone)]
-pub struct AppState {
-    pub(crate) conn: Database,
+pub(crate) struct AppState {
+    pub conn: Database,
+    pub cfg: Config,
 }
 
 impl AppState {
     pub(crate) async fn new(cfg: Config) -> Self {
-        let conn = ouroboros_core::db::Database::new("sqlite:todos.db?mode=rwc").await;
-        AppState { conn }
+        let url = format!(
+            "sqlite:{}/{}?mode=rwc",
+            cfg.common.data_path, ".ouroboros/data.db"
+        );
+
+        let conn = ouroboros_core::db::Database::new(url.as_str()).await;
+        AppState { conn, cfg }
     }
 }
-

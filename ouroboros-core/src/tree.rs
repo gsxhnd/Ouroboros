@@ -29,6 +29,7 @@ impl Tree {
                     .unwrap()
                     .to_string();
 
+                println!("{}", entry_path.to_str().unwrap());
                 let child_node = Rc::new(RefCell::new(Node::new(entry_name.clone())));
 
                 if entry_path.is_dir() {
