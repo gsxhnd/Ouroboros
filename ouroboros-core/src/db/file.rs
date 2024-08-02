@@ -1,5 +1,5 @@
 use super::Database;
-use crate::model::{self, File};
+use crate::model::File;
 use sqlx::Error;
 
 impl Database {
