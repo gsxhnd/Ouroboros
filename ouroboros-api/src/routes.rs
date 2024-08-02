@@ -1,6 +1,6 @@
 use axum::{routing, Router};
 
-use crate::handler::{root, tag};
+use crate::handler::{file, folder, root, tag};
 
 use crate::{config, state::AppState};
 
@@ -14,8 +14,21 @@ pub async fn routes(cfg: config::Config) -> Router {
                 .put(tag::update_tag_name)
                 .delete(tag::delete_tag),
         )
-        .route("/dir", routing::get(root::ping))
-        .route("/file", routing::get(root::ping))
+        .route(
+            "/folder",
+            routing::get(folder::get_folders)
+                .post(folder::add_folders)
+                .put(folder::rename_folders)
+                .delete(folder::delete_folders),
+        )
+        .route(
+            "/file",
+            routing::get(file::get_files)
+                .post(file::add_files)
+                .put(file::rename_files)
+                .delete(file::delete_files),
+        )
+        .route("/file_tag", routing::get(root::ping))
         .route("/sync", routing::get(root::sync));
 
     Router::new()

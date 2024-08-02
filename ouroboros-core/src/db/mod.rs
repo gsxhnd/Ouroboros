@@ -1,5 +1,7 @@
-use serde::{Deserialize, Serialize};
-use sqlx::{migrate::Migrator, sqlite::SqlitePool, Pool, Sqlite};
+use sqlx::{migrate::Migrator, sqlite::SqlitePool, Error, Pool, Sqlite};
+
+use crate::model::Folder;
+mod file;
 
 #[derive(Debug, Clone)]
 pub struct Database {
@@ -40,26 +42,42 @@ impl Database {
         }
     }
 
-    pub async fn get_folder(&self, name: &str, parent: u32) {
-        println!("get folder sql");
+    pub async fn get_folder(&self, name: &str, parent: u32) -> Result<Option<Folder>, Error> {
         let row = sqlx::query_as::<_, Folder>(
-            "SELECT id, name, parent FROM folders WHERE name = ? AND parent = ?",
+            "SELECT id, name, parent_id FROM folder WHERE name = ? AND parent_id = ?",
         )
         .bind(name)
         .bind(parent)
         .fetch_one(&self.pool)
-        .await
-        .expect("get fold name error");
+        .await;
 
-        println!("{:?}", row.id)
+        match row {
+            Ok(d) => Ok(Some(d)),
+            Err(e) => match e {
+                Error::RowNotFound => Ok(None),
+                _ => Err(e),
+            },
+        }
     }
-}
 
-#[derive(Serialize, Deserialize, sqlx::FromRow)]
-pub struct Folder {
-    pub id: u32,
-    pub name: String,
-    pub parent: u32,
+    pub async fn add_folder(&self, name: &str, parent: u32) -> u32 {
+        let mut tx = self.pool.begin().await.unwrap();
+
+        sqlx::query("insert into folder (name, parent_id)  values (?,?)")
+            .bind(name)
+            .bind(parent)
+            .execute(&mut *tx)
+            .await
+            .unwrap();
+
+        let last_insert_id = sqlx::query_as::<_, (u32,)>("SELECT last_insert_rowid();")
+            .fetch_one(&mut *tx)
+            .await
+            .unwrap()
+            .0;
+        tx.commit().await.unwrap();
+        last_insert_id
+    }
 }
 
 #[tokio::test]

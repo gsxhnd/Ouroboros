@@ -3,8 +3,8 @@ use std::{env, fs};
 mod config;
 mod handler;
 mod routes;
+mod service;
 mod state;
-
 use config::Config;
 
 #[tokio::main]
@@ -16,7 +16,7 @@ async fn main() {
     let config_file_path = if args.len() > 1 {
         &args[1]
     } else {
-        "config.toml"
+        "./script/config_full.toml"
     };
 
     let toml_str = match fs::read_to_string(config_file_path) {

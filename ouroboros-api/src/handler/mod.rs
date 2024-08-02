@@ -1,3 +1,4 @@
-pub(crate) mod directory;
-pub(crate) mod root;
-pub(crate) mod tag;
+pub mod file;
+pub mod folder;
+pub mod root;
+pub mod tag;

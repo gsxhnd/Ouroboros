@@ -1,9 +1,10 @@
+
 CREATE TABLE IF NOT EXISTS "folder"
 (
     "id"         INTEGER  NOT NULL UNIQUE,
     "name"       VARCHAR  NOT NULL,
     "parent_id"  INTEGER,
-    "created_at" DATETIME NOT NULL,
+    "created_at" DATETIME NOT NULL default CURRENT_TIMESTAMP,
     "updated_at" DATETIME,
     PRIMARY KEY ("id")
 );
@@ -17,7 +18,7 @@ CREATE TABLE IF NOT EXISTS "file"
     "name"       TEXT,
     "desc"       TEXT,
     "updated_at" DATETIME,
-    "created_at" DATETIME NOT NULL,
+    "created_at" DATETIME NOT NULL default CURRENT_TIMESTAMP,
     PRIMARY KEY ("id")
 );
 CREATE INDEX IF NOT EXISTS "file_index_0"
@@ -28,7 +29,7 @@ CREATE TABLE IF NOT EXISTS "tag"
     "id"         INTEGER  NOT NULL UNIQUE,
     "name"       VARCHAR  NOT NULL,
     "parent_id"  INTEGER,
-    "created_at" DATETIME NOT NULL,
+    "created_at" DATETIME NOT NULL default CURRENT_TIMESTAMP,
     "updated_at" DATETIME,
     PRIMARY KEY ("id")
 );
@@ -39,6 +40,6 @@ CREATE TABLE IF NOT EXISTS "file_tag"
 (
     "tag_id"     INTEGER,
     "file_id"    INTEGER,
-    "created_at" DATETIME NOT NULL,
+    "created_at" DATETIME NOT NULL default CURRENT_TIMESTAMP,
     "updated_at" DATETIME
 );

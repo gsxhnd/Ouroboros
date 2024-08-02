@@ -10,3 +10,4 @@ axum = { version = "0.7" }
 serde = { workspace = true }
 tokio = { workspace = true }
 toml = { version = "0.8" }
+walkdir = "2"
