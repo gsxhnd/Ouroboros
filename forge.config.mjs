@@ -1,13 +1,12 @@
 import { MakerZIP } from "@electron-forge/maker-zip";
 
-// ignore = [];
-
 export default {
   packagerConfig: {
     asar: false,
     prune: true,
     platforms: ["drawin", "linux", "windows"],
     arch: ["x64", "arm64"],
+    dir:"dist2",
     ignore: [
       "^/.cargo",
       "^/.github",
@@ -23,11 +22,30 @@ export default {
       "tsconfig.json",
       "tsconfig.node.json",
       "vite.config.ts",
-      "forge.config.js",
-      "build.main.js",
+      "forge.config.mjs",
       "yarn.lock",
       "README.md",
+      "doc",
+      "ouroboros-core",
+      "ouroboros-api",
+      "ouroboros-napi",
+      "ouroboros-electron",
+      "ouroboros-web",
       "node_modules/.vite",
+      "node_modules/@babel",
+      "node_modules/@electron",
+      "node_modules/@electron-forge",
+      "node_modules/@esbuild",
+      "node_modules/@he-tree",
+      "node_modules/@dotenvx",
+      "node_modules/@napi-rs",
+      "node_modules/@npmcli",
+      "node_modules/@rollup",
+      "node_modules/@tsconfig",
+      "node_modules/@types",
+      "node_modules/@vue",
+      "node_modules/@vueuse",
+      "node_modules/@volar",
     ],
     // extraResource: ["resources/tray.png"],
   },

@@ -22,3 +22,7 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+*.db
+testdata/
+testing
