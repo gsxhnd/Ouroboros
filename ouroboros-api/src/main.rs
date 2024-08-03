@@ -9,6 +9,7 @@ use config::Config;
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::fmt::init();
     // Get the command line arguments
     let args: Vec<String> = env::args().collect();
 

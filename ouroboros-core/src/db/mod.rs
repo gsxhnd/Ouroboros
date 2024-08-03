@@ -1,4 +1,8 @@
-use sqlx::{migrate::Migrator, sqlite::SqlitePool, Pool, Sqlite};
+use sqlx::{
+    migrate::Migrator,
+    sqlite::{SqliteConnectOptions, SqlitePoolOptions},
+    ConnectOptions, Pool, Sqlite,
+};
 
 mod file;
 mod folder;
@@ -10,7 +14,14 @@ pub struct Database {
 
 impl Database {
     pub async fn new(db_path: &str) -> Database {
-        let pool = SqlitePool::connect(db_path).await.unwrap();
+        let mut conn_opt: SqliteConnectOptions = db_path.parse().unwrap();
+        conn_opt = conn_opt.log_statements(log::LevelFilter::Trace);
+
+        let pool_option = SqlitePoolOptions::new();
+        let pool = pool_option.connect_with(conn_opt).await.unwrap();
+
+        // let pool = SqlitePool::connect(db_path).await.unwrap();
+
         Migrator::new(std::path::Path::new("./migrations"))
             .await
             .unwrap()

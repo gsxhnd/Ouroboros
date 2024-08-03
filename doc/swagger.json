@@ -1,0 +1,12 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "My api",
+    "contact": {
+      "name": "Admin Admin",
+      "email": "amdin@petapi.com"
+    },
+    "version": "1.0.0"
+  },
+  "paths": {}
+}

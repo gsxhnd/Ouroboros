@@ -4,13 +4,13 @@ use crate::model::Folder;
 use sqlx::Error;
 
 impl Database {
-    pub async fn get_folders(&self) {
-        let rows: Result<Vec<Folder>, Error> = sqlx::query_as("").fetch_all(&self.pool).await;
+    pub async fn get_folders(&self) -> Result<Vec<Folder>, Error> {
+        let rows: Result<Vec<Folder>, Error> = sqlx::query_as("select * from folder;")
+            .fetch_all(&self.pool)
+            .await;
         match rows {
-            Ok(data) => {
-                println!("{:?}", data)
-            }
-            Err(e) => {}
+            Ok(data) => Ok(data),
+            Err(e) => Err(e),
         }
     }
 
@@ -49,5 +49,18 @@ impl Database {
             .0;
         tx.commit().await.unwrap();
         last_insert_id
+    }
+
+    pub async fn delete_folders(&self, filder_ids: Vec<u32>) {
+        let mut tx = self.pool.begin().await.unwrap();
+        sqlx::query("delete from folder where id in (1,2,3);")
+            .execute(&mut *tx)
+            .await
+            .unwrap();
+        sqlx::query("delete from file where folder_id in (1,2,3);")
+            .execute(&mut *tx)
+            .await
+            .unwrap();
+        tx.commit().await.unwrap();
     }
 }
