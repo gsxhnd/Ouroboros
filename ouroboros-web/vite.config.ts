@@ -14,6 +14,9 @@ export default defineConfig({
   mode: mode,
   server: {
     port: 3000,
+    proxy: {
+      "/api/v1": "http://localhost:8080",
+    },
   },
   plugins: [vue()],
   resolve: {

@@ -40,11 +40,14 @@
 
 <script setup lang="ts">
 import ContextMenu from "@imengyu/vue3-context-menu";
-import { Draggable, OpenIcon } from "@he-tree/vue";
+import { Draggable, DraggableTreeType, OpenIcon } from "@he-tree/vue";
 import "@he-tree/vue/style/default.css";
 import "@he-tree/vue/style/material-design.css";
+import { getFolders } from "@/api/folder";
+// import { http } from "@/utils/http";
 
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onBeforeMount } from "vue";
+import type { Ref } from "vue";
 
 const show = ref(false);
 const optionsComponent = ref({
@@ -54,131 +57,37 @@ const optionsComponent = ref({
   y: 200,
 });
 
-const data = ref([
-  {
-    text: "Projects",
-    children: [
-      {
-        text: "Frontend",
-        children: [
-          {
-            text: "Vue",
-            children: [
-              {
-                text: "Nuxt",
-              },
-            ],
-          },
-          {
-            text: "React",
-            children: [
-              {
-                text: "Next",
-              },
-            ],
-          },
-          {
-            text: "Angular",
-          },
-        ],
-      },
-      {
-        text: "Backend",
-      },
-    ],
-  },
-  {
-    text: "Videos",
-    children: [
-      {
-        text: "Movie",
-        children: [
-          {
-            text: "The Godfather",
-          },
-          {
-            text: "La Dolce Vita",
-          },
-          {
-            text: "In the Mood for Love",
-          },
-        ],
-      },
-      {
-        text: "AD",
-      },
-      {
-        text: "Shorts",
-      },
-    ],
-  },
-  {
-    text: "Photos",
-    children: [
-      {
-        text: "Animals",
-      },
-      {
-        text: "Buildings",
-      },
-      {
-        text: "Sky",
-      },
-      {
-        text: "Sea",
-      },
-    ],
-  },
-  {
-    text: "Music",
-    children: [
-      {
-        text: "My Happy Melodies.",
-      },
-      {
-        text: "Hello Summer.",
-      },
-      {
-        text: "An Overture To Happiness.",
-      },
-      {
-        text: "Sunny Days.",
-      },
-      {
-        text: "Every One Need Adventure.",
-      },
-      {
-        text: "Happy, Chill Radio.",
-      },
-      {
-        text: "I Found My Way.",
-      },
-      {
-        text: "Early, Early Morning.",
-      },
-    ],
-  },
-  {
-    text: "Games",
-    children: [
-      {
-        text: "swimming",
-      },
-      {
-        text: "cycling",
-      },
-      {
-        text: "tennis",
-      },
-      {
-        text: "boxing",
-      },
-    ],
-  },
-  {
-    text: "Download",
-  },
-]);
+const tree = ref();
+const data: Ref<Array<any>> = ref([{ text: "123" }]);
+
+onBeforeMount(async () => {
+  console.log("onBeforeMount");
+  let l = [];
+  await getFolders().then((res: Array<any>) => {
+    console.log(res);
+    res.forEach((e) => {
+      console.log("foreach");
+      if (e["parent_id"] === 0) {
+        l.push({
+          text: e.name,
+          children: [],
+        });
+      }
+    });
+  });
+  console.log(data.value);
+  console.log(
+    tree.value.addMulti(l)
+  );
+});
+
+// function createFolder(data: Array<any>, index: number) {
+//   for (let i = 0; i < data.length; i++) {
+//     const element = data[i];
+//     if (element.parent_id == index) {
+//     }
+//   }
+// }
 
 function onButtonClick(e: MouseEvent) {
   //Show component mode menu

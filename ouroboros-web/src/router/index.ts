@@ -42,7 +42,7 @@ router.beforeEach(async (to, _from) => {
   // await preferencesStore.getPreferences();
 
   if (to.name != "InitBrowser" && preferencesStore.useBrowser) {
-    return { name: "InitBrowser" };
+    // return { name: "InitBrowser" };
   }
 
   if (
