@@ -8,61 +8,52 @@
     :externalDataHandler="dropFile"
     :onExternalDragOver="() => true"
   >
-    <template #default="{ node, stat }">
-      <OpenIcon
-        v-if="stat.children.length"
-        :open="stat.open"
-        class="mtl-mr"
+    <template #default="{ node, stat }" class="test">
+      <i
+        v-if="!stat.open"
         @click.native="stat.open = !stat.open"
-      />
+        class="pi pi-angle-right"
+        style="font-size: 1rem"
+      ></i>
+      <i
+        v-if="stat.open"
+        @click.native="stat.open = !stat.open"
+        class="pi pi-angle-down"
+        style="font-size: 1rem"
+      ></i>
 
-      <div class="dropzone" @contextmenu="onButtonClick">
+      <div
+        class="dropzone"
+        @contextmenu="onButtonClick"
+        @click="
+          () => {
+            console.log(stat, node);
+          }
+        "
+      >
         <span class="mtl-ml">{{ node.text }}</span>
       </div>
     </template>
   </Draggable>
-  <context-menu v-model:show="show" :options="optionsComponent">
-    <context-menu-item label="Simple item" />
-    <context-menu-sperator /><!--use this to add sperator-->
-    <context-menu-group label="Menu with child">
-      <context-menu-item label="Item1" />
-      <context-menu-item label="Item2" />
-      <context-menu-group label="Child with v-for 50">
-        <context-menu-item
-          v-for="index of 50"
-          :key="index"
-          :label="'Item3-' + index"
-        />
-      </context-menu-group>
-    </context-menu-group>
-  </context-menu>
+  <button @click="remove">remove</button>
 </template>
 
 <script setup lang="ts">
 import ContextMenu from "@imengyu/vue3-context-menu";
-import { Draggable, DraggableTreeType, OpenIcon } from "@he-tree/vue";
+import { Draggable } from "@he-tree/vue";
 import "@he-tree/vue/style/default.css";
 import "@he-tree/vue/style/material-design.css";
 import { getFolders } from "@/api/folder";
-// import { http } from "@/utils/http";
 
 import { ref, onMounted, onBeforeMount } from "vue";
 import type { Ref } from "vue";
 
-const show = ref(false);
-const optionsComponent = ref({
-  zIndex: 3,
-  minWidth: 230,
-  x: 500,
-  y: 200,
-});
-
 const tree = ref();
-const data: Ref<Array<any>> = ref([{ text: "123" }]);
+const data: Ref<Array<any>> = ref([]);
 
 onBeforeMount(async () => {
   console.log("onBeforeMount");
-  let l = [];
+  let l: Array<any> = [];
   await getFolders().then((res: Array<any>) => {
     console.log(res);
     res.forEach((e) => {
@@ -70,24 +61,15 @@ onBeforeMount(async () => {
       if (e["parent_id"] === 0) {
         l.push({
           text: e.name,
-          children: [],
+          children: [{ text: "aaa" }],
         });
       }
     });
   });
-  console.log(data.value);
-  console.log(
-    tree.value.addMulti(l)
-  );
+  console.log(tree.value.addMulti(l));
 });
 
-// function createFolder(data: Array<any>, index: number) {
-//   for (let i = 0; i < data.length; i++) {
-//     const element = data[i];
-//     if (element.parent_id == index) {
-//     }
-//   }
-// }
+onMounted(() => {});
 
 function onButtonClick(e: MouseEvent) {
   //Show component mode menu
@@ -127,7 +109,14 @@ function dropFile(event: DragEvent) {
   console.log(event.dataTransfer?.files);
   console.log(event);
 }
-onMounted(() => {});
+
+function remove() {
+  tree.value.closeAll();
+  console.log(tree.value);
+  console.log(tree.value.getData());
+  console.log(tree.value.stats);
+  console.log(tree.value.removeMulti(tree.value.stats));
+}
 </script>
 
 <style scoped lang="less">
@@ -136,6 +125,11 @@ onMounted(() => {});
   :deep(.tree-node:hover) {
     background-color: rgb(255 255 255 / 10%);
   }
+  .tree-node {
+    display: flex;
+    width: 100%;
+  }
+
   .mtl-ml {
     width: 100%;
     text-align: left;
@@ -145,6 +139,10 @@ onMounted(() => {});
   }
   input {
     width: 0px;
+  }
+  .dropzone {
+    width: 100%;
+    display: flex;
   }
 }
 </style>

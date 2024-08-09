@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "@dotenvx/dotenvx": "^1.6.4",
-    "@he-tree/vue": "^2.8.2",
+    "@he-tree/vue": "^2.8.3",
     "@imengyu/vue3-context-menu": "^1.4.1",
     "@napi-rs/cli": "^2.18.4",
     "@primevue/themes": "^4.0.0",

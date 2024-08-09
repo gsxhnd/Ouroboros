@@ -329,10 +329,10 @@
     drag-event-service "^2.0.0"
     helper-js "^3.1.2"
 
-"@he-tree/vue@^2.8.2":
-  version "2.8.2"
-  resolved "https://registry.yarnpkg.com/@he-tree/vue/-/vue-2.8.2.tgz#a9aebeba1844642783f1a5ce2431210c39028482"
-  integrity sha512-689yynjftoqnXERlfigRT3kTn1MTwuVygOSRtKq9BRFQykoRFrz0xiozbVVX1so5pOwim5XfsB5aZo9fHlKmUA==
+"@he-tree/vue@^2.8.3":
+  version "2.8.3"
+  resolved "https://registry.yarnpkg.com/@he-tree/vue/-/vue-2.8.3.tgz#f66c952be1ef56e6a09c55baa630adb5cac3db71"
+  integrity sha512-D764d9F32AIdhusz3RFfh5jPZY+0r+RHZ2ZZa/UrQw+hHhvRZ3jhyJ7PNy5JJ0XbPI/P4u1DG7Hzcx7lJKBD5g==
   dependencies:
     "@he-tree/dnd-utils" latest
     "@he-tree/tree-utils" "^0.1.0-alpha.4"
