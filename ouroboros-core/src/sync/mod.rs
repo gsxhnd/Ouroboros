@@ -1,4 +1,6 @@
-use ouroboros_core::{db::Database, model::File};
+use crate::db::Database;
+use crate::model::{File, Folder};
+
 use walkdir::WalkDir;
 
 pub async fn sync(db: Database, data_path: String) {

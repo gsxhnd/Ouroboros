@@ -10,7 +10,8 @@
     "build": "vue-tsc && vite build"
   },
   "dependencies": {
-    "ky": "^1.5.0"
+    "ky": "^1.5.0",
+    "viewerjs": "^1.11.6"
   },
   "devDependencies": {
     "@dotenvx/dotenvx": "^1.6.4",
