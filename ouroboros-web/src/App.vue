@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
 import { usePreferencesStore } from "@/stores/preferences";
+import DynamicDialog from "primevue/dynamicdialog";
 const preferencesStore = usePreferencesStore();
 
 onMounted(async () => {
@@ -11,6 +12,7 @@ onMounted(async () => {
 </script>
 
 <template>
+  <DynamicDialog class="preference-dialog" />
   <router-view class="router-view" />
 </template>
 

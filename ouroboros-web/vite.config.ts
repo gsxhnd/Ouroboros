@@ -1,6 +1,8 @@
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import path from "path";
+import { vite as vidstack } from "vidstack/plugins";
+import { visualizer } from "rollup-plugin-visualizer";
 
 const isDev = process.env.NODE_ENV === "development";
 const mode = isDev ? "development" : "production";
@@ -18,7 +20,17 @@ export default defineConfig({
       "/api/v1": "http://localhost:8080",
     },
   },
-  plugins: [vue()],
+  plugins: [
+    vue({
+      template: {
+        compilerOptions: {
+          isCustomElement: (tag) => tag.startsWith("media-"),
+        },
+      },
+    }),
+    vidstack(),
+    visualizer({ open: true }),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

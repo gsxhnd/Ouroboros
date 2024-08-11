@@ -66,7 +66,7 @@ const props = withDefaults(defineProps<VirtualWaterfallOption>(), {
   maxColumnCount: 10,
   minColumnCount: 2,
   items: () => [],
-  calcItemHeight: (item: any, itemWidth: number) => 250,
+  calcItemHeight: (_item: any, _itemWidth: number) => 250,
 });
 
 defineSlots<{

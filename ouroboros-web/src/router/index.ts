@@ -4,6 +4,8 @@ import { usePreferencesStore } from "@/stores/preferences";
 import Home from "@/layout/Home.vue";
 import InitElectron from "@/pages/InitElectron.vue";
 import InitBrowser from "@/pages/InitBrowser.vue";
+import Setting from "@/pages/Setting.vue";
+import Dashboard from "@/pages/Dashboard.vue";
 
 const RootRoute: RouteRecordRaw = {
   path: "/",
@@ -13,9 +15,8 @@ const RootRoute: RouteRecordRaw = {
     title: "Root",
   },
   children: [
-    // {
-    //   path: "/aaa/",
-    // },
+    { path: "", name: "Dashboard", component: Dashboard },
+    { path: "setting", name: "Setting", component: Setting },
   ],
 };
 
