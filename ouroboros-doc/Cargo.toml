@@ -1,0 +1,8 @@
+[package]
+name = "ouroboros-doc"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ouroboros-api = { path = "../ouroboros-api" }
+utoipa = { version = "4", features = ["axum_extras"] }

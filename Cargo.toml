@@ -1,5 +1,5 @@
 [workspace]
-members = ["ouroboros-core", "ouroboros-api", "ouroboros-napi"]
+members = ["ouroboros-core", "ouroboros-api", "ouroboros-napi", "ouroboros-doc"]
 resolver = "2"
 
 [workspace.dependencies]

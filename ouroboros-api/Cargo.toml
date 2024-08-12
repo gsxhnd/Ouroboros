@@ -13,8 +13,6 @@ tokio = { workspace = true }
 toml = { version = "0.8" }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
-utoipa = { version = "4" }
+utoipa = { version = "4", features = ["axum_extras"] }
 walkdir = { workspace = true }
 
-[build-dependencies]
-utoipa = { version = "4" }

@@ -7,6 +7,7 @@ use axum::{
 };
 use std::collections::HashMap;
 
+#[utoipa::path(get, path = "/api/v1/file", responses())]
 pub async fn get_files(
     state: State<AppState>,
     Query(params): Query<HashMap<String, String>>,

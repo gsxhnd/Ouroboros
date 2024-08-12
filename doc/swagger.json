@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "My api",
+    "title": "Ouroboros API",
     "contact": {
       "name": "Admin Admin",
       "email": "amdin@petapi.com"

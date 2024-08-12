@@ -1,7 +1,6 @@
 use axum::{routing, Router};
 
 use crate::handler::{file, folder, root, tag};
-
 use crate::{config, state::AppState};
 
 pub async fn routes(cfg: config::Config) -> Router {
