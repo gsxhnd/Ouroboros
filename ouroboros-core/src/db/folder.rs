@@ -51,13 +51,45 @@ impl Database {
         last_insert_id
     }
 
-    pub async fn delete_folders(&self, filder_ids: Vec<u32>) {
+    pub async fn delete_folders(&self, folder_ids: Vec<u32>) {
         let mut tx = self.pool.begin().await.unwrap();
-        sqlx::query("delete from folder where id in (1,2,3);")
+
+        let query_str = format!(
+            "delete from folder where id in ( {} )",
+            folder_ids
+                .iter()
+                .map(|id| id.to_string())
+                .collect::<Vec<String>>()
+                .join(",")
+        );
+
+        let query_files = format!(
+            "delete from file where folder_id in ( {} )",
+            folder_ids
+                .iter()
+                .map(|id| id.to_string())
+                .collect::<Vec<String>>()
+                .join(",")
+        );
+
+        sqlx::query(query_str.as_str())
             .execute(&mut *tx)
             .await
             .unwrap();
-        sqlx::query("delete from file where folder_id in (1,2,3);")
+        sqlx::query(query_files.as_str())
+            .execute(&mut *tx)
+            .await
+            .unwrap();
+        tx.commit().await.unwrap();
+    }
+
+    pub async fn update_folder(&self, folder: Folder) {
+        let mut tx = self.pool.begin().await.unwrap();
+
+        sqlx::query("update folder set parent_id = ?, name = ? where id= ?")
+            .bind(folder.parent_id)
+            .bind(folder.name)
+            .bind(folder.id)
             .execute(&mut *tx)
             .await
             .unwrap();

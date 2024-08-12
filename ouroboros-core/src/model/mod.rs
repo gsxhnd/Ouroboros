@@ -19,3 +19,12 @@ pub struct Folder {
     // pub created_at: chrono::DateTime<chrono::Utc>,
     // pub updated_at: chrono::DateTime<chrono::Utc>,
 }
+
+#[derive(Serialize, Deserialize, sqlx::FromRow, Clone, Debug)]
+pub struct Tag {
+    pub id: u32,
+    pub name: String,
+    pub parent_id: u32,
+    // pub created_at: chrono::DateTime<chrono::Utc>,
+    // pub updated_at: chrono::DateTime<chrono::Utc>,
+}

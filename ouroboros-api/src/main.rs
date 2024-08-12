@@ -1,4 +1,5 @@
 use std::{env, fs};
+use tracing;
 
 mod config;
 mod handler;
@@ -9,7 +10,9 @@ use config::Config;
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .init();
     // Get the command line arguments
     let args: Vec<String> = env::args().collect();
 

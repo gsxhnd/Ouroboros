@@ -6,6 +6,7 @@ use sqlx::{
 
 mod file;
 mod folder;
+mod tag;
 
 #[derive(Debug, Clone)]
 pub struct Database {
@@ -15,7 +16,7 @@ pub struct Database {
 impl Database {
     pub async fn new(db_path: &str) -> Database {
         let mut conn_opt: SqliteConnectOptions = db_path.parse().unwrap();
-        conn_opt = conn_opt.log_statements(log::LevelFilter::Trace);
+        conn_opt = conn_opt.log_statements(log::LevelFilter::Info);
 
         let pool_option = SqlitePoolOptions::new();
         let pool = pool_option.connect_with(conn_opt).await.unwrap();

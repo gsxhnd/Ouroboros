@@ -1,7 +1,7 @@
 use crate::state::AppState;
 
 use axum::{
-    extract::{Query, RawQuery, State},
+    extract::{self, Query, State},
     response::IntoResponse,
     Json,
 };
@@ -29,7 +29,10 @@ pub async fn get_files(
     Json(data)
 }
 
-pub async fn delete_files(state: State<AppState>) -> impl IntoResponse {
+pub async fn delete_files(
+    state: State<AppState>,
+    extract::Json(payload): extract::Json<Vec<u32>>,
+) -> impl IntoResponse {
     Json("ok")
 }
 
