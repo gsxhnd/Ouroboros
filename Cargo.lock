@@ -1082,15 +1082,8 @@ dependencies = [
  "serde_json",
  "sqlx",
  "tokio",
- "walkdir",
-]
-
-[[package]]
-name = "ouroboros-doc"
-version = "0.1.0"
-dependencies = [
- "ouroboros-api",
  "utoipa",
+ "walkdir",
 ]
 
 [[package]]

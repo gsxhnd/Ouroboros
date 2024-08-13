@@ -7,10 +7,11 @@ edition = "2021"
 rustflags = ["--cfg=sqlx_macros_unstable"]
 
 [dependencies]
+chrono = { version = "0.4", features = ["serde"] }
 log = { version = "0.4" }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "chrono"] }
-walkdir = { workspace = true }
 tokio = { workspace = true }
-chrono = { version = "0.4", features = ["serde"] }
+utoipa = { workspace = true, features = ["axum_extras"] }
+walkdir = { workspace = true }

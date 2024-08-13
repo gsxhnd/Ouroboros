@@ -1,6 +1,5 @@
-use std::sync::Arc;
-
 use ouroboros_core::{db::Database, tree::Tree};
+use std::sync::Arc;
 
 use crate::config::Config;
 

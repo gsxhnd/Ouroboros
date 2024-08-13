@@ -7,7 +7,14 @@ use axum::{
 };
 use std::collections::HashMap;
 
-#[utoipa::path(get, path = "/api/v1/file", responses())]
+#[utoipa::path(get,
+    path = "/api/v1/file",
+    params(
+        ("id" = i32, Path, description = "Todo database id")
+    ),
+    tag="file",
+    responses()
+)]
 pub async fn get_files(
     state: State<AppState>,
     Query(params): Query<HashMap<String, String>>,
@@ -30,6 +37,26 @@ pub async fn get_files(
     Json(data)
 }
 
+#[utoipa::path(post,
+    path = "/api/v1/file",
+    params(
+        ("id" = i32, Path, description = "Todo database id")
+    ),
+    tag="file",
+    responses()
+)]
+pub async fn add_files(state: State<AppState>) -> impl IntoResponse {
+    Json("ok")
+}
+
+#[utoipa::path(delete,
+    path = "/api/v1/file",
+    params(
+        ("id" = i32, Path, description = "Todo database id")
+    ),
+    tag="file",
+    responses()
+)]
 pub async fn delete_files(
     state: State<AppState>,
     extract::Json(payload): extract::Json<Vec<u32>>,
@@ -37,10 +64,14 @@ pub async fn delete_files(
     Json("ok")
 }
 
+#[utoipa::path(put,
+    path = "/api/v1/file",
+    params(
+        ("id" = i32, Path, description = "Todo database id")
+    ),
+    tag="file",
+    responses()
+)]
 pub async fn rename_files(state: State<AppState>) -> impl IntoResponse {
-    Json("ok")
-}
-
-pub async fn add_files(state: State<AppState>) -> impl IntoResponse {
     Json("ok")
 }

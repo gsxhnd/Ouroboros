@@ -1,5 +1,5 @@
 [workspace]
-members = ["ouroboros-core", "ouroboros-api", "ouroboros-napi", "ouroboros-doc"]
+members = ["ouroboros-core", "ouroboros-api", "ouroboros-napi"]
 resolver = "2"
 
 [workspace.dependencies]
@@ -8,4 +8,5 @@ tracing = { version = "0.1" }
 tracing-subscriber = { version = "0.3" }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1" }
+utoipa = { version = "4", features = ["axum_extras"] }
 walkdir = "2"

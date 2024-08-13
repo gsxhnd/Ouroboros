@@ -7,13 +7,15 @@ use axum::{
 use ouroboros_core::model::Tag;
 use serde::Deserialize;
 use tracing::info;
+use utoipa::ToSchema;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub struct CreateTag {
     name: String,
     parent_id: u32,
 }
 
+#[utoipa::path(post, path = "/api/v1/tag", tag = "tag", responses())]
 pub(crate) async fn add_tag(
     state: State<AppState>,
     extract::Json(payload): extract::Json<CreateTag>,
@@ -22,6 +24,7 @@ pub(crate) async fn add_tag(
     Json("ok")
 }
 
+#[utoipa::path(delete, path = "/api/v1/tag", tag = "tag", responses())]
 pub(crate) async fn delete_tag(
     state: State<AppState>,
     extract::Json(payload): extract::Json<Vec<u32>>,
@@ -30,6 +33,7 @@ pub(crate) async fn delete_tag(
     Json("ok")
 }
 
+#[utoipa::path(put, path = "/api/v1/tag", request_body = Tag, tag = "tag", responses())]
 pub(crate) async fn update_tag_info(
     state: State<AppState>,
     extract::Json(payload): extract::Json<Tag>,
@@ -38,6 +42,7 @@ pub(crate) async fn update_tag_info(
     Json("ok")
 }
 
+#[utoipa::path(get, path = "/api/v1/tag", tag = "tag", responses())]
 pub(crate) async fn get_tags(state: State<AppState>) -> impl IntoResponse {
     let data = match state.conn.get_all_tags().await {
         Ok(data) => data,

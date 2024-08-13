@@ -6,24 +6,24 @@ use axum::response::Json as resp_json;
 use axum::{response::IntoResponse, Json as json_res};
 use serde::Deserialize;
 use tracing::info;
+use utoipa::ToSchema;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub struct CreateFolder {
     name: String,
     parent_id: u32,
 }
 
-#[derive(Deserialize)]
-pub struct RenameFolder {
-    id: u32,
-    new_name: String,
+#[utoipa::path(post, path = "/api/v1/folder", tag = "folder", responses())]
+pub async fn add_folder(
+    state: State<AppState>,
+    extract::Json(payload): extract::Json<CreateFolder>,
+) -> impl IntoResponse {
+    service::folder::add_folder(state.conn.clone(), payload.name, payload.parent_id).await;
+    json_res("ok")
 }
 
-pub async fn get_folders(state: State<AppState>) -> impl IntoResponse {
-    let data = state.conn.get_folders().await.unwrap();
-    resp_json(data)
-}
-
+#[utoipa::path(delete, path = "/api/v1/folder", tag = "folder", responses())]
 pub async fn delete_folders(
     state: State<AppState>,
     extract::Json(payload): extract::Json<Vec<u32>>,
@@ -33,6 +33,7 @@ pub async fn delete_folders(
     json_res("ok")
 }
 
+#[utoipa::path(put, path = "/api/v1/folder", request_body = Folder,tag = "folder", responses())]
 pub async fn rename_folders(
     state: State<AppState>,
     extract::Json(payload): extract::Json<model::Folder>,
@@ -42,10 +43,8 @@ pub async fn rename_folders(
     json_res("ok")
 }
 
-pub async fn add_folder(
-    state: State<AppState>,
-    extract::Json(payload): extract::Json<CreateFolder>,
-) -> impl IntoResponse {
-    service::folder::add_folder(state.conn.clone(), payload.name, payload.parent_id).await;
-    json_res("ok")
+#[utoipa::path(get, path = "/api/v1/folder", tag = "folder", responses())]
+pub async fn get_folders(state: State<AppState>) -> impl IntoResponse {
+    let data = state.conn.get_folders().await.unwrap();
+    resp_json(data)
 }

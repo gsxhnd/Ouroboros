@@ -2,6 +2,7 @@ use std::{env, fs};
 use tracing;
 
 mod config;
+mod doc;
 mod handler;
 mod routes;
 mod service;
