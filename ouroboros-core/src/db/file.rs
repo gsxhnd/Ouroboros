@@ -39,9 +39,10 @@ impl Database {
     pub async fn insert_file_by_folder_id(&self, list: Vec<File>) {
         let mut tx = self.pool.begin().await.unwrap();
         for f in list.iter() {
-            sqlx::query("insert into file (name, folder_id)  values (?,?)")
+            sqlx::query("insert into file (name, folder_id, md5)  values (?,?,?)")
                 .bind(&f.name)
                 .bind(f.folder_id)
+                .bind(&f.md5)
                 .execute(&mut *tx)
                 .await
                 .unwrap();
@@ -49,4 +50,8 @@ impl Database {
 
         tx.commit().await.unwrap();
     }
+
+    pub async fn get_files_by_id(&self, ids: Vec<u32>) {}
+
+    pub async fn delete_files_by_id(&self, ids: Vec<u32>) {}
 }

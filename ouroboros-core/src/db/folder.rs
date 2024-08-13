@@ -15,13 +15,11 @@ impl Database {
     }
 
     pub async fn get_folder(&self, name: &str, parent: u32) -> Result<Option<Folder>, Error> {
-        let row = sqlx::query_as::<_, Folder>(
-            "SELECT id, name, parent_id FROM folder WHERE name = ? AND parent_id = ?",
-        )
-        .bind(name)
-        .bind(parent)
-        .fetch_one(&self.pool)
-        .await;
+        let row = sqlx::query_as::<_, Folder>("SELECT * FROM folder WHERE name = ? AND pid = ?")
+            .bind(name)
+            .bind(parent)
+            .fetch_one(&self.pool)
+            .await;
 
         match row {
             Ok(d) => Ok(Some(d)),
@@ -35,7 +33,7 @@ impl Database {
     pub async fn add_folder(&self, name: &str, parent: u32) -> u32 {
         let mut tx = self.pool.begin().await.unwrap();
 
-        sqlx::query("insert into folder (name, parent_id)  values (?,?)")
+        sqlx::query("insert into folder (name, pid)  values (?,?)")
             .bind(name)
             .bind(parent)
             .execute(&mut *tx)
@@ -86,8 +84,8 @@ impl Database {
     pub async fn update_folder(&self, folder: Folder) {
         let mut tx = self.pool.begin().await.unwrap();
 
-        sqlx::query("update folder set parent_id = ?, name = ? where id= ?")
-            .bind(folder.parent_id)
+        sqlx::query("update folder set pid = ?, name = ? where id= ?")
+            .bind(folder.pid)
             .bind(folder.name)
             .bind(folder.id)
             .execute(&mut *tx)
@@ -96,3 +94,28 @@ impl Database {
         tx.commit().await.unwrap();
     }
 }
+
+// WITH RECURSIVE folder_tree AS (
+//     SELECT
+//         id,
+//         name,
+//         pid
+
+//     FROM
+//         folder
+//     WHERE
+//         id = 8 -- 替换为你要查询的初始 id
+
+//     UNION ALL
+
+//     SELECT
+//         f.id,
+//         f.name,
+//         f.pid
+
+//     FROM
+//         folder f
+//             INNER JOIN
+//         folder_tree ft ON f.id = ft.pid
+// )
+// SELECT * FROM folder_tree;

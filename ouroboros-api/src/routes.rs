@@ -1,6 +1,6 @@
 use axum::{routing, Router};
 
-use crate::handler::{file, folder, root, tag};
+use crate::handler::{file, folder, resource, root, tag};
 use crate::{config, state::AppState};
 
 pub async fn routes(cfg: config::Config) -> Router {
@@ -29,6 +29,11 @@ pub async fn routes(cfg: config::Config) -> Router {
                 .delete(file::delete_files),
         )
         .route("/file_tag", routing::get(root::ping))
+        .route("/resource/file/:file_id", routing::get(resource::file))
+        .route(
+            "/resource/thumbnail/:file_id",
+            routing::get(resource::thumbnail),
+        )
         .route("/sync", routing::get(root::sync));
 
     Router::new()
