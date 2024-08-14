@@ -1,1 +1,0 @@
-"use strict";var e=require("electron");e.contextBridge.exposeInMainWorld("electronAPI",{loadPreferences:()=>e.ipcRenderer.invoke("loadPreferences"),newAssetLibPath:t=>e.ipcRenderer.invoke("dialog:newAssetLibPath",t),selectAssetLibPath:()=>e.ipcRenderer.invoke("dialog:selectAssetLibPath")});

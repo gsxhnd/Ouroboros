@@ -1,2 +1,1 @@
-napi
-node_modules
+napi/*.node
