@@ -2,6 +2,7 @@ import { App, app } from "electron";
 import { traySetting } from "./tray";
 import { preferences } from "./preferences";
 import { application } from "./application";
+// import ;
 
 // console.log("dev: ", process.env.NODE_ENV);
 // console.log("path", app.getAppPath());

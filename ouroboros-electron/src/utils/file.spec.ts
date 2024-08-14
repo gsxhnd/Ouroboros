@@ -1,5 +1,6 @@
 import { fileExist, createDir } from "./file";
 import { equal } from "assert";
+// import { describe } from "mocha";
 
 describe("file spec test", () => {
   it("filets exist success", async () => {

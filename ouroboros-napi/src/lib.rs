@@ -7,5 +7,3 @@ mod assets;
 mod database;
 mod file;
 mod tree;
-
-// use std::sync::Arc;

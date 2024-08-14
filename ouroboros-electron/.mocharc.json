@@ -1,6 +1,6 @@
 {
   "extension": ["ts"],
-  "spec": "electron/**/*.spec.ts",
+  "spec": "src/**/*.spec.ts",
   "require": "ts-node/register",
   "node-option": [
     "loader=ts-node/esm",
