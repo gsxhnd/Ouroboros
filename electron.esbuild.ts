@@ -1,17 +1,24 @@
-import { build, context } from "esbuild";
+import { build, context, BuildOptions } from "esbuild";
 // import { wasmPlugin } from "./wasm.plugin.js";
 // import watPlugin from "esbuild-plugin-wat";
 
+let entryPoints = [
+  "./ouroboros-electron/main.ts",
+  "./ouroboros-electron/preload.ts",
+];
+let external = ["path", "electron", "fs", "chokidar", "rxjs"];
+
+// let buildOptions: BuildOptions = {
+//   entry
+// };
+
 async function devWatch() {
   let ctx = await context({
-    entryPoints: [
-      "./ouroboros-electron/main.ts",
-      "./ouroboros-electron/preload.ts",
-    ],
+    entryPoints: entryPoints,
     bundle: true,
     platform: "node",
     format: "cjs",
-    external: ["path", "electron", "fs", "chokidar", "rxjs"],
+    external: external,
     outdir: "./dist/",
     minify: false,
     outExtension: {
@@ -26,16 +33,13 @@ async function devWatch() {
   await ctx.watch();
 }
 
-async function prodBuild(params) {
+async function prodBuild() {
   build({
-    entryPoints: [
-      "./ouroboros-electron/main.ts",
-      "./ouroboros-electron/preload.ts",
-    ],
+    entryPoints: entryPoints,
     bundle: true,
     platform: "node",
     format: "cjs",
-    external: ["path", "electron", "fs", "chokidar", "rxjs"],
+    external: external,
     outdir: "./dist/",
     minify: true,
     outExtension: {
