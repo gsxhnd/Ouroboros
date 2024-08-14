@@ -1,26 +1,26 @@
 use axum::{routing, Router};
 
-use crate::handler::{file, folder, root, tag};
+use crate::handler::{file, folder, resource, root, tag};
+use crate::state::AppState;
 
-use crate::{config, state::AppState};
-
-pub async fn routes(cfg: config::Config) -> Router {
-    let state = AppState::new(cfg).await;
+pub async fn routes(state: AppState) -> Router {
     let v1_r = Router::new()
+        .route("/init", routing::post(root::init))
         .route(
             "/tag",
-            routing::get(tag::get_all_tag)
+            routing::get(tag::get_tags)
                 .post(tag::add_tag)
-                .put(tag::update_tag_name)
+                .put(tag::update_tag_info)
                 .delete(tag::delete_tag),
         )
         .route(
             "/folder",
             routing::get(folder::get_folders)
-                .post(folder::add_folders)
-                .put(folder::rename_folders)
+                .post(folder::add_folder)
                 .delete(folder::delete_folders),
         )
+        .route("/folder/rename", routing::put(folder::rename_folders))
+        .route("/folder/move", routing::put(folder::rename_folders))
         .route(
             "/file",
             routing::get(file::get_files)
@@ -29,6 +29,11 @@ pub async fn routes(cfg: config::Config) -> Router {
                 .delete(file::delete_files),
         )
         .route("/file_tag", routing::get(root::ping))
+        .route("/resource/file/:file_id", routing::get(resource::file))
+        .route(
+            "/resource/thumbnail/:file_id",
+            routing::get(resource::thumbnail),
+        )
         .route("/sync", routing::get(root::sync));
 
     Router::new()

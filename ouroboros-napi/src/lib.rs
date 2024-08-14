@@ -8,4 +8,7 @@ mod database;
 mod file;
 mod tree;
 
-// use std::sync::Arc;
+#[napi]
+fn sum(a: i32, b: i32) -> i32 {
+    a + b
+}

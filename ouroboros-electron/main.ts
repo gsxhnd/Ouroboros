@@ -2,6 +2,7 @@ import { App, app } from "electron";
 import { traySetting } from "./tray";
 import { preferences } from "./preferences";
 import { application } from "./application";
+import { add } from "./napi";
 
 // console.log("dev: ", process.env.NODE_ENV);
 // console.log("path", app.getAppPath());
@@ -9,6 +10,7 @@ import { application } from "./application";
 // console.log("appData", app.getPath("appData"));
 // console.log("exe", app.getPath("exe"));
 // console.log("user config", userConfigPath);
+console.log(add());
 
 app.on("ready", async () => {
   console.log("App on ready");

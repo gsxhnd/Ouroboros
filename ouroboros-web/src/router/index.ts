@@ -2,7 +2,10 @@ import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 import { usePreferencesStore } from "@/stores/preferences";
 
 import Home from "@/layout/Home.vue";
-import Init from "@/pages/Init.vue";
+import InitElectron from "@/pages/InitElectron.vue";
+import InitBrowser from "@/pages/InitBrowser.vue";
+import Setting from "@/pages/Setting.vue";
+import Dashboard from "@/pages/Dashboard.vue";
 
 const RootRoute: RouteRecordRaw = {
   path: "/",
@@ -12,48 +15,50 @@ const RootRoute: RouteRecordRaw = {
     title: "Root",
   },
   children: [
-    // {
-    //   path: "/aaa/",
-    // },
+    { path: "", name: "Dashboard", component: Dashboard },
+    { path: "setting", name: "Setting", component: Setting },
   ],
 };
 
 const InitRouter: RouteRecordRaw = {
   path: "/init",
   name: "Init",
-  component: Init,
   meta: {
     title: "",
   },
+  children: [
+    { path: "electron", name: "InitElectron", component: InitElectron },
+    { path: "browser", name: "InitBrowser", component: InitBrowser },
+  ],
 };
 
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [RootRoute, InitRouter],
-  // strict: true,
+  strict: true,
 });
 
 router.beforeEach(async (to, _from) => {
   const preferencesStore = usePreferencesStore();
-  await preferencesStore.getPreferences();
+  // await preferencesStore.getPreferences();
+
+  if (to.name != "InitBrowser" && preferencesStore.useBrowser) {
+    // return { name: "InitBrowser" };
+  }
 
   if (
-    to.name != "Init" &&
+    to.name != "InitElectron" &&
+    !preferencesStore.useBrowser &&
     (preferencesStore.preference === null ||
       preferencesStore.preference.appConfig.libraries.length === 0)
   ) {
-    return { name: "Init" };
+    return { name: "InitElectron" };
   }
 
   preferencesStore.preference?.appConfig.libraries.forEach((library) => {
     const { path, use } = library;
     console.log(path, use);
   });
-
-  // console.log(preferencesStore.preference);
-  // console.log(from);
-  // console.log(to);
-  // return true;
 });
 
 export { router };

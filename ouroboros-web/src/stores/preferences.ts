@@ -1,21 +1,35 @@
-// import { Preference } from "@/vite-env";
 import { defineStore } from "pinia";
 import { i18n } from "@/locales/i18n";
+import { getPreferencesAPI, getPreferencesEAPI } from "@/api/preferences";
 
 interface preferences {
+  useBrowser: boolean;
+  useLanuage: string;
   preference: PreferencesData | null;
 }
 
 export const usePreferencesStore = defineStore("preferences", {
   state: (): preferences => ({
+    useBrowser: false,
+    useLanuage: "zh-CN",
     preference: null,
   }),
 
   actions: {
     async getPreferences() {
-      if (!window.electronAPI) return;
-      const preferences = await window.electronAPI.loadPreferences();
-      this.preference = preferences;
+      if (!window.electronAPI) {
+        this.useBrowser = true;
+        await getPreferencesAPI();
+      } else {
+        const preferences = await getPreferencesEAPI();
+        this.preference = preferences;
+      }
+    },
+
+    async sync() {
+      if (this.useBrowser) {
+      } else {
+      }
     },
 
     async changeLanuage(_l: string) {

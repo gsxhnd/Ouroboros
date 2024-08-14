@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import "../ouroboros.d.ts";
+import "../../ouroboros.d.ts";
 
 export interface IElectronAPI {
   loadPreferences: () => Promise<PreferencesData>;

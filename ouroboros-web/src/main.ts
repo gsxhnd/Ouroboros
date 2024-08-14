@@ -8,6 +8,7 @@ import i18nInstance from "./locales/i18n.ts";
 import PrimeVue from "primevue/config";
 import Aura from "@primevue/themes/aura";
 import "primeicons/primeicons.css";
+import DialogService from "primevue/dialogservice";
 
 // context menu
 import "@imengyu/vue3-context-menu/lib/vue3-context-menu.css";
@@ -27,6 +28,7 @@ app.use(PrimeVue, {
     preset: Aura,
   },
 });
+app.use(DialogService);
 app.use(ContextMenu);
 
 app.mount("#app");

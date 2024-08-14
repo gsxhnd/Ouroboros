@@ -1,5 +1,10 @@
-use ouroboros_core::{db::Database, model::File};
+use crate::db::Database;
+use crate::model::{File, Folder};
+use crate::utils::md5::calculate_md5;
+
 use walkdir::WalkDir;
+
+mod init;
 
 pub async fn sync(db: Database, data_path: String) {
     // let data_path = Path::new(&data_path);
@@ -15,6 +20,8 @@ pub async fn sync(db: Database, data_path: String) {
         };
 
         let path = entry.path();
+        let full_path = path.to_str().unwrap();
+
         let relative_path = match path.strip_prefix(data_path.clone()) {
             Ok(p) => p,
             Err(e) => {
@@ -78,23 +85,33 @@ pub async fn sync(db: Database, data_path: String) {
                             None
                         }
                     };
+                    let md5 = match calculate_md5(full_path) {
+                        Ok(v) => v,
+                        Err(_) => "".to_string(),
+                    };
+
                     match data {
                         Some(_row) => {}
                         None => {
                             file_list.push(File {
                                 id: 0,
+                                desc: String::from(""),
                                 name: String::from(str),
+                                md5,
                                 folder_id,
+                                created_at: None,
+                                updated_at: None,
                             });
                         }
                     }
                 }
+
                 match db.get_folder(str, folder_id).await {
                     Ok(row) => match row {
                         Some(r) => folder_id = r.id,
                         None => {}
                     },
-                    Err(e) => {}
+                    Err(_e) => {}
                 }
             }
         }

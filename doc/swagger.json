@@ -1,0 +1,374 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "ouroboros-api",
+    "description": "My Api description",
+    "license": {
+      "name": ""
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/file": {
+      "get": {
+        "tags": [
+          "file"
+        ],
+        "operationId": "get_files",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Todo database id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {}
+      },
+      "post": {
+        "tags": [
+          "file"
+        ],
+        "operationId": "add_files",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Todo database id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {}
+      },
+      "put": {
+        "tags": [
+          "file"
+        ],
+        "operationId": "rename_files",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Todo database id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {}
+      },
+      "delete": {
+        "tags": [
+          "file"
+        ],
+        "summary": "This is a summary of the operation",
+        "operationId": "delete_files",
+        "requestBody": {
+          "description": "id list",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "int32",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {}
+      }
+    },
+    "/api/v1/folder": {
+      "get": {
+        "tags": [
+          "folder"
+        ],
+        "operationId": "get_folders",
+        "responses": {}
+      },
+      "post": {
+        "tags": [
+          "folder"
+        ],
+        "operationId": "add_folder",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFolder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {}
+      },
+      "put": {
+        "tags": [
+          "folder"
+        ],
+        "operationId": "rename_folders",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Folder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {}
+      },
+      "delete": {
+        "tags": [
+          "folder"
+        ],
+        "operationId": "delete_folders",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "int32",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {}
+      }
+    },
+    "/api/v1/tag": {
+      "get": {
+        "tags": [
+          "tag"
+        ],
+        "operationId": "get_tags",
+        "responses": {}
+      },
+      "post": {
+        "tags": [
+          "tag"
+        ],
+        "operationId": "add_tag",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTag"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {}
+      },
+      "put": {
+        "tags": [
+          "tag"
+        ],
+        "operationId": "update_tag_info",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Tag"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {}
+      },
+      "delete": {
+        "tags": [
+          "tag"
+        ],
+        "operationId": "delete_tag",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "int32",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {}
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateFolder": {
+        "type": "object",
+        "required": [
+          "name",
+          "parent_id"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "parent_id": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        }
+      },
+      "CreateTag": {
+        "type": "object",
+        "required": [
+          "name",
+          "parent_id"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "parent_id": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        }
+      },
+      "File": {
+        "type": "object",
+        "required": [
+          "id",
+          "folder_id",
+          "name",
+          "desc",
+          "md5"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date"
+          },
+          "desc": {
+            "type": "string"
+          },
+          "folder_id": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "md5": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "Folder": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "pid"
+        ],
+        "properties": {
+          "cover_fid": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "minimum": 0
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "name": {
+            "type": "string"
+          },
+          "pid": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "Tag": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "parent_id"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "name": {
+            "type": "string"
+          },
+          "parent_id": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      }
+    }
+  }
+}
