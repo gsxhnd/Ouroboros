@@ -6,10 +6,10 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev:electron": "node electron.dev.mjs",
+    "dev:electron": "dotenvx run -f ./script/.dev.env -- node electron.esbuild.mjs",
     "dev:napi": "napi build --cargo-name napi ./ouroboros-electron/napi",
     "dev:start": "NODE_ENV=dev electron .",
-    "build:electron": "node electron.build.mjs",
+    "build:electron": "dotenvx run -f ./script/.prod.env -- node electron.esbuild.mjs",
     "build": "yarn build:electron && yarn build:renderer",
     "build:napi": "napi build --cargo-name napi --release ./ouroboros-electron/napi",
     "start": "electron .",
