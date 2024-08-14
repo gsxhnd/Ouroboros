@@ -10,6 +10,11 @@ pub struct File {
     pub name: String,
     pub desc: String,
     pub md5: String,
-    // pub created_at: chrono::DateTime<chrono::Utc>,
-    // pub updated_at: chrono::DateTime<chrono::Utc>,
+    #[serde(default)]
+    #[schema(value_type = String, format = Date)]
+    pub created_at: Option<chrono::DateTime<chrono::Utc>>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(value_type = String, format = Date)]
+    pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
 }

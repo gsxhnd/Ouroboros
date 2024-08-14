@@ -51,7 +51,40 @@ impl Database {
         tx.commit().await.unwrap();
     }
 
-    pub async fn get_files_by_id(&self, ids: Vec<u32>) {}
+    pub async fn get_files_by_id(&self, ids: Vec<u32>) -> Result<Option<Vec<File>>, Error> {
+        let query = format!(
+            "SELECT * FROM folder WHERE id in ( {} )",
+            ids.iter()
+                .map(|id| id.to_string())
+                .collect::<Vec<String>>()
+                .join(",")
+        );
 
-    pub async fn delete_files_by_id(&self, ids: Vec<u32>) {}
+        let rows = sqlx::query_as::<_, File>(&query)
+            .fetch_all(&self.pool)
+            .await;
+
+        match rows {
+            Ok(d) => Ok(Some(d)),
+            Err(e) => match e {
+                Error::RowNotFound => Ok(None),
+                _ => Err(e),
+            },
+        }
+    }
+
+    pub async fn delete_files_by_id(&self, ids: Vec<u32>) {
+        let mut tx = self.pool.begin().await.unwrap();
+
+        let query = format!(
+            "delete from file where id in ( {} )",
+            ids.iter()
+                .map(|id| id.to_string())
+                .collect::<Vec<String>>()
+                .join(",")
+        );
+
+        sqlx::query(query.as_str()).execute(&mut *tx).await.unwrap();
+        tx.commit().await.unwrap();
+    }
 }

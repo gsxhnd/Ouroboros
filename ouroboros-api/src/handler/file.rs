@@ -49,11 +49,10 @@ pub async fn add_files(state: State<AppState>) -> impl IntoResponse {
     Json("ok")
 }
 
+/// This is a summary of the operation
 #[utoipa::path(delete,
     path = "/api/v1/file",
-    params(
-        ("id" = i32, Path, description = "Todo database id")
-    ),
+    request_body(content=Vec<u32>,description="id list"),
     tag="file",
     responses()
 )]

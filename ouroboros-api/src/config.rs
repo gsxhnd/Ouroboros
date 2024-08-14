@@ -1,11 +1,26 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Config {
     pub common: Common,
 }
 
-#[derive(Deserialize, Clone)]
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            common: Common::default(),
+        }
+    }
+}
+
+impl Config {
+    pub async fn rewrite(&self, config_path: &str) {
+        let toml_str = toml::to_string(self).unwrap();
+        tokio::fs::write(config_path, toml_str).await.unwrap();
+    }
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(default)]
 pub struct Common {
     pub data_path: String,

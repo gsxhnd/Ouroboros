@@ -71,21 +71,10 @@
         "tags": [
           "file"
         ],
+        "summary": "This is a summary of the operation",
         "operationId": "delete_files",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "Todo database id",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
         "requestBody": {
-          "description": "",
+          "description": "id list",
           "content": {
             "application/json": {
               "schema": {
@@ -152,7 +141,6 @@
         ],
         "operationId": "delete_folders",
         "requestBody": {
-          "description": "",
           "content": {
             "application/json": {
               "schema": {
@@ -278,10 +266,19 @@
         "type": "object",
         "required": [
           "id",
+          "folder_id",
           "name",
-          "folder_id"
+          "desc",
+          "md5"
         ],
         "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date"
+          },
+          "desc": {
+            "type": "string"
+          },
           "folder_id": {
             "type": "integer",
             "format": "int32",
@@ -292,8 +289,15 @@
             "format": "int32",
             "minimum": 0
           },
+          "md5": {
+            "type": "string"
+          },
           "name": {
             "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date"
           }
         }
       },
@@ -302,9 +306,19 @@
         "required": [
           "id",
           "name",
-          "parent_id"
+          "pid"
         ],
         "properties": {
+          "cover_fid": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "minimum": 0
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date"
+          },
           "id": {
             "type": "integer",
             "format": "int32",
@@ -313,10 +327,14 @@
           "name": {
             "type": "string"
           },
-          "parent_id": {
+          "pid": {
             "type": "integer",
             "format": "int32",
             "minimum": 0
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date"
           }
         }
       },
@@ -328,6 +346,10 @@
           "parent_id"
         ],
         "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date"
+          },
           "id": {
             "type": "integer",
             "format": "int32",
@@ -340,6 +362,10 @@
             "type": "integer",
             "format": "int32",
             "minimum": 0
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date"
           }
         }
       }

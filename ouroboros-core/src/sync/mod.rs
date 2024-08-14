@@ -4,6 +4,8 @@ use crate::utils::md5::calculate_md5;
 
 use walkdir::WalkDir;
 
+mod init;
+
 pub async fn sync(db: Database, data_path: String) {
     // let data_path = Path::new(&data_path);
     let mut file_list = Vec::new();
@@ -97,6 +99,8 @@ pub async fn sync(db: Database, data_path: String) {
                                 name: String::from(str),
                                 md5,
                                 folder_id,
+                                created_at: None,
+                                updated_at: None,
                             });
                         }
                     }

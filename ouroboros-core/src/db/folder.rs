@@ -4,13 +4,16 @@ use crate::model::Folder;
 use sqlx::Error;
 
 impl Database {
-    pub async fn get_folders(&self) -> Result<Vec<Folder>, Error> {
+    pub async fn get_folders(&self) -> Result<Option<Vec<Folder>>, Error> {
         let rows: Result<Vec<Folder>, Error> = sqlx::query_as("select * from folder;")
             .fetch_all(&self.pool)
             .await;
         match rows {
-            Ok(data) => Ok(data),
-            Err(e) => Err(e),
+            Ok(data) => Ok(Some(data)),
+            Err(e) => match e {
+                Error::RowNotFound => Ok(None),
+                _ => Err(e),
+            },
         }
     }
 

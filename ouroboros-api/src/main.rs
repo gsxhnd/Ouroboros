@@ -1,5 +1,6 @@
-use std::{env, fs};
-use tracing;
+use clap::Parser;
+use std::fs;
+use tracing::{self, info};
 
 mod config;
 mod doc;
@@ -9,34 +10,47 @@ mod service;
 mod state;
 use config::Config;
 
+/// Simple program to greet a person
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    #[arg(short, long, default_value = None)]
+    config: Option<String>,
+
+    #[arg(short, long, default_value = None)]
+    data_path: Option<String>,
+}
+
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
-        .init();
-    // Get the command line arguments
-    let args: Vec<String> = env::args().collect();
+    let args = Args::parse();
 
-    // Check if the user provided the config file path
-    let config_file_path = if args.len() > 1 {
-        &args[1]
-    } else {
-        "./script/config_full.toml"
-    };
-
-    let toml_str = match fs::read_to_string(config_file_path) {
-        Ok(s) => s,
-        Err(e) => {
-            eprintln!("Error reading default config file: {}", e);
-            eprintln!("Usage: {} <config_file_path>", args[0]);
-            std::process::exit(1);
+    let (config_path, mut cfg) = match args.config {
+        None => {
+            let cfg = Config::default();
+            let config_path = "./config.toml";
+            (config_path.to_string().clone(), cfg)
+        }
+        Some(p) => {
+            let toml_str = fs::read_to_string(p.clone()).unwrap();
+            let cfg = toml::from_str(&toml_str).unwrap();
+            (p.clone(), cfg)
         }
     };
 
-    let cfg: Config = toml::from_str(&toml_str).unwrap();
-    let r = routes::routes(cfg.clone()).await;
+    match args.data_path {
+        Some(p) => cfg.common.data_path = p,
+        None => {}
+    }
 
-    let listener = tokio::net::TcpListener::bind(cfg.common.server_listen)
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .init();
+
+    let state = state::AppState::new(config_path, cfg.clone()).await;
+
+    let r = routes::routes(state).await;
+    let listener = tokio::net::TcpListener::bind(cfg.clone().common.server_listen)
         .await
         .unwrap();
     axum::serve(listener, r).await.unwrap();

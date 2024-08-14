@@ -23,7 +23,7 @@ pub async fn add_folder(
     json_res("ok")
 }
 
-#[utoipa::path(delete, path = "/api/v1/folder", tag = "folder", responses())]
+#[utoipa::path(delete, path = "/api/v1/folder",request_body=Vec<u32>, tag = "folder", responses())]
 pub async fn delete_folders(
     state: State<AppState>,
     extract::Json(payload): extract::Json<Vec<u32>>,
