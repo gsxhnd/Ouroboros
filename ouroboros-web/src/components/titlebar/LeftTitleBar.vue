@@ -9,12 +9,28 @@
 </template>
 <script setup lang="ts">
 import { useRoute, useRouter } from "vue-router";
+import { useDialog } from "primevue/usedialog";
+import Setting from "@/components/Setting.vue";
+const dialog = useDialog();
 
 const router = useRouter();
 const route = useRoute();
 
 function openPreference() {
-  router.push({ path: "/setting", replace: true, query: route.query });
+  dialog.open(Setting, {
+    props: {
+      modal: true,
+      closable: false,
+      draggable: false,
+      showHeader: false,
+      dismissableMask: true,
+      contentClass: "setting-dialog",
+    },
+    onClose: (options: any) => {
+      console.log("close opt: ", options);
+    },
+  });
+  // router.push({ path: "/setting", replace: true, query: route.query });
 }
 </script>
 

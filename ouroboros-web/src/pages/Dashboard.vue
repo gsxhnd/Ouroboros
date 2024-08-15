@@ -95,6 +95,6 @@ const loadData = async () => {
   }
   data.total = result.total;
   data.max = result.max;
-  data.list = [...data.list, ...result.list];
+  // data.list = [...data.list, ...result.list];
 };
 </script>

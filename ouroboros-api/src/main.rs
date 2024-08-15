@@ -47,6 +47,18 @@ async fn main() {
         .with_max_level(tracing::Level::INFO)
         .init();
 
+    match ouroboros_core::sync::init::init(cfg.clone().common.data_path).await {
+        Ok(_) => tracing::info!("init sync storage success"),
+        Err(e) => match e.kind() {
+            std::io::ErrorKind::AlreadyExists => {
+                tracing::info!("sync storage already exists");
+            }
+            _ => {
+                panic!("init failed error: {}", e)
+            }
+        },
+    }
+
     let state = state::AppState::new(config_path, cfg.clone()).await;
 
     let r = routes::routes(state).await;

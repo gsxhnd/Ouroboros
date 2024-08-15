@@ -6,9 +6,9 @@ import i18nInstance from "./locales/i18n.ts";
 
 // primevue
 import PrimeVue from "primevue/config";
-import Aura from "@primevue/themes/aura";
 import "primeicons/primeicons.css";
 import DialogService from "primevue/dialogservice";
+import { darkTheme } from "@/themes/theme";
 
 // context menu
 import "@imengyu/vue3-context-menu/lib/vue3-context-menu.css";
@@ -25,7 +25,7 @@ app.use(pinia);
 app.use(router);
 app.use(PrimeVue, {
   theme: {
-    preset: Aura,
+    preset: darkTheme,
   },
 });
 app.use(DialogService);
