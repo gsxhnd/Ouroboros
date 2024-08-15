@@ -1,9 +1,10 @@
 <template>
   <div class="left-title-bar electron-drag">
     <div class="button-group">
-      <i class="pi pi-cog" @click="openPreference"></i>
-      <i class="pi pi-spin pi-spinner"></i>
-      <i class="pi pi-spin pi-spinner"></i>
+      <i class="icon pi pi-cog" @click="openPreference"></i>
+      <i class="icon pi pi-spin pi-spinner"></i>
+      <!-- <span class="material-icons-outlined">dock_to_right</span> -->
+      <!-- <span class="material-icons-outlined">dock</span> -->
     </div>
   </div>
 </template>
@@ -43,7 +44,7 @@ function openPreference() {
     display: flex;
     align-items: center;
     /* padding-right: 10px; */
-    i {
+    .icon {
       cursor: pointer;
       margin-right: 10px;
     }

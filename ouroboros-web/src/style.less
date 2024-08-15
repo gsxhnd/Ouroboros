@@ -10,25 +10,18 @@
   overflow: hidden;
 }
 
-@ob-background: #3d3e42;
-@ob-font-color: white;
-
 body {
   margin: 0;
   display: flex;
   place-items: center;
   min-width: 100vw;
   min-height: 100vh;
-  color: @ob-font-color;
   user-select: none;
   #app {
     min-width: 100vw;
     min-height: 100vh;
     text-align: center;
-    color: @ob-font-color;
     .p-splitter {
-      color: @ob-font-color;
-      // background-color: @ob-background;
       .p-splitter-gutter {
         width: 2px;
         &:hover {
@@ -38,6 +31,14 @@ body {
     }
     overflow: hidden;
   }
+}
+
+.p-dialog {
+  border: none !important;
+}
+
+.mi {
+  font-weight: 200;
 }
 
 .electron-drag {

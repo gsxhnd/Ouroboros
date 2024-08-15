@@ -1,6 +1,6 @@
 <template>
-  Setting
-  <div class="card flex justify-center">
+  <div class="left">123</div>
+  <div class="right">
     <Select
       v-model="selected"
       :options="options"
@@ -15,6 +15,18 @@
 .setting-dialog {
   height: 80vh;
   width: 60vw;
+  padding: 0;
+  display: flex;
+  border-radius: 8px;
+  color: white;
+  .left {
+    width: 30%;
+    background-color: var(--p-bg-1);
+  }
+  .right {
+    width: 70%;
+    background-color: var(--p-bg-2);
+  }
 }
 </style>
 <script setup lang="ts">

@@ -22,7 +22,7 @@ onMounted(async () => {});
 <style scoped lang="less">
 .content-pane {
   height: 100%;
-  background-color: rgb(55, 56, 60);
+  background-color: var(--p-bg-2);
   .content {
     height: 100%;
     overflow: auto;

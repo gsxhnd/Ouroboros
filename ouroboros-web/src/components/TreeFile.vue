@@ -35,7 +35,6 @@
       </div>
     </template>
   </Draggable>
-  <button @click="remove">remove</button>
 </template>
 
 <script setup lang="ts">
@@ -110,13 +109,13 @@ function dropFile(event: DragEvent) {
   console.log(event);
 }
 
-function remove() {
-  tree.value.closeAll();
-  console.log(tree.value);
-  console.log(tree.value.getData());
-  console.log(tree.value.stats);
-  console.log(tree.value.removeMulti(tree.value.stats));
-}
+// function remove() {
+//   tree.value.closeAll();
+//   console.log(tree.value);
+//   console.log(tree.value.getData());
+//   console.log(tree.value.stats);
+//   console.log(tree.value.removeMulti(tree.value.stats));
+// }
 </script>
 
 <style scoped lang="less">
