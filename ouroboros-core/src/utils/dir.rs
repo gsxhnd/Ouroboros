@@ -2,6 +2,7 @@ use std::error::Error;
 use std::fs;
 use std::path::Path;
 
+#[allow(dead_code)]
 pub async fn create_dir(path: &Path) -> Result<(), Box<dyn Error>> {
     // let m = match path.metadata() {
     //     Ok(m) => {

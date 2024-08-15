@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use serde_json::Result;
 
 #[derive(Debug, Serialize, Deserialize)]
 enum Node {
@@ -8,9 +7,11 @@ enum Node {
 }
 
 impl Node {
+    #[allow(dead_code)]
     fn new_dir(s: String) -> Self {
         Node::Dir(NodeDir::new(s))
     }
+    #[allow(dead_code)]
     fn new_file(s: String) -> Self {
         Node::File(s)
     }
@@ -30,17 +31,20 @@ impl NodeDir {
         }
     }
 
+    #[allow(dead_code)]
     fn add_child(&mut self, child: Node) {
         self.children.push(child)
     }
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 struct NodeFile {
     name: String,
 }
 
 impl NodeFile {
+    #[allow(dead_code)]
     fn new(name: String) -> Self {
         NodeFile { name }
     }
@@ -48,6 +52,7 @@ impl NodeFile {
 
 #[derive(Debug)]
 pub struct Tree {
+    #[allow(dead_code)]
     root: NodeDir,
 }
 

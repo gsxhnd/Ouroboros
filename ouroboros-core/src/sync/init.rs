@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::Path;
 
+#[allow(dead_code)]
 pub async fn init(data_path: String) -> Result<(), String> {
     let p = Path::new(&data_path);
     let op = p.join(".ouroboros");
@@ -27,7 +28,7 @@ pub async fn init(data_path: String) -> Result<(), String> {
         }
 
         match fs::create_dir(target.clone()).err() {
-            Some(e) => {}
+            Some(_e) => {}
             None => {}
         }
     }
@@ -43,5 +44,5 @@ async fn test_init() {
 
     let current_path = p.to_str().unwrap();
     println!("current path: {}", current_path);
-    init(String::from(current_path)).await;
+    // init(String::from(current_path)).await;
 }

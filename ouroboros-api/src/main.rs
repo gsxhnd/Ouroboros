@@ -1,6 +1,6 @@
 use clap::Parser;
 use std::fs;
-use tracing::{self, info};
+use tracing::{self};
 
 mod config;
 mod doc;

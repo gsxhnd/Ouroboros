@@ -1,10 +1,6 @@
-use crate::{service, state::AppState};
+use crate::state::AppState;
 
-use axum::{
-    extract::{self, State},
-    response::IntoResponse,
-    Json,
-};
+use axum::{extract::State, response::IntoResponse, Json};
 use ouroboros_core::sync;
 use tracing::info;
 

@@ -45,7 +45,7 @@ pub async fn get_files(
     tag="file",
     responses()
 )]
-pub async fn add_files(state: State<AppState>) -> impl IntoResponse {
+pub async fn add_files(_state: State<AppState>) -> impl IntoResponse {
     Json("ok")
 }
 
@@ -57,8 +57,8 @@ pub async fn add_files(state: State<AppState>) -> impl IntoResponse {
     responses()
 )]
 pub async fn delete_files(
-    state: State<AppState>,
-    extract::Json(payload): extract::Json<Vec<u32>>,
+    _state: State<AppState>,
+    extract::Json(_payload): extract::Json<Vec<u32>>,
 ) -> impl IntoResponse {
     Json("ok")
 }
@@ -71,6 +71,6 @@ pub async fn delete_files(
     tag="file",
     responses()
 )]
-pub async fn rename_files(state: State<AppState>) -> impl IntoResponse {
+pub async fn rename_files(_state: State<AppState>) -> impl IntoResponse {
     Json("ok")
 }

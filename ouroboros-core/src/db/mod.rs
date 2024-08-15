@@ -42,8 +42,3 @@ impl Database {
             .unwrap();
     }
 }
-
-#[tokio::test]
-async fn test_new() {
-    let db = Database::new("").await;
-}

@@ -2,10 +2,9 @@ use crate::handler;
 use ouroboros_core::model;
 
 use utoipa::OpenApi;
-
 #[derive(OpenApi)]
 #[openapi(
-    info(description = "My Api description"),
+    info(title = "123", description = "My Api description"),
     paths(
         handler::file::get_files,
         handler::file::delete_files,
@@ -28,18 +27,20 @@ use utoipa::OpenApi;
         model::Tag,
     ))
 )]
+#[allow(dead_code)]
 struct ApiDoc;
-impl ApiDoc {
-    pub fn generate() -> String {
-        ApiDoc::openapi().to_pretty_json().unwrap()
-    }
-}
 
 #[tokio::test]
 async fn generate_doc() {
     use std::fs;
-    let content = ApiDoc::generate();
-    println!("{}", content);
+
+    let mut doc = ApiDoc::openapi();
+    let contact = utoipa::openapi::ContactBuilder::new()
+        .name(Some("ouroboros"))
+        .build();
+    doc.info.contact = Some(contact);
+
+    let content = doc.to_pretty_json().unwrap();
     match fs::write("../doc/swagger.json", content) {
         Ok(_) => {}
         Err(e) => {

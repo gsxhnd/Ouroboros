@@ -1,8 +1,11 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "ouroboros-api",
+    "title": "123",
     "description": "My Api description",
+    "contact": {
+      "name": "ouroboros"
+    },
     "license": {
       "name": ""
     },

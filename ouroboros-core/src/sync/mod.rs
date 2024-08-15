@@ -1,5 +1,5 @@
 use crate::db::Database;
-use crate::model::{File, Folder};
+use crate::model::File;
 use crate::utils::md5::calculate_md5;
 
 use walkdir::WalkDir;
