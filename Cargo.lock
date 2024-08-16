@@ -1008,6 +1008,7 @@ dependencies = [
  "napi 2.16.6",
  "napi-build",
  "napi-derive",
+ "ouroboros-core",
  "serde",
  "serde_json",
  "sqlx",
@@ -1024,6 +1025,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dfc300228808a0e6aea5a58115c82889240bcf8dab16fc25ad675b33e454b368"
 dependencies = [
  "bitflags 2.5.0",
+ "chrono",
  "ctor",
  "napi-derive",
  "napi-sys",
@@ -1193,6 +1195,8 @@ dependencies = [
  "chrono",
  "log",
  "md-5",
+ "napi 2.16.6",
+ "napi-derive",
  "serde",
  "serde_json",
  "sqlx",

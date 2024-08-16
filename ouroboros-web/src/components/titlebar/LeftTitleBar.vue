@@ -9,13 +9,13 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useRoute, useRouter } from "vue-router";
+// import { useRoute, useRouter } from "vue-router";
 import { useDialog } from "primevue/usedialog";
 import Setting from "@/components/Setting.vue";
 const dialog = useDialog();
 
-const router = useRouter();
-const route = useRoute();
+// const router = useRouter();
+// const route = useRoute();
 
 function openPreference() {
   dialog.open(Setting, {

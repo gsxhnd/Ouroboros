@@ -46,7 +46,7 @@ impl Database {
         let mut tx = self.pool.begin().await.unwrap();
 
         sqlx::query("update tag set parent_id = ?, name = ? where id= ?")
-            .bind(tag.parent_id)
+            .bind(tag.pid)
             .bind(tag.name)
             .bind(tag.id)
             .execute(&mut *tx)

@@ -4,6 +4,9 @@ import { getPreferencesAPI, getPreferencesEAPI } from "@/api/preferences";
 import { localStore } from "@/utils/store";
 import { usePreset } from "@primevue/themes";
 import { darkTheme } from "@/themes/theme";
+import { usePreferredLanguages } from "@vueuse/core";
+
+const languages = usePreferredLanguages();
 
 interface preferences {
   useBrowser: boolean;
@@ -28,11 +31,18 @@ export const usePreferencesStore = defineStore("preferences", {
         this.useElectron = true;
       }
 
-      await localStore.getItem<string>("useLanguage").then((res) => {
-        if (res) {
-          this.useLanguage = res;
-        }
-      });
+      let l = await localStore
+        .getItem<Language>("useLanguage")
+        .then((l) => {
+          if (l != null) return l;
+          if (languages.value[0] == "zh-CN") return "zh-CN";
+          return "en-US";
+        })
+        .then((v) => {
+          return localStore.setItem("useLanguage", v);
+        });
+      this.useLanguage = l;
+      i18n.locale.value = l;
     },
 
     async getPreferences() {

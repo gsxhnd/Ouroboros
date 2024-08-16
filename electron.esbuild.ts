@@ -1,4 +1,5 @@
 import { build, context, BuildOptions } from "esbuild";
+import { nativeNodeModulesPlugin } from "./script/plugin.node";
 // import { wasmPlugin } from "./wasm.plugin.js";
 // import watPlugin from "esbuild-plugin-wat";
 
@@ -10,14 +11,16 @@ let buildOptions: BuildOptions = {
   bundle: true,
   platform: "node",
   format: "cjs",
+  // plugins: [nativeNodeModulesPlugin],
   external: ["path", "electron", "fs", "chokidar", "rxjs"],
   outdir: "./dist/",
   minify: process.env.NODE_ENV === "prod",
   outExtension: {
     ".js": ".cjs",
   },
+  minifyIdentifiers: false,
   loader: {
-    ".node": "copy",
+    ".node": "file",
     ".wasm": "copy",
   },
 };

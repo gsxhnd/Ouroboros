@@ -9,7 +9,7 @@ import PrimeVue from "primevue/config";
 import "primeicons/primeicons.css";
 import DialogService from "primevue/dialogservice";
 import { darkTheme } from "@/themes/theme";
-import "@material-design-icons/font";
+// import "@material-design-icons/font";
 
 // context menu
 import "@imengyu/vue3-context-menu/lib/vue3-context-menu.css";

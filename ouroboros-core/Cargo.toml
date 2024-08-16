@@ -17,3 +17,5 @@ tokio = { workspace = true }
 tracing = { workspace = true }
 utoipa = { workspace = true, features = ["axum_extras"] }
 walkdir = { workspace = true }
+napi = { workspace = true }
+napi-derive = { workspace = true }
