@@ -53,18 +53,18 @@ const data: Ref<Array<any>> = ref([]);
 onBeforeMount(async () => {
   console.log("onBeforeMount");
   let l: Array<any> = [];
-  await getFolders().then((res) => {
-    console.log(res);
-    res.forEach((e) => {
-      console.log("foreach");
-      if (e["parent_id"] === 0) {
-        l.push({
-          text: e.name,
-          children: [{ text: "aaa" }],
-        });
-      }
-    });
-  });
+  // await getFolders().then((res) => {
+  //   console.log(res);
+  //   res.forEach((e) => {
+  //     console.log("foreach");
+  //     if (e["parent_id"] === 0) {
+  //       l.push({
+  //         text: e.name,
+  //         children: [{ text: "aaa" }],
+  //       });
+  //     }
+  //   });
+  // });
   console.log(tree.value.addMulti(l));
 });
 

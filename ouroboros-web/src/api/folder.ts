@@ -11,3 +11,7 @@ export const getFolders = async () => {
     return data;
   });
 };
+
+export const getFoldersElectron = async () => {
+  return window.electronAPI;
+};

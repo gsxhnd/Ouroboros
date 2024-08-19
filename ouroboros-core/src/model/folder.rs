@@ -1,8 +1,10 @@
 use chrono;
+use napi_derive::napi;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, sqlx::FromRow, Clone, Debug, ToSchema)]
+#[napi(object)]
 pub struct Folder {
     pub id: u32,
     pub name: String,
