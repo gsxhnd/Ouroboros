@@ -1,13 +1,9 @@
 [workspace]
-members = [
-    "ouroboros-core",
-    "ouroboros-api",
-    "ouroboros-napi",
-    "ouroboros-wasm",
-]
+members = ["ouroboros-core", "ouroboros-api", "ouroboros-napi"]
 resolver = "2"
 
 [workspace.dependencies]
+chrono = { version = "0.4", features = ["serde"] }
 napi = { version = "2", default-features = false, features = [
     "napi8",
     "async",
