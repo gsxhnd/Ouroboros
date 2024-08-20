@@ -3,7 +3,6 @@ import { traySetting } from "./tray";
 import { preferences } from "./preferences";
 import { application } from "./application";
 import { Database } from "./napi";
-// const napi.Database: Database = require("./napi/index.node");
 
 // console.log("dev: ", process.env.NODE_ENV);
 // console.log("path", app.getAppPath());

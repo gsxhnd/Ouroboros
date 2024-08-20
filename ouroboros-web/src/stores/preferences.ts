@@ -5,6 +5,7 @@ import { localStore } from "@/utils/store";
 import { usePreset } from "@primevue/themes";
 import { darkTheme } from "@/themes/theme";
 import { usePreferredLanguages } from "@vueuse/core";
+import { PreferencesData } from "@type";
 
 const languages = usePreferredLanguages();
 

@@ -1,7 +1,5 @@
 /// <reference types="vite/client" />
 
-import "../../ouroboros.d.ts";
-
 export interface IElectronAPI {
   loadPreferences: () => Promise<PreferencesData>;
   newAssetLibPath: (libName: string) => Promise<void>;
@@ -14,4 +12,3 @@ declare global {
   }
 }
 
-export interface Folder {}

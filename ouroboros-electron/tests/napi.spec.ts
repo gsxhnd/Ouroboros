@@ -1,7 +1,5 @@
-// import * as napi from "../napi/index.node";
 import { equal } from "assert";
 import { Database } from "../napi";
-import { greet } from "../wasm/ouroboros_wasm";
 import { resolve } from "path";
 
 describe("file spec test", () => {
@@ -11,9 +9,5 @@ describe("file spec test", () => {
     await db.get().then((v) => {
       console.log(v);
     });
-  });
-
-  test("wasm", async () => {
-    console.log(greet());
   });
 });

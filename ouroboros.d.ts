@@ -1,15 +1,19 @@
-interface PreferencesData {
+export interface PreferencesData {
   os: string;
   appConfig: AppConfig;
 }
 
-interface Libraries {
+export interface Libraries {
   name: string;
   path: string;
   use: boolean;
 }
 
-interface AppConfig {
+export interface AppConfig {
   libraries: Array<Libraries>;
   useLanguage: string;
 }
+
+export interface Folder {}
+export interface File {}
+export interface Tag {}
