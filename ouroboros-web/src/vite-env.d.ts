@@ -1,9 +1,12 @@
 /// <reference types="vite/client" />
 
+import { Preferences, Folder } from "@type";
+
 export interface IElectronAPI {
-  loadPreferences: () => Promise<PreferencesData>;
+  loadPreferences: () => Promise<Preferences>;
   newAssetLibPath: (libName: string) => Promise<void>;
   selectAssetLibPath: () => Promise<string>;
+  getFolders: () => Promise<Array<Folder>>;
 }
 
 declare global {
@@ -11,4 +14,3 @@ declare global {
     electronAPI: IElectronAPI;
   }
 }
-

@@ -1,9 +1,8 @@
 <template>
   <Draggable
-    v-model="data"
     ref="tree"
     virtualization
-    class="mtl-tree dirtree"
+    class="mtl-tree dir-tree"
     treeLine
     :externalDataHandler="dropFile"
     :onExternalDragOver="() => true"
@@ -26,12 +25,13 @@
         class="dropzone"
         @contextmenu="onButtonClick"
         @click="
-          () => {
+          async () => {
+            await folderStore.addFolder();
             console.log(stat, node);
           }
         "
       >
-        <span class="mtl-ml">{{ node.text }}</span>
+        <span class="mtl-ml">{{ node.name }}</span>
       </div>
     </template>
   </Draggable>
@@ -42,33 +42,57 @@ import ContextMenu from "@imengyu/vue3-context-menu";
 import { Draggable } from "@he-tree/vue";
 import "@he-tree/vue/style/default.css";
 import "@he-tree/vue/style/material-design.css";
-import { getFolders } from "@/api/folder";
+import { userFolderStore } from "@/stores/folder";
+import { ref, onMounted, onBeforeMount, Ref } from "vue";
+import { Folder } from "@type";
 
-import { ref, onMounted, onBeforeMount } from "vue";
-import type { Ref } from "vue";
+interface TreeFolder {
+  id: number;
+  name: string;
+  children: Array<TreeFolder>;
+}
 
+const folderStore = userFolderStore();
 const tree = ref();
-const data: Ref<Array<any>> = ref([]);
+const folders: Ref<Array<TreeFolder>> = ref([]);
+
+folderStore.$subscribe((mutation, state) => {
+  let f = convertToTree(folderStore.folders);
+  tree.value.addMulti(f);
+});
 
 onBeforeMount(async () => {
-  console.log("onBeforeMount");
-  let l: Array<any> = [];
-  // await getFolders().then((res) => {
-  //   console.log(res);
-  //   res.forEach((e) => {
-  //     console.log("foreach");
-  //     if (e["parent_id"] === 0) {
-  //       l.push({
-  //         text: e.name,
-  //         children: [{ text: "aaa" }],
-  //       });
-  //     }
-  //   });
-  // });
-  console.log(tree.value.addMulti(l));
+  await folderStore.getFolders();
 });
 
 onMounted(() => {});
+
+function convertToTree(folders: Array<Folder>): Array<TreeFolder> {
+  const map: { [key: number]: TreeFolder } = {};
+  const roots: Array<TreeFolder> = [];
+
+  // 首先将所有文件夹放入 map 中
+  folders.forEach((folder) => {
+    map[folder.id] = {
+      id: folder.id,
+      name: folder.name,
+      children: [],
+    };
+  });
+
+  // 然后构建树结构
+  folders.forEach((folder) => {
+    if (folder.pid === 0) {
+      roots.push(map[folder.id]);
+    } else {
+      if (map[folder.pid]) {
+        map[folder.pid].children.push(map[folder.id]);
+      }
+    }
+  });
+
+  return roots;
+}
 
 function onButtonClick(e: MouseEvent) {
   //Show component mode menu
@@ -119,7 +143,7 @@ function dropFile(event: DragEvent) {
 </script>
 
 <style scoped lang="less">
-.dirtree {
+.dir-tree {
   height: 500px;
   :deep(.tree-node:hover) {
     background-color: rgb(255 255 255 / 10%);

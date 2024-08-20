@@ -14,6 +14,17 @@ export interface AppConfig {
   useLanguage: string;
 }
 
-export interface Folder {}
+export interface Preferences {
+  os: string;
+  libraries: Array<Libraries>;
+  useLanguage: string;
+}
+
+export interface Folder {
+  id: number;
+  name: string;
+  pid: number;
+}
+
 export interface File {}
 export interface Tag {}

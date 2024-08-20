@@ -35,17 +35,14 @@ import Select, { SelectChangeEvent } from "primevue/select";
 import { usePreferencesStore } from "@/stores/preferences";
 import { Language } from "@/locales/i18n";
 import { DynamicDialogInstance } from "primevue/dynamicdialogoptions";
-const preferencesStore = usePreferencesStore();
-
-const dialogRef = inject<Ref<DynamicDialogInstance>>("dialogRef");
-
 interface LanguageOption {
   name: string;
   code: Language;
 }
 
+const preferencesStore = usePreferencesStore();
+const dialogRef = inject<Ref<DynamicDialogInstance>>("dialogRef");
 const selected: Ref<LanguageOption> = ref({ name: "中文", code: "zh-CN" });
-
 const options: Ref<Array<LanguageOption>> = ref([
   { name: "中文", code: "zh-CN" },
   { name: "English", code: "en-US" },
@@ -60,8 +57,6 @@ onBeforeMount(async () => {
 });
 
 async function changeLanguage(event: SelectChangeEvent) {
-  console.log(event.value);
-  console.log(selected);
   await preferencesStore.changeLanguage(event.value.code);
   await preferencesStore.changeTheme();
   dialogRef?.value.close({ a: "a" });

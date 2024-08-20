@@ -1,17 +1,13 @@
 import { http } from "@/utils/http";
+import { Folder } from "@type";
 
-interface Folder {
-  id: number;
-  name: string;
-  parent_id: number;
-}
-
-export const getFolders = async () => {
-  return await http.get<Array<Folder>>("/api/v1/folder").then(({ data }) => {
-    return data;
-  });
-};
-
-export const getFoldersElectron = async () => {
-  return window.electronAPI;
+export const getFolders = async (target: string) => {
+  if (target == "web") {
+    return await http.get<Array<Folder>>("/api/v1/folder").then(({ data }) => {
+      return data;
+    });
+  } else if ((target = "desktop")) {
+    return window.electronAPI.getFolders();
+  }
+  return [];
 };
