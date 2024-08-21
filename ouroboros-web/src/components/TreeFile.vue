@@ -1,13 +1,19 @@
 <template>
   <Draggable
+    v-model="folders"
     ref="tree"
     virtualization
     class="mtl-tree dir-tree"
     treeLine
+    updateBehavior="modify"
     :externalDataHandler="dropFile"
     :onExternalDragOver="() => true"
+    @click:node="onClickNode"
   >
-    <template #default="{ node, stat }" class="test">
+    <template
+      #default="{ node, stat }: { node: any, stat: Stat<Folder> }"
+      class="test"
+    >
       <i
         v-if="!stat.open"
         @click.native="stat.open = !stat.open"
@@ -23,13 +29,8 @@
 
       <div
         class="dropzone"
+        :class="{ selected: selectFolderId == stat.data.id }"
         @contextmenu="onButtonClick"
-        @click="
-          async () => {
-            await folderStore.addFolder();
-            console.log(stat, node);
-          }
-        "
       >
         <span class="mtl-ml">{{ node.name }}</span>
       </div>
@@ -40,10 +41,11 @@
 <script setup lang="ts">
 import ContextMenu from "@imengyu/vue3-context-menu";
 import { Draggable } from "@he-tree/vue";
+import { Stat } from "@he-tree/tree-utils";
 import "@he-tree/vue/style/default.css";
 import "@he-tree/vue/style/material-design.css";
 import { userFolderStore } from "@/stores/folder";
-import { ref, onMounted, onBeforeMount, Ref } from "vue";
+import { ref, onMounted, onBeforeMount, Ref, reactive, Reactive } from "vue";
 import { Folder } from "@type";
 
 interface TreeFolder {
@@ -53,19 +55,27 @@ interface TreeFolder {
 }
 
 const folderStore = userFolderStore();
-const tree = ref();
+const tree = ref<InstanceType<typeof Draggable>>()
 const folders: Ref<Array<TreeFolder>> = ref([]);
-
-folderStore.$subscribe((mutation, state) => {
-  let f = convertToTree(folderStore.folders);
-  tree.value.addMulti(f);
-});
+const selectFolderId: Ref<number> = ref(0);
 
 onBeforeMount(async () => {
   await folderStore.getFolders();
+  let f = convertToTree(folderStore.folders);
+  tree.value?.addMulti(f);
 });
 
-onMounted(() => {});
+onMounted(() => {
+  console.log(typeof tree.value);
+  console.log(tree);
+});
+
+async function addRow(node: any) {
+  console.log(node);
+  await folderStore.addFolder();
+  let f = convertToTree(folderStore.folders);
+  folders.value = f;
+}
 
 function convertToTree(folders: Array<Folder>): Array<TreeFolder> {
   const map: { [key: number]: TreeFolder } = {};
@@ -92,6 +102,12 @@ function convertToTree(folders: Array<Folder>): Array<TreeFolder> {
   });
 
   return roots;
+}
+
+function onClickNode(stat: Stat<TreeFolder>) {
+  console.log(stat.data.id);
+  console.log(stat);
+  selectFolderId.value = stat.data.id;
 }
 
 function onButtonClick(e: MouseEvent) {
@@ -132,22 +148,18 @@ function dropFile(event: DragEvent) {
   console.log(event.dataTransfer?.files);
   console.log(event);
 }
-
-// function remove() {
-//   tree.value.closeAll();
-//   console.log(tree.value);
-//   console.log(tree.value.getData());
-//   console.log(tree.value.stats);
-//   console.log(tree.value.removeMulti(tree.value.stats));
-// }
 </script>
 
 <style scoped lang="less">
 .dir-tree {
   height: 500px;
   :deep(.tree-node:hover) {
-    background-color: rgb(255 255 255 / 10%);
+    background-color: var(--p-tree-hover);
   }
+  :deep(.tree-node:has(.tree-node-inner .selected)) {
+    background-color: var(--p-tree-selected);
+  }
+
   .tree-node {
     display: flex;
     width: 100%;

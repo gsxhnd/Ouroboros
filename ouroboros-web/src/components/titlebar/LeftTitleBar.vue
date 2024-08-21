@@ -2,7 +2,10 @@
   <div class="left-title-bar electron-drag">
     <div class="button-group">
       <i class="icon pi pi-cog" @click="openPreference"></i>
-      <i class="icon pi pi-spin pi-spinner"></i>
+      <i
+        class="icon pi pi-spin pi-spinner"
+        @click="preferencesStore.toggleSidePanel()"
+      ></i>
       <!-- <span class="material-icons-outlined">dock_to_right</span> -->
       <!-- <span class="material-icons-outlined">dock</span> -->
     </div>
@@ -12,6 +15,9 @@
 // import { useRoute, useRouter } from "vue-router";
 import { useDialog } from "primevue/usedialog";
 import Setting from "@/components/Setting.vue";
+import { usePreferencesStore } from "@/stores/preferences";
+
+const preferencesStore = usePreferencesStore();
 const dialog = useDialog();
 
 // const router = useRouter();

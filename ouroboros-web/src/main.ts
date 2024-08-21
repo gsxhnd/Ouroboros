@@ -17,6 +17,7 @@ import ContextMenu from "@imengyu/vue3-context-menu";
 
 import App from "./App.vue";
 import "./style.less";
+import "./themes/scrollbar.less";
 
 const pinia = createPinia();
 

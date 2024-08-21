@@ -20,9 +20,11 @@ export const userFolderStore = defineStore("folder", () => {
   }
 
   async function addFolder() {
+    let id = Math.random();
+    let name = Math.random().toString(10);
     folders.value.push({
-      id: 0,
-      name: "1111",
+      id: id,
+      name: name,
       pid: 0,
     });
   }
