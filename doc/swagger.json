@@ -161,6 +161,53 @@
         "responses": {}
       }
     },
+    "/api/v1/resource/file/{file_id}": {
+      "post": {
+        "tags": [
+          "resource"
+        ],
+        "operationId": "file",
+        "parameters": [
+          {
+            "name": "file_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {}
+      }
+    },
+    "/api/v1/resource/thumbnail/{file_id}": {
+      "post": {
+        "tags": [
+          "resource"
+        ],
+        "operationId": "thumbnail",
+        "parameters": [
+          {
+            "name": "file_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {}
+      }
+    },
+    "/api/v1/sync": {
+      "post": {
+        "tags": [
+          "default"
+        ],
+        "operationId": "sync",
+        "responses": {}
+      }
+    },
     "/api/v1/tag": {
       "get": {
         "tags": [
@@ -225,6 +272,15 @@
           },
           "required": true
         },
+        "responses": {}
+      }
+    },
+    "/ping": {
+      "post": {
+        "tags": [
+          "default"
+        ],
+        "operationId": "ping",
         "responses": {}
       }
     }
@@ -346,7 +402,7 @@
         "required": [
           "id",
           "name",
-          "parent_id"
+          "pid"
         ],
         "properties": {
           "created_at": {
@@ -361,7 +417,7 @@
           "name": {
             "type": "string"
           },
-          "parent_id": {
+          "pid": {
             "type": "integer",
             "format": "int32",
             "minimum": 0

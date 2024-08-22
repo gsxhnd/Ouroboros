@@ -18,6 +18,10 @@ use utoipa::OpenApi;
         handler::tag::delete_tag,
         handler::tag::update_tag_info,
         handler::tag::get_tags,
+        handler::resource::file,
+        handler::resource::thumbnail,
+        handler::root::ping,
+        handler::root::sync,
     ),
     components(schemas(
         handler::folder::CreateFolder,

@@ -3,8 +3,6 @@ name = "ouroboros-core"
 version = "0.1.0"
 edition = "2021"
 
-[build]
-rustflags = ["--cfg=sqlx_macros_unstable"]
 
 [dependencies]
 chrono = { workspace = true }
