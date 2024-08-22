@@ -5,7 +5,9 @@
       <AccordionPanel value="file">
         <template #default
           >123
-          <AccordionContent><template #default>123</template></AccordionContent>
+          <AccordionContent
+            ><template #default><tree-file></tree-file></template
+          ></AccordionContent>
         </template>
       </AccordionPanel>
       <AccordionPanel value="1">

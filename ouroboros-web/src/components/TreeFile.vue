@@ -45,7 +45,7 @@ import { Stat } from "@he-tree/tree-utils";
 import "@he-tree/vue/style/default.css";
 import "@he-tree/vue/style/material-design.css";
 import { userFolderStore } from "@/stores/folder";
-import { ref, onMounted, onBeforeMount, Ref, reactive, Reactive } from "vue";
+import { ref, onMounted, onBeforeMount, Ref } from "vue";
 import { Folder } from "@type";
 
 interface TreeFolder {
@@ -55,14 +55,15 @@ interface TreeFolder {
 }
 
 const folderStore = userFolderStore();
-const tree = ref<InstanceType<typeof Draggable>>()
+const tree = ref<InstanceType<typeof Draggable>>();
 const folders: Ref<Array<TreeFolder>> = ref([]);
 const selectFolderId: Ref<number> = ref(0);
 
 onBeforeMount(async () => {
   await folderStore.getFolders();
   let f = convertToTree(folderStore.folders);
-  tree.value?.addMulti(f);
+  console.log(f);
+  // tree.value?.addMulti(f);
 });
 
 onMounted(() => {
@@ -70,12 +71,12 @@ onMounted(() => {
   console.log(tree);
 });
 
-async function addRow(node: any) {
-  console.log(node);
-  await folderStore.addFolder();
-  let f = convertToTree(folderStore.folders);
-  folders.value = f;
-}
+// async function addRow(node: any) {
+//   console.log(node);
+//   await folderStore.addFolder();
+//   let f = convertToTree(folderStore.folders);
+//   folders.value = f;
+// }
 
 function convertToTree(folders: Array<Folder>): Array<TreeFolder> {
   const map: { [key: number]: TreeFolder } = {};

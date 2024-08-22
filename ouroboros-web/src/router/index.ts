@@ -34,21 +34,22 @@ const router = createRouter({
   strict: true,
 });
 
-router.beforeEach(async (to, _from) => {
+router.beforeEach(async (_to, _from) => {
   const preferencesStore = usePreferencesStore();
+  console.log(preferencesStore.useElectron);
 
-  if (
-    to.name != "InitElectron" &&
-    !preferencesStore.useBrowser &&
-    (preferencesStore.preference === null ||
-      preferencesStore.preference.appConfig.libraries.length === 0)
-  ) {
-    preferencesStore.preference?.appConfig.libraries.forEach((library) => {
-      const { path, use } = library;
-      console.log(path, use);
-    });
-    return { name: "InitElectron" };
-  }
+  // if (
+  //   to.name != "InitElectron" &&
+  //   !preferencesStore.useBrowser &&
+  //   (preferencesStore.preference === null ||
+  //     preferencesStore.preference.appConfig.libraries.length === 0)
+  // ) {
+  //   preferencesStore.preference?.appConfig.libraries.forEach((library) => {
+  //     const { path, use } = library;
+  //     console.log(path, use);
+  //   });
+  //   return { name: "InitElectron" };
+  // }
 });
 
 export { router };
