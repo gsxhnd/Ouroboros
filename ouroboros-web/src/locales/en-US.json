@@ -1,5 +1,6 @@
 {
   "message": {
-    "hello": "test"
+    "hello": "test",
+    "Tag": "Tag"
   }
 }

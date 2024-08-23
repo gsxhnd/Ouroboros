@@ -4,14 +4,12 @@
     <div class="content">
       <router-view></router-view>
     </div>
-
-    <player></player>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onBeforeMount, onMounted } from "vue";
-import Player from "@/components/Player.vue";
+
 import ContentTitleBar from "@/components/titlebar/ContentTitleBar.vue";
 
 onBeforeMount(async () => {});

@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { i18n, Language } from "@/locales/i18n";
 import { localStore } from "@/utils/store";
 import { usePreset } from "@primevue/themes";
-import { darkTheme } from "@/themes/theme";
+import { oneDarkTheme } from "@/themes";
 import { usePreferredLanguages } from "@vueuse/core";
 import { Ref, ref, computed } from "vue";
 
@@ -47,7 +47,7 @@ export const usePreferencesStore = defineStore("preferences", () => {
   }
 
   async function changeTheme() {
-    usePreset(darkTheme);
+    usePreset(oneDarkTheme);
   }
 
   async function toggleSidePanel() {

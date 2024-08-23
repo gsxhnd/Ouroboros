@@ -63,7 +63,7 @@ onBeforeMount(async () => {
   await folderStore.getFolders();
   let f = convertToTree(folderStore.folders);
   console.log(f);
-  // tree.value?.addMulti(f);
+  tree.value?.addMulti(f);
 });
 
 onMounted(() => {
@@ -153,7 +153,8 @@ function dropFile(event: DragEvent) {
 
 <style scoped lang="less">
 .dir-tree {
-  height: 500px;
+  height: 100%;
+  width: 100%;
   :deep(.tree-node:hover) {
     background-color: var(--p-tree-hover);
   }

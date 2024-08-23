@@ -1,15 +1,7 @@
 import Aura from "@primevue/themes/aura";
 import { definePreset } from "@primevue/themes";
 
-export const lightTheme = definePreset(Aura, {
-  components: {
-    splitter: {
-      gutter: {},
-    },
-  },
-});
-
-export const darkTheme = definePreset(Aura, {
+export const oneDarkTheme = definePreset(Aura, {
   components: {
     dialog: {
       content: {
@@ -24,7 +16,7 @@ export const darkTheme = definePreset(Aura, {
     },
     splitter: {
       root: {
-        background: "var(--p-bg-1)",
+        background: "var(--p-bg-2)",
         color: "white",
       },
       gutter: {
@@ -53,7 +45,20 @@ export const darkTheme = definePreset(Aura, {
       hover: "rgb(255, 255, 255, 10%)",
       selected: "rgb(255, 255, 255, 20%)",
     },
+    splitter: {
+      bg: "var(--p-slate-700)",
+      hover: "#006dff",
+    },
+  },
+  semantic: {
+    focusRing: {
+      color: "",
+      offset: "0",
+      shadow: "none",
+      style: "none",
+      width: "0",
+    },
   },
 });
 
-console.log(darkTheme);
+console.log(oneDarkTheme);

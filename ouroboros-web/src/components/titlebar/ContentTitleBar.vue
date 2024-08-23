@@ -6,6 +6,5 @@
 <style scoped lang="less">
 .content-title-bar {
   height: 30px;
-  /* background-color: black; */
 }
 </style>

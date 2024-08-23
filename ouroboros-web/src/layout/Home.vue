@@ -6,7 +6,6 @@
       class="flex align-items-center justify-content-center"
       :style="{ display: preferencesStore.showSidePanel ? '' : 'none' }"
     >
-      {{ preferencesStore.getPanelSize.value[0] }}
       <left-pane></left-pane>
     </SplitterPanel>
     <SplitterPanel
@@ -14,7 +13,6 @@
       :size="preferencesStore.getPanelSize.value[1]"
       class="flex align-items-center justify-content-center"
     >
-      {{ preferencesStore.getPanelSize.value[1] }}
       <content-pane></content-pane>
     </SplitterPanel>
     <SplitterPanel
@@ -23,7 +21,6 @@
       class="flex align-items-center justify-content-center"
       :style="{ display: preferencesStore.showSidePanel ? '' : 'none' }"
     >
-      {{ preferencesStore.getPanelSize.value[2] }}
       <right-pane></right-pane>
     </SplitterPanel>
   </Splitter>

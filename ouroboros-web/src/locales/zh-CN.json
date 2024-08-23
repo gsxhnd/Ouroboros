@@ -1,5 +1,6 @@
 {
   "message": {
-    "hello": "测试"
+    "hello": "测试",
+    "Tag": "标签"
   }
 }
