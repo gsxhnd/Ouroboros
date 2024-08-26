@@ -3,7 +3,7 @@
     v-model="folders"
     ref="tree"
     virtualization
-    class="mtl-tree dir-tree"
+    class="mtl-tree folder-tree"
     treeLine
     updateBehavior="modify"
     :externalDataHandler="dropFile"
@@ -11,17 +11,16 @@
     @click:node="onClickNode"
   >
     <template
-      #default="{ node, stat }: { node: any, stat: Stat<Folder> }"
-      class="test"
+      #default="{ node, stat }: { node: TreeFolder, stat: Stat<Folder> }"
     >
       <i
-        v-if="!stat.open"
+        v-if="!stat.open && node.children.length > 0"
         @click.native="stat.open = !stat.open"
         class="pi pi-angle-right"
         style="font-size: 1rem"
       ></i>
       <i
-        v-if="stat.open"
+        v-if="stat.open && node.children.length > 0"
         @click.native="stat.open = !stat.open"
         class="pi pi-angle-down"
         style="font-size: 1rem"
@@ -29,25 +28,64 @@
 
       <div
         class="dropzone"
-        :class="{ selected: selectFolderId == stat.data.id }"
-        @contextmenu="onButtonClick"
+        :class="{ selected: folderStore.selectedFolderId == stat.data.id }"
+        @contextmenu="(e) => onMenuClick(e, node)"
       >
-        <span class="mtl-ml">{{ node.name }}</span>
+        <i
+          v-if="!stat.open || node.children.length == 0"
+          class="pi pi-folder"
+          style="font-size: 1rem"
+        ></i>
+        <i
+          v-if="stat.open && node.children.length > 0"
+          class="pi pi-folder-open"
+          style="font-size: 1rem"
+        ></i>
+        <!-- <span class="mtl-ml">{{ node.name }}</span> -->
+        <Inplace
+          :disabled="true"
+          :active="editFolderId == node.id"
+          class="mtl-ml"
+        >
+          <template #display>
+            <span>{{ node.name }}</span>
+          </template>
+          <template #content="{ closeCallback }">
+            <InputText
+              class="folder-name-input"
+              v-on-click-outside="
+                () => {
+                  editFolderId = 0;
+                }
+              "
+              v-model="node.name"
+              type="text"
+              size="small"
+              placeholder=""
+              variant="filled"
+            />
+          </template>
+        </Inplace>
       </div>
     </template>
   </Draggable>
 </template>
 
 <script setup lang="ts">
+import Inplace from "primevue/inplace";
+import InputText from "primevue/inputtext";
 import ContextMenu from "@imengyu/vue3-context-menu";
+import { vOnClickOutside } from "@vueuse/components";
 import { Draggable } from "@he-tree/vue";
 import { Stat } from "@he-tree/tree-utils";
 import "@he-tree/vue/style/default.css";
 import "@he-tree/vue/style/material-design.css";
 import { userFolderStore } from "@/stores/folder";
 import { ref, onMounted, onBeforeMount, Ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { Folder } from "@type";
 
+const i18n = useI18n();
 interface TreeFolder {
   id: number;
   name: string;
@@ -57,12 +95,11 @@ interface TreeFolder {
 const folderStore = userFolderStore();
 const tree = ref<InstanceType<typeof Draggable>>();
 const folders: Ref<Array<TreeFolder>> = ref([]);
-const selectFolderId: Ref<number> = ref(0);
+const editFolderId: Ref<number> = ref(0);
 
 onBeforeMount(async () => {
   await folderStore.getFolders();
   let f = convertToTree(folderStore.folders);
-  console.log(f);
   tree.value?.addMulti(f);
 });
 
@@ -70,13 +107,6 @@ onMounted(() => {
   console.log(typeof tree.value);
   console.log(tree);
 });
-
-// async function addRow(node: any) {
-//   console.log(node);
-//   await folderStore.addFolder();
-//   let f = convertToTree(folderStore.folders);
-//   folders.value = f;
-// }
 
 function convertToTree(folders: Array<Folder>): Array<TreeFolder> {
   const map: { [key: number]: TreeFolder } = {};
@@ -106,17 +136,16 @@ function convertToTree(folders: Array<Folder>): Array<TreeFolder> {
 }
 
 function onClickNode(stat: Stat<TreeFolder>) {
-  console.log(stat.data.id);
-  console.log(stat);
-  selectFolderId.value = stat.data.id;
+  folderStore.selectedFolderId = stat.data.id;
 }
 
-function onButtonClick(e: MouseEvent) {
+function onMenuClick(e: MouseEvent, node: TreeFolder) {
   //Show component mode menu
   // show.value = true;
   // optionsComponent.value.x = e.x;
   // optionsComponent.value.y = e.y;
   //prevent the browser's default menu
+  console.log(e);
   e.preventDefault();
   //show your menu
   ContextMenu.showContextMenu({
@@ -126,10 +155,11 @@ function onButtonClick(e: MouseEvent) {
     theme: "mac dark",
     items: [
       {
-        label: "A menu item",
+        label: i18n.t("message.Tag"),
         iconFontClass: "pi-folder",
         onClick: () => {
-          alert("You click a menu item");
+          editFolderId.value = node.id;
+          // alert(`You click a menu item ${node.name}`);
         },
       },
       {
@@ -152,14 +182,19 @@ function dropFile(event: DragEvent) {
 </script>
 
 <style scoped lang="less">
-.dir-tree {
+.folder-tree {
+  font-size: 18px;
   height: 100%;
   width: 100%;
+
   :deep(.tree-node:hover) {
     background-color: var(--p-tree-hover);
   }
   :deep(.tree-node:has(.tree-node-inner .selected)) {
     background-color: var(--p-tree-selected);
+  }
+  :deep(.tree-node .p-disabled) {
+    opacity: 1;
   }
 
   .tree-node {
@@ -168,18 +203,28 @@ function dropFile(event: DragEvent) {
   }
 
   .mtl-ml {
+    font-size: 16px;
     width: 100%;
     text-align: left;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  input {
-    width: 0px;
-  }
+
   .dropzone {
+    margin-left: 2px;
     width: 100%;
     display: flex;
+    align-items: center;
+    .folder-name-input {
+      font-size: 1em;
+      padding: 0 4px;
+      border-radius: 2px;
+      border: none;
+      // background: red;
+      height: 100%;
+      width: 80%;
+    }
   }
 }
 </style>

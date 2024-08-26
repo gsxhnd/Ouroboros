@@ -7,6 +7,7 @@ import { computed } from "vue";
 
 export const userFolderStore = defineStore("folder", () => {
   const folders: Ref<Array<Folder>> = ref([]);
+  const selectedFolderId: Ref<number> = ref(0);
 
   const target = computed(() => {
     const preferenceStore = usePreferencesStore();
@@ -29,5 +30,5 @@ export const userFolderStore = defineStore("folder", () => {
     });
   }
 
-  return { folders, getFolders, addFolder };
+  return { folders, selectedFolderId, getFolders, addFolder };
 });

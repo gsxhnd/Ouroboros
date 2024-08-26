@@ -35,6 +35,11 @@ export const oneDarkTheme = definePreset(Aura, {
         borderWidth: "0",
       },
     },
+    inplace: {
+      root: {
+        padding: 0,
+      },
+    },
   },
   primitive: {
     bg: {

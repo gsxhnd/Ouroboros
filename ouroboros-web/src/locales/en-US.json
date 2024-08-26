@@ -1,6 +1,7 @@
 {
   "message": {
     "hello": "test",
-    "Tag": "Tag"
+    "Tag": "Tag",
+    "SmartSearch": "SmartSearch"
   }
 }

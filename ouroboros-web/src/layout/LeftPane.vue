@@ -2,7 +2,7 @@
   <div class="left-pane">
     <left-title-bar></left-title-bar>
     <splitpanes horizontal style="height: 100%">
-      <pane min-size="10">
+      <pane min-size="10" class="file">
         <tree-file></tree-file>
       </pane>
       <pane min-size="10" class="tag">
@@ -11,7 +11,10 @@
         </div>
         <tag />
       </pane>
-      <pane min-size="10">
+      <pane min-size="10" class="search">
+        <div class="search-header">
+          <span>{{ $t("message.SmartSearch") }}</span>
+        </div>
         <smart-search />
       </pane>
     </splitpanes>
@@ -32,8 +35,8 @@ onMounted(() => {});
 
 <style scoped lang="less">
 .left-pane {
-  padding: 2px;
   height: 100vh;
+  background-color: var(--p-bg-1);
   .tag {
     padding: 2px;
     flex-direction: column;

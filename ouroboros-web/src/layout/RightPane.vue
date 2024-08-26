@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="right-pane">
     <right-title-bar></right-title-bar>
     <span>{{ $t("message.hello") }}</span>
   </div>
@@ -10,5 +10,7 @@ import RightTitleBar from "@/components/titlebar/RightTitleBar.vue";
 
 <style scoped lang="less">
 .right-pane {
+  background-color: var(--p-bg-1);
+  height: 100vh;
 }
 </style>
