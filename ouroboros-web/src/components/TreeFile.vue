@@ -85,13 +85,13 @@ import { ref, onMounted, onBeforeMount, Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { Folder } from "@type";
 
-const i18n = useI18n();
 interface TreeFolder {
   id: number;
   name: string;
   children: Array<TreeFolder>;
 }
 
+const i18n = useI18n();
 const folderStore = userFolderStore();
 const tree = ref<InstanceType<typeof Draggable>>();
 const folders: Ref<Array<TreeFolder>> = ref([]);
@@ -135,7 +135,10 @@ function convertToTree(folders: Array<Folder>): Array<TreeFolder> {
   return roots;
 }
 
-function onClickNode(stat: Stat<TreeFolder>) {
+async function onClickNode(stat: Stat<TreeFolder>) {
+  // await folderStore.getFolders();
+  // let f = convertToTree(folderStore.folders);
+  // tree.value?.addMulti(f);
   folderStore.selectedFolderId = stat.data.id;
 }
 

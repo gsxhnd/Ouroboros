@@ -9,8 +9,18 @@
 
 <script setup lang="ts">
 import { onBeforeMount, onMounted } from "vue";
-
+import { userFolderStore } from "@/stores/folder";
+import { useFileStore } from "@/stores/file";
 import ContentTitleBar from "@/components/titlebar/ContentTitleBar.vue";
+
+const folderStore = userFolderStore();
+const fileStore = useFileStore();
+
+folderStore.$subscribe((_mutation, state) => {
+  if (state.selectedFolderId == 0) return;
+  fileStore.getFiles(state.selectedFolderId);
+  console.log(fileStore.files);
+});
 
 onBeforeMount(async () => {});
 
