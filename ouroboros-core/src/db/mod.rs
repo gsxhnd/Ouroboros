@@ -21,8 +21,6 @@ impl Database {
         let pool_option = SqlitePoolOptions::new();
         let pool = pool_option.connect_with(conn_opt).await.unwrap();
 
-        // let pool = SqlitePool::connect(db_path).await.unwrap();
-
         Migrator::new(std::path::Path::new("./migrations"))
             .await
             .unwrap()
@@ -31,14 +29,5 @@ impl Database {
             .unwrap();
 
         Database { pool }
-    }
-
-    pub async fn init(&self) {
-        Migrator::new(std::path::Path::new("./migrations"))
-            .await
-            .unwrap()
-            .run(&self.pool)
-            .await
-            .unwrap();
     }
 }

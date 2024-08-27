@@ -73,8 +73,11 @@ impl Database {
         }
     }
 
-    pub async fn delete_files_by_id(&self, ids: Vec<u32>) {
-        let mut tx = self.pool.begin().await.unwrap();
+    pub async fn delete_files_by_id(&self, ids: Vec<u32>) -> Result<(), Error> {
+        let mut tx = match self.pool.begin().await {
+            Ok(tx) => tx,
+            Err(e) => return Err(e),
+        };
 
         let query = format!(
             "delete from file where id in ( {} )",
@@ -84,7 +87,17 @@ impl Database {
                 .join(",")
         );
 
-        sqlx::query(query.as_str()).execute(&mut *tx).await.unwrap();
-        tx.commit().await.unwrap();
+        match sqlx::query(query.as_str()).execute(&mut *tx).await {
+            Ok(_) => tx.commit().await,
+            Err(e) => {
+                match tx.rollback().await {
+                    Ok(_) => return Err(e),
+                    Err(e2) => {
+                        print!("{}", e2);
+                        return Err(e);
+                    }
+                };
+            }
+        }
     }
 }
