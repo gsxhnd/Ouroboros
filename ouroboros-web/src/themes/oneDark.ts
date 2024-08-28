@@ -20,10 +20,7 @@ export const oneDarkTheme = definePreset(Aura, {
         color: "white",
       },
       gutter: {
-        background: "--p-stone-800",
-      },
-      handle: {
-        background: "--p-stone-800",
+        background: "var(--p-splitter-gutter-bg-1)",
       },
     },
     accordion: {
@@ -46,16 +43,32 @@ export const oneDarkTheme = definePreset(Aura, {
       1: "#414246",
       2: "#37383c",
     },
+    pane: {
+      1: "#414246",
+      2: "#37383c",
+    },
+    surface: { 100: "#414246", 200: "#37383c" },
     tree: {
       hover: "rgb(255, 255, 255, 10%)",
       selected: "rgb(255, 255, 255, 20%)",
     },
     splitter: {
-      bg: "var(--p-slate-700)",
+      gutter: {
+        bg: { 1: "#404040", 2: "var(--p-pane-2)" },
+      },
       hover: "#006dff",
     },
   },
   semantic: {
+    // colorScheme: null,
+    colorScheme: {
+      light: {
+        surface: {},
+      },
+      dark: {
+        surface: {},
+      },
+    },
     focusRing: {
       color: "",
       offset: "0",
