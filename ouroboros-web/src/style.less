@@ -38,24 +38,19 @@ body {
   border: none !important;
 }
 
-.p-splitter {
-  .p-splitter-gutter {
-    width: 2px;
+.splitpanes {
+  color: white;
+  &.splitpanes--vertical > .splitpanes__splitter {
+    min-width: 3px !important;
+  }
+  &.splitpanes--horizontal > .splitpanes__splitter {
+    min-height: 3px !important;
+  }
+  .splitpanes__splitter {
+    background-color: var(--p-splitter-gutter-bg-2);
     &:hover {
       background-color: var(--p-splitter-hover);
     }
-  }
-}
-
-.splitpanes__pane {
-  display: flex;
-}
-
-.splitpanes__splitter {
-  background-color: var(--p-splitter-gutter-bg-2);
-  height: 2px;
-  &:hover {
-    background-color: var(--p-splitter-hover);
   }
 }
 

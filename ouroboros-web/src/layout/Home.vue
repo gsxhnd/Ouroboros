@@ -1,50 +1,25 @@
 <template>
-  <Splitter :pt="{}" @resizeend="onResizeEnd" @resize="onResizeEnd">
-    <SplitterPanel
-      :minSize="0"
-      :size="preferencesStore.getPanelSize.value[0]"
-      class="flex align-items-center justify-content-center"
-      :style="{ display: preferencesStore.showSidePanel ? '' : 'none' }"
-    >
+  <splitpanes style="height: 100vh">
+    <pane min-size="10" size="20" class="">
       <left-pane></left-pane>
-    </SplitterPanel>
-    <SplitterPanel
-      :minSize="20"
-      :size="preferencesStore.getPanelSize.value[1]"
-      class="flex align-items-center justify-content-center"
-    >
+    </pane>
+    <pane min-size="10" size="40" class="">
       <content-pane></content-pane>
-    </SplitterPanel>
-    <SplitterPanel
-      :minSize="0"
-      :size="preferencesStore.getPanelSize.value[2]"
-      class="flex align-items-center justify-content-center"
-      :style="{ display: preferencesStore.showSidePanel ? '' : 'none' }"
-    >
+    </pane>
+    <pane min-size="10" size="20" class="">
       <right-pane></right-pane>
-    </SplitterPanel>
-  </Splitter>
+    </pane>
+  </splitpanes>
 </template>
 
 <script setup lang="ts">
-import Splitter, { SplitterResizeEndEvent } from "primevue/splitter";
-import SplitterPanel from "primevue/splitterpanel";
+import { Splitpanes, Pane } from "splitpanes";
 
 import LeftPane from "./LeftPane.vue";
 import RightPane from "./RightPane.vue";
 import ContentPane from "./ContentPane.vue";
-import { usePreferencesStore } from "@/stores/preferences";
-const preferencesStore = usePreferencesStore();
-
-async function onResizeEnd(e: SplitterResizeEndEvent) {
-  console.log(e);
-  await preferencesStore.resizeSidePanel(e.sizes);
-}
+// import { usePreferencesStore } from "@/stores/preferences";
+// const preferencesStore = usePreferencesStore();
 </script>
 
-<style scoped lang="less">
-.p-splitter {
-  height: 100vh;
-  border: none;
-}
-</style>
+<style scoped lang="less"></style>

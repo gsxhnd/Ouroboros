@@ -5,7 +5,7 @@
       <pane min-size="10" class="file">
         <tree-file></tree-file>
       </pane>
-      <pane min-size="10" class="tag">
+      <pane min-size="10" class="tag-pane">
         <div class="tag-header">
           <span>{{ $t("message.Tag") }}</span>
         </div>
@@ -37,7 +37,7 @@ onMounted(() => {});
 .left-pane {
   height: 100vh;
   background-color: var(--p-bg-1);
-  .tag {
+  .tag-pane {
     padding: 2px;
     flex-direction: column;
     display: flex;

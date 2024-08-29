@@ -16,6 +16,7 @@ import ContextMenu from "@imengyu/vue3-context-menu";
 
 import App from "./App.vue";
 
+import "bulma/css/bulma.min.css";
 import "./style.less";
 import "splitpanes/dist/splitpanes.css";
 
