@@ -1,5 +1,5 @@
 <template>
-  <waterfall
+  <!-- <waterfall
     class="image"
     id="image"
     :virtual="waterfallOption.virtual"
@@ -12,7 +12,8 @@
     <template #default="{ item }: { item: ItemOption }">
       <img @click="showViewer" :src="item.url" />
     </template>
-  </waterfall>
+  </waterfall> -->
+  <grid-image></grid-image>
 </template>
 <style lang="less"></style>
 <script setup lang="ts">
@@ -20,6 +21,7 @@ import { reactive, onBeforeMount, onMounted } from "vue";
 import Viewer from "viewerjs";
 import "viewerjs/dist/viewer.min.css";
 import Waterfall from "@/components/Waterfall.vue";
+import GridImage from "@/components/GridImage.vue";
 
 interface ItemOption {
   id: number;

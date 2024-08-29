@@ -32,7 +32,7 @@ onMounted(async () => {});
   height: 100%;
   background-color: var(--p-bg-2);
   .content {
-    height: 100%;
+    height: calc(100% - var(--app-header-height));
     overflow: auto;
   }
 }

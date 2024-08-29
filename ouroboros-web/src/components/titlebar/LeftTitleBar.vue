@@ -1,5 +1,5 @@
 <template>
-  <div class="left-title-bar electron-drag">
+  <div class="left-title-bar electron-drag app-header-height">
     <div class="button-group">
       <i class="icon pi pi-cog" @click="openPreference"></i>
       <i
@@ -44,7 +44,6 @@ function openPreference() {
 <style scoped>
 .left-title-bar {
   display: flex;
-  height: 30px;
   flex-direction: row-reverse;
   .button-group {
     display: flex;

@@ -183,6 +183,7 @@ function dropFile(event: DragEvent) {
   event.stopPropagation();
 
   console.log(event.dataTransfer?.files);
+  console.log(event.dataTransfer?.getData("123"));
   console.log(event);
 }
 </script>

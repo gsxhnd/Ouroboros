@@ -10,6 +10,7 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
+  --app-header-height: 30px;
 }
 
 body {
@@ -27,6 +28,9 @@ body {
       outline: none;
     }
     overflow: hidden;
+    .app-header-height {
+      height: var(--app-header-height);
+    }
   }
 }
 

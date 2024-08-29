@@ -1,11 +1,10 @@
 <template>
-  <div class="right-title-bar electron-drag"></div>
+  <div class="right-title-bar electron-drag app-header-height"></div>
 </template>
 <script setup lang="ts"></script>
 
 <style scoped>
 .right-title-bar {
-  height: 30px;
   /* background-color: black; */
 }
 </style>
