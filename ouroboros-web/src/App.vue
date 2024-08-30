@@ -2,7 +2,6 @@
 import { onMounted, onBeforeMount } from "vue";
 import { usePreferencesStore } from "@/stores/preferences";
 const preferencesStore = usePreferencesStore();
-// import { SupportLanguage } from "@/locales/i18n";
 
 onBeforeMount(() => {
   const doc = document.documentElement;

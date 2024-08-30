@@ -3,7 +3,7 @@
   <div class="card">
     <!-- <Button label="NewAssetLib" outlined @click="open" /> -->
     <button label="NewAssetLib" outlined @click="open"></button>
-    <Button label="SelectAssetLib" outlined @click="selectPath" />
+    <!-- <Button label="SelectAssetLib" outlined @click="selectPath" /> -->
     <button label="SelectAssetLib" outlined @click="selectPath"></button>
     <input type="file" webkitdirectory directory />
   </div>

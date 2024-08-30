@@ -3,7 +3,6 @@ import { usePreferencesStore } from "@/stores/preferences";
 
 import Home from "@/layout/Home.vue";
 import InitElectron from "@/pages/InitElectron.vue";
-import InitBrowser from "@/pages/InitBrowser.vue";
 import Dashboard from "@/pages/Dashboard.vue";
 
 const RootRoute: RouteRecordRaw = {
@@ -24,7 +23,6 @@ const InitRouter: RouteRecordRaw = {
   },
   children: [
     { path: "electron", name: "InitElectron", component: InitElectron },
-    { path: "browser", name: "InitBrowser", component: InitBrowser },
   ],
 };
 
