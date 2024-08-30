@@ -37,6 +37,7 @@ export default defineConfig({
   },
 
   build: {
+    emptyOutDir: true,
     outDir: "../dist/renderer",
     cssTarget: "chrome61",
     sourcemap: isDev,

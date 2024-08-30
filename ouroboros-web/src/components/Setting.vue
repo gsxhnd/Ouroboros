@@ -2,7 +2,7 @@
   <div class="modal" :class="{ 'is-active': preferencesStore.showModal }">
     <div class="modal-background"></div>
     <div class="modal-content" v-on-click-outside="closeModal">
-      <div class="left">123</div>
+      <div class="left" @click="changeLanguage">123</div>
       <div class="right"></div>
     </div>
   </div>
@@ -27,7 +27,7 @@
 }
 </style>
 <script setup lang="ts">
-import { ref, Ref, inject, onBeforeMount } from "vue";
+import { ref, Ref, onBeforeMount } from "vue";
 import { usePreferencesStore } from "@/stores/preferences";
 import { Language } from "@/locales/i18n";
 import { vOnClickOutside } from "@vueuse/components";

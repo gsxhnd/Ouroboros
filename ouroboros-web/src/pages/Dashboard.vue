@@ -26,9 +26,9 @@
 <style scoped lang="scss"></style>
 <script setup lang="ts">
 import { reactive, onBeforeMount, onMounted } from "vue";
-import Viewer from "viewerjs";
+// import Viewer from "viewerjs";
 import "viewerjs/dist/viewer.min.css";
-import Waterfall from "@/components/Waterfall.vue";
+// import Waterfall from "@/components/Waterfall.vue";
 import GridImage from "@/components/GridImage.vue";
 
 interface ItemOption {
@@ -42,20 +42,20 @@ interface ItemOption {
   views: number;
 }
 
-const waterfallOption = reactive({
-  loading: false,
-  bottomDistance: 0,
-  // 是否只展示图片，这是自定义加的一个属性
-  onlyImage: false,
-  topPreloadScreenCount: 0,
-  bottomPreloadScreenCount: 0,
-  virtual: true,
-  gap: 10,
-  padding: 15,
-  itemMinWidth: 220,
-  minColumnCount: 2,
-  maxColumnCount: 10,
-});
+// const waterfallOption = reactive({
+//   loading: false,
+//   bottomDistance: 0,
+//   // 是否只展示图片，这是自定义加的一个属性
+//   onlyImage: false,
+//   topPreloadScreenCount: 0,
+//   bottomPreloadScreenCount: 0,
+//   virtual: true,
+//   gap: 10,
+//   padding: 15,
+//   itemMinWidth: 220,
+//   minColumnCount: 2,
+//   maxColumnCount: 10,
+// });
 
 const data = reactive({
   page: 0,
@@ -72,23 +72,23 @@ onBeforeMount(async () => {
 
 onMounted(async () => {});
 
-function showViewer() {
-  console.log("showViewer");
-  let g = document.getElementById("image");
-  if (g == null) return;
+// function showViewer() {
+//   console.log("showViewer");
+//   let g = document.getElementById("image");
+//   if (g == null) return;
 
-  const viewer = new Viewer(g, {
-    inline: true,
-    hidden: function () {
-      viewer.destroy();
-    },
-  });
-  viewer.show();
-}
+//   const viewer = new Viewer(g, {
+//     inline: true,
+//     hidden: function () {
+//       viewer.destroy();
+//     },
+//   });
+//   viewer.show();
+// }
 
-const calcItemHeight = (item: ItemOption, itemWidth: number) => {
-  return item.height * (itemWidth / item.width);
-};
+// const calcItemHeight = (item: ItemOption, itemWidth: number) => {
+//   return item.height * (itemWidth / item.width);
+// };
 
 const loadData = async () => {
   if (data.end) {

@@ -56,7 +56,6 @@ import "@he-tree/vue/style/default.css";
 import "@he-tree/vue/style/material-design.css";
 
 import { ref, onMounted, onBeforeMount, Ref } from "vue";
-import { vOnClickOutside } from "@vueuse/components";
 import { useI18n } from "vue-i18n";
 
 import { userFolderStore } from "@/stores/folder";

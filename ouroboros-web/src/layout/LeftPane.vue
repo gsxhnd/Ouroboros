@@ -28,7 +28,7 @@ import Tag from "@/components/Tag.vue";
 import SmartSearch from "@/components/SmartSearch.vue";
 
 import { Splitpanes, Pane } from "splitpanes";
-import { ref, onMounted } from "vue";
+import { onMounted } from "vue";
 
 onMounted(() => {});
 </script>
