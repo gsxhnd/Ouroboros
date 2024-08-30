@@ -35,8 +35,10 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+
   build: {
     outDir: "../dist/renderer",
+    cssTarget: "chrome61",
     sourcemap: isDev,
   },
 });

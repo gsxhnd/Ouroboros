@@ -33,7 +33,7 @@
 
   <div ref="regionRef" class="selection-area" :style="regionConfig"></div> -->
 </template>
-<style lang="less">
+<style scoped lang="scss">
 .vgl-item {
   background-color: aliceblue;
   img {

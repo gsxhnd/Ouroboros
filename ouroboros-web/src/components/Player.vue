@@ -8,7 +8,7 @@
     <media-video-layout></media-video-layout>
   </media-player>
 </template>
-<style lang="less"></style>
+<style scoped lang="scss"></style>
 <script setup lang="ts">
 import "vidstack/bundle";
 </script>

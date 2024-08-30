@@ -6,38 +6,19 @@
         class="icon pi pi-spin pi-spinner"
         @click="preferencesStore.toggleSidePanel()"
       ></i>
-      <!-- <span class="material-icons-outlined">dock_to_right</span> -->
-      <!-- <span class="material-icons-outlined">dock</span> -->
     </div>
   </div>
+
+  <setting></setting>
 </template>
 <script setup lang="ts">
-// import { useRoute, useRouter } from "vue-router";
-import { useDialog } from "primevue/usedialog";
 import Setting from "@/components/Setting.vue";
 import { usePreferencesStore } from "@/stores/preferences";
 
 const preferencesStore = usePreferencesStore();
-const dialog = useDialog();
-
-// const router = useRouter();
-// const route = useRoute();
 
 function openPreference() {
-  dialog.open(Setting, {
-    props: {
-      modal: true,
-      closable: false,
-      draggable: false,
-      showHeader: false,
-      dismissableMask: true,
-      contentClass: "setting-dialog",
-    },
-    onClose: (options: any) => {
-      console.log("close opt: ", options);
-    },
-  });
-  // router.push({ path: "/setting", replace: true, query: route.query });
+  preferencesStore.showModal = true;
 }
 </script>
 
@@ -48,7 +29,6 @@ function openPreference() {
   .button-group {
     display: flex;
     align-items: center;
-    /* padding-right: 10px; */
     .icon {
       cursor: pointer;
       margin-right: 10px;

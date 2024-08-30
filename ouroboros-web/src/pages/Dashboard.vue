@@ -14,8 +14,16 @@
     </template>
   </waterfall> -->
   <grid-image></grid-image>
+
+  <div class="columns">
+    <div class="column">1</div>
+    <div class="column">2</div>
+    <div class="column">3</div>
+    <div class="column">4</div>
+    <div class="column">5</div>
+  </div>
 </template>
-<style lang="less"></style>
+<style scoped lang="scss"></style>
 <script setup lang="ts">
 import { reactive, onBeforeMount, onMounted } from "vue";
 import Viewer from "viewerjs";

@@ -1,3 +1,3 @@
 <template></template>
-<style lang="less"></style>
+<style scoped lang="scss"></style>
 <script setup lang="ts"></script>

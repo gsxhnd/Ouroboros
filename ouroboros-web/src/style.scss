@@ -1,4 +1,5 @@
-@import "./themes/scrollbar.less";
+@import "./themes/scrollbar";
+@import "./themes/oneDark";
 
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -10,7 +11,6 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
-  --app-header-height: 30px;
 }
 
 body {
@@ -24,18 +24,11 @@ body {
     min-width: 100vw;
     min-height: 100vh;
     text-align: center;
-    :focus-visible {
-      outline: none;
-    }
     overflow: hidden;
     .app-header-height {
       height: var(--app-header-height);
     }
   }
-}
-
-.p-dialog {
-  border: none !important;
 }
 
 .splitpanes {
@@ -47,9 +40,9 @@ body {
     min-height: 3px !important;
   }
   .splitpanes__splitter {
-    background-color: var(--p-splitter-gutter-bg-2);
+    background-color: var(--app-splitter-gutter-color-h);
     &:hover {
-      background-color: var(--p-splitter-hover);
+      background-color: var(--app-splitter-gutter-hover);
     }
   }
 }

@@ -41,39 +41,13 @@
           class="pi pi-folder-open"
           style="font-size: 1rem"
         ></i>
-        <!-- <span class="mtl-ml">{{ node.name }}</span> -->
-        <Inplace
-          :disabled="true"
-          :active="editFolderId == node.id"
-          class="mtl-ml"
-        >
-          <template #display>
-            <span>{{ node.name }}</span>
-          </template>
-          <template #content="{ closeCallback }">
-            <InputText
-              class="folder-name-input"
-              v-on-click-outside="
-                () => {
-                  editFolderId = 0;
-                }
-              "
-              v-model="node.name"
-              type="text"
-              size="small"
-              placeholder=""
-              variant="filled"
-            />
-          </template>
-        </Inplace>
+        <span class="mtl-ml">{{ node.name }}</span>
       </div>
     </template>
   </Draggable>
 </template>
 
 <script setup lang="ts">
-import Inplace from "primevue/inplace";
-import InputText from "primevue/inputtext";
 import ContextMenu from "@imengyu/vue3-context-menu";
 
 import { Draggable } from "@he-tree/vue";
@@ -165,7 +139,6 @@ function onMenuClick(e: MouseEvent, node: TreeFolder) {
         iconFontClass: "pi-folder",
         onClick: () => {
           editFolderId.value = node.id;
-          // alert(`You click a menu item ${node.name}`);
         },
       },
       {
@@ -188,25 +161,18 @@ function dropFile(event: DragEvent) {
 }
 </script>
 
-<style scoped lang="less">
+<style scoped lang="scss">
 .folder-tree {
   font-size: 18px;
   height: 100%;
   width: 100%;
-
-  :deep(.tree-node:hover) {
-    background-color: var(--p-tree-hover);
-  }
-  :deep(.tree-node:has(.tree-node-inner .selected)) {
-    background-color: var(--p-tree-selected);
-  }
-  :deep(.tree-node .p-disabled) {
-    opacity: 1;
-  }
-
-  .tree-node {
-    display: flex;
-    width: 100%;
+  :deep(.tree-node) {
+    &:hover {
+      background-color: var(--app-file-tree-hover);
+    }
+    &:has(.tree-node-inner .selected) {
+      background-color: var(--app-file-tree-selected);
+    }
   }
 
   .mtl-ml {
@@ -228,7 +194,6 @@ function dropFile(event: DragEvent) {
       padding: 0 4px;
       border-radius: 2px;
       border: none;
-      // background: red;
       height: 100%;
       width: 80%;
     }

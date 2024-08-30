@@ -1,9 +1,9 @@
 <template>
   <div class="left-pane">
-    <left-title-bar></left-title-bar>
+    <LeftTitleBar />
     <splitpanes horizontal style="height: 100%">
       <pane min-size="10" class="file">
-        <tree-file></tree-file>
+        <FileTree />
       </pane>
       <pane min-size="10" class="tag-pane">
         <div class="tag-header">
@@ -15,7 +15,7 @@
         <div class="search-header">
           <span>{{ $t("message.SmartSearch") }}</span>
         </div>
-        <smart-search />
+        <SmartSearch />
       </pane>
     </splitpanes>
   </div>
@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 import LeftTitleBar from "@/components/titlebar/LeftTitleBar.vue";
-import TreeFile from "@/components/TreeFile.vue";
+import FileTree from "@/components/FileTree.vue";
 import Tag from "@/components/Tag.vue";
 import SmartSearch from "@/components/SmartSearch.vue";
 
@@ -33,10 +33,10 @@ import { ref, onMounted } from "vue";
 onMounted(() => {});
 </script>
 
-<style scoped lang="less">
+<style scoped lang="scss">
 .left-pane {
   height: 100vh;
-  background-color: var(--p-bg-1);
+  background-color: var(--app-pane-background-2);
   .tag-pane {
     padding: 2px;
     flex-direction: column;

@@ -8,9 +8,9 @@
 import RightTitleBar from "@/components/titlebar/RightTitleBar.vue";
 </script>
 
-<style scoped lang="less">
+<style scoped lang="scss">
 .right-pane {
-  background-color: var(--p-bg-1);
+  background-color: var(--app-pane-background-2);
   height: 100vh;
 }
 </style>

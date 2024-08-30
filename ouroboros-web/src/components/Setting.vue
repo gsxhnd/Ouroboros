@@ -1,18 +1,15 @@
 <template>
-  <div class="left">123</div>
-  <div class="right">
-    <Select
-      v-model="selected"
-      :options="options"
-      @change="changeLanguage($event)"
-      optionLabel="name"
-      placeholder="Select a City"
-      class="w-full md:w-56"
-    />
+  <div class="modal" :class="{ 'is-active': preferencesStore.showModal }">
+    <div class="modal-background"></div>
+    <div class="modal-content" v-on-click-outside="closeModal">
+      <div class="left">123</div>
+      <div class="right"></div>
+    </div>
   </div>
 </template>
-<style lang="less">
-.setting-dialog {
+<style scoped lang="scss">
+.modal-content {
+  --bulma-modal-content-width: var(--app-setting-pane-width);
   height: 80vh;
   width: 60vw;
   padding: 0;
@@ -21,27 +18,27 @@
   color: white;
   .left {
     width: 30%;
-    background-color: var(--p-bg-1);
+    background-color: var(--app-pane-background-1);
   }
   .right {
     width: 70%;
-    background-color: var(--p-bg-2);
+    background-color: var(--app-pane-background-2);
   }
 }
 </style>
 <script setup lang="ts">
 import { ref, Ref, inject, onBeforeMount } from "vue";
-import Select, { SelectChangeEvent } from "primevue/select";
 import { usePreferencesStore } from "@/stores/preferences";
 import { Language } from "@/locales/i18n";
-import { DynamicDialogInstance } from "primevue/dynamicdialogoptions";
+import { vOnClickOutside } from "@vueuse/components";
+
 interface LanguageOption {
   name: string;
   code: Language;
 }
 
+const isActive = ref(true);
 const preferencesStore = usePreferencesStore();
-const dialogRef = inject<Ref<DynamicDialogInstance>>("dialogRef");
 const selected: Ref<LanguageOption> = ref({ name: "中文", code: "zh-CN" });
 const options: Ref<Array<LanguageOption>> = ref([
   { name: "中文", code: "zh-CN" },
@@ -56,9 +53,14 @@ onBeforeMount(async () => {
   selected.value = options.value[index];
 });
 
-async function changeLanguage(event: SelectChangeEvent) {
-  await preferencesStore.changeLanguage(event.value.code);
+async function changeLanguage() {
+  await preferencesStore.changeLanguage("en-US");
   await preferencesStore.changeTheme();
-  dialogRef?.value.close({ a: "a" });
+}
+
+function closeModal() {
+  // alert("close");
+  isActive.value = false;
+  preferencesStore.showModal = false;
 }
 </script>

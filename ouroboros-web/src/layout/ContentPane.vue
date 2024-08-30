@@ -27,10 +27,10 @@ onBeforeMount(async () => {});
 onMounted(async () => {});
 </script>
 
-<style scoped lang="less">
+<style scoped lang="scss">
 .content-pane {
   height: 100%;
-  background-color: var(--p-bg-2);
+  background-color: var(--app-pane-background-1);
   .content {
     height: calc(100% - var(--app-header-height));
     overflow: auto;

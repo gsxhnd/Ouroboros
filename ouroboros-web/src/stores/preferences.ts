@@ -1,8 +1,7 @@
 import { defineStore } from "pinia";
 import { i18n, Language } from "@/locales/i18n";
 import { localStore } from "@/utils/store";
-import { usePreset } from "@primevue/themes";
-import { oneDarkTheme } from "@/themes";
+
 import { usePreferredLanguages } from "@vueuse/core";
 import { Ref, ref, computed } from "vue";
 
@@ -13,6 +12,7 @@ export const usePreferencesStore = defineStore("preferences", () => {
   const useElectron: Ref<boolean> = ref(false);
   const target: Ref<string> = ref("");
   const useLanguage: Ref<Language> = ref("en-US");
+  const showModal: Ref<boolean> = ref(false);
   const showSidePanel: Ref<boolean> = ref(true);
   const sidePanelSize: Ref<Array<number>> = ref([20, 60, 20]);
 
@@ -47,7 +47,7 @@ export const usePreferencesStore = defineStore("preferences", () => {
   }
 
   async function changeTheme() {
-    usePreset(oneDarkTheme);
+    // usePreset(oneDarkTheme);
   }
 
   async function toggleSidePanel() {
@@ -72,6 +72,7 @@ export const usePreferencesStore = defineStore("preferences", () => {
     target,
     showSidePanel,
     sidePanelSize,
+    showModal,
     init,
     changeLanguage,
     toggleSidePanel,

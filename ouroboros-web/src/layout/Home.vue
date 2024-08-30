@@ -22,4 +22,4 @@ import ContentPane from "./ContentPane.vue";
 // const preferencesStore = usePreferencesStore();
 </script>
 
-<style scoped lang="less"></style>
+<style scoped lang="scss"></style>
