@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import { Preferences, Folder, File } from "@type";
+import { Preferences, Folder, File } from "@/ouroboros";
 
 export interface IElectronAPI {
   loadPreferences: () => Promise<Preferences>;

@@ -3,6 +3,7 @@
     <div class="button-group">
       <i class="icon pi pi-cog" @click="openPreference"></i>
       <i
+        v-tooltip="'test'"
         class="icon pi pi-spin pi-spinner"
         @click="preferencesStore.toggleSidePanel()"
       ></i>

@@ -49,17 +49,15 @@
 
 <script setup lang="ts">
 import ContextMenu from "@imengyu/vue3-context-menu";
-
 import { Draggable } from "@he-tree/vue";
 import { Stat } from "@he-tree/tree-utils";
 import "@he-tree/vue/style/default.css";
 import "@he-tree/vue/style/material-design.css";
-
 import { ref, onMounted, onBeforeMount, Ref } from "vue";
 import { useI18n } from "vue-i18n";
 
 import { userFolderStore } from "@/stores/folder";
-import { Folder } from "@type";
+import { Folder } from "@/ouroboros";
 
 interface TreeFolder {
   id: number;

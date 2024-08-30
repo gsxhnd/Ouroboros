@@ -1,3 +1,5 @@
+import "../../ouroboros.d.ts";
+
 import { createApp } from "vue";
 import { createPinia } from "pinia";
 import { router } from "@/router";
@@ -13,6 +15,7 @@ import "primeicons/primeicons.css";
 import "./themes/common.scss";
 import "./style.scss";
 
+import { tooltip } from "@/directive/tooltip.ts";
 import App from "./App.vue";
 
 const pinia = createPinia();
@@ -22,4 +25,5 @@ app.use(i18nInstance);
 app.use(pinia);
 app.use(router);
 app.use(ContextMenu);
+app.directive("tooltip", tooltip);
 app.mount("#app");
