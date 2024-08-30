@@ -1,6 +1,6 @@
 <template>
   <div class="left-pane">
-    <LeftTitleBar />
+    <LeftHeader />
     <splitpanes horizontal style="height: 100%">
       <pane min-size="10" class="file">
         <FileTree />
@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import LeftTitleBar from "@/components/titlebar/LeftTitleBar.vue";
+import LeftHeader from "./header/LeftHeader.vue";
 import FileTree from "@/components/FileTree.vue";
 import Tag from "@/components/Tag.vue";
 import SmartSearch from "@/components/SmartSearch.vue";

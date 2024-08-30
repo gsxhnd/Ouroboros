@@ -17,5 +17,4 @@ onMounted(async () => {
 <template>
   <router-view class="router-view" />
 </template>
-
 <style scoped lang="scss"></style>

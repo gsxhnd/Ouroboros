@@ -1,6 +1,6 @@
 <template>
   <div class="content-pane">
-    <content-title-bar></content-title-bar>
+    <ContentHeader />
     <div class="content">
       <router-view></router-view>
     </div>
@@ -11,7 +11,7 @@
 import { onBeforeMount, onMounted } from "vue";
 import { userFolderStore } from "@/stores/folder";
 import { useFileStore } from "@/stores/file";
-import ContentTitleBar from "@/components/titlebar/ContentTitleBar.vue";
+import ContentHeader from "./header/ContentHeader.vue";
 
 const folderStore = userFolderStore();
 const fileStore = useFileStore();

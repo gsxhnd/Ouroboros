@@ -54,7 +54,7 @@ onBeforeMount(async () => {
 });
 
 async function changeLanguage() {
-  await preferencesStore.changeLanguage("en-US");
+  await preferencesStore.changeLanguage("zh-CN");
   await preferencesStore.changeTheme();
 }
 

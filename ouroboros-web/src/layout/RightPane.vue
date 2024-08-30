@@ -1,11 +1,11 @@
 <template>
   <div class="right-pane">
-    <right-title-bar></right-title-bar>
+    <RightHeader />
     <span>{{ $t("message.hello") }}</span>
   </div>
 </template>
 <script setup lang="ts">
-import RightTitleBar from "@/components/titlebar/RightTitleBar.vue";
+import RightHeader from "./header/RightHeader.vue";
 </script>
 
 <style scoped lang="scss">

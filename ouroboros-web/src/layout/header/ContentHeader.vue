@@ -1,5 +1,5 @@
 <template>
-  <div class="content-title-bar electron-drag app-header-height"></div>
+  <div class="content-header electron-drag app-header-height"></div>
 </template>
 <script setup lang="ts"></script>
 

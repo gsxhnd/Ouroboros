@@ -1,5 +1,5 @@
 <template>
-  <div class="left-title-bar electron-drag app-header-height">
+  <div class="left-header electron-drag app-header-height">
     <div class="button-group">
       <i class="icon pi pi-cog" @click="openPreference"></i>
       <i
@@ -9,12 +9,11 @@
     </div>
   </div>
 
-  <setting></setting>
+  <Setting />
 </template>
 <script setup lang="ts">
 import Setting from "@/components/Setting.vue";
 import { usePreferencesStore } from "@/stores/preferences";
-
 const preferencesStore = usePreferencesStore();
 
 function openPreference() {
@@ -23,7 +22,7 @@ function openPreference() {
 </script>
 
 <style scoped>
-.left-title-bar {
+.left-header {
   display: flex;
   flex-direction: row-reverse;
   .button-group {
