@@ -2,3 +2,11 @@
 @use "bulma/sass/themes";
 @use "bulma/sass/grid";
 @use "bulma/sass/components/modal.scss";
+
+.tooltip {
+  position: absolute;
+  display: none;
+  top: 0;
+  left: 0;
+  background: #222;
+}

@@ -1,7 +1,11 @@
 <template>
   <div class="left-header electron-drag app-header-height">
     <div class="button-group">
-      <i class="icon pi pi-cog" @click="openPreference"></i>
+      <i
+        v-tooltip="'setting'"
+        class="icon pi pi-cog"
+        @click="openPreference"
+      ></i>
       <i
         v-tooltip="'test'"
         class="icon pi pi-spin pi-spinner"
