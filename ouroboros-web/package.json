@@ -10,9 +10,10 @@
     "build": "vue-tsc && vite build"
   },
   "dependencies": {
+    "@floating-ui/vue": "^1.1.4",
+    "@formkit/auto-animate": "^0.8.2",
     "@he-tree/vue": "^2.8.5",
     "@imengyu/vue3-context-menu": "^1.4.2",
-    "@floating-ui/vue": "^1.1.4",
     "@vueuse/components": "^11.0.3",
     "@vueuse/core": "^11.0.3",
     "axios": "^1.7.4",
@@ -21,8 +22,8 @@
     "localforage": "^1.10.0",
     "pinia": "^2.2.2",
     "splitpanes": "^3.1.5",
-    "viewerjs": "^1.11.6",
     "vidstack": "^1.12.9",
+    "viewerjs": "^1.11.6",
     "vue": "^3.4.38",
     "vue-i18n": "^9.14.0",
     "vue-router": "^4.4.3"

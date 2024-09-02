@@ -2,16 +2,16 @@
   <div class="left-pane">
     <LeftHeader />
     <splitpanes horizontal style="height: 100%">
-      <pane min-size="10" class="file">
+      <pane min-size="5" class="file">
         <FileTree />
       </pane>
-      <pane min-size="10" class="tag-pane">
+      <pane min-size="5" class="tag-pane">
         <div class="tag-header">
           <span>{{ $t("message.Tag") }}</span>
         </div>
         <tag />
       </pane>
-      <pane min-size="10" class="search">
+      <pane min-size="5" class="search">
         <div class="search-header">
           <span>{{ $t("message.SmartSearch") }}</span>
         </div>
