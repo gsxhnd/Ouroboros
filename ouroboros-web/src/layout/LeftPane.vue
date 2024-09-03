@@ -3,13 +3,14 @@
     <LeftHeader />
     <splitpanes horizontal style="height: 100%">
       <pane min-size="5" class="file">
+        <FileTreeHeader />
         <FileTree />
       </pane>
       <pane min-size="5" class="tag-pane">
         <div class="tag-header">
           <span>{{ $t("message.Tag") }}</span>
         </div>
-        <tag />
+        <Tag />
       </pane>
       <pane min-size="5" class="search">
         <div class="search-header">
@@ -24,6 +25,8 @@
 <script setup lang="ts">
 import LeftHeader from "./header/LeftHeader.vue";
 import FileTree from "@/components/FileTree.vue";
+import FileTreeHeader from "@/components/FileTreeHeader.vue";
+
 import Tag from "@/components/Tag.vue";
 import SmartSearch from "@/components/SmartSearch.vue";
 

@@ -7,7 +7,7 @@
     treeLine
     updateBehavior="modify"
     :externalDataHandler="dropFile"
-    :onExternalDragOver="() => true"
+    :onExternalDragOver="() => (folders.length > 0 ? true : false)"
     @click:node="onClickNode"
   >
     <template
@@ -153,6 +153,7 @@ function dropFile(event: DragEvent) {
   event.stopPropagation();
 
   console.log(event.dataTransfer?.files);
+  console.log(event.dataTransfer);
   console.log(event.dataTransfer?.getData("123"));
   console.log(event);
 }
@@ -160,14 +161,18 @@ function dropFile(event: DragEvent) {
 
 <style scoped lang="scss">
 .folder-tree {
+  margin: 0 10px;
   font-size: 18px;
   height: 100%;
-  width: 100%;
+  // width: 100%;
   :deep(.tree-node) {
     &:hover {
+      background-color: rgb(0 0 0 / 0%);
+    }
+    .tree-node-inner:hover {
       background-color: var(--app-file-tree-hover);
     }
-    &:has(.tree-node-inner .selected) {
+    .tree-node-inner:has(.selected) {
       background-color: var(--app-file-tree-selected);
     }
   }
@@ -182,7 +187,7 @@ function dropFile(event: DragEvent) {
   }
 
   .dropzone {
-    margin-left: 2px;
+    margin-left: 5px;
     width: 100%;
     display: flex;
     align-items: center;

@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { File } from "@type";
+import { File } from "@/ouroboros";
 import { ref, Ref } from "vue";
 import { usePreferencesStore } from "./preferences";
 import { computed } from "vue";
