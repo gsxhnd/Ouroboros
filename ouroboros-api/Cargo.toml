@@ -6,9 +6,10 @@ edition = "2021"
 [dependencies]
 ouroboros-core = { path = "../ouroboros-core" }
 
-axum = { version = "0.7" }
+axum = { version = "0.7", features = ["multipart"] }
 clap = { version = "4", features = ["derive"] }
 mime_guess = { version = "2" }
+multer = { version = "3" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }

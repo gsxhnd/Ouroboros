@@ -21,3 +21,11 @@ pub struct Folder {
     #[schema(value_type = String, format = Date)]
     pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
 }
+
+#[derive(Serialize, Deserialize, sqlx::FromRow, Clone, Debug, ToSchema)]
+#[napi(object)]
+pub struct FolderPath {
+    pub id: u32,
+    pub name: String,
+    pub pid: u32,
+}

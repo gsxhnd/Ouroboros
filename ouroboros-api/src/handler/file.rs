@@ -1,7 +1,8 @@
 use crate::state::AppState;
+use tokio::{fs::File, io::AsyncWriteExt};
 
 use axum::{
-    extract::{self, Query, State},
+    extract::{self, Multipart, Query, State},
     response::IntoResponse,
     Json,
 };
@@ -45,7 +46,27 @@ pub async fn get_files(
     tag="file",
     responses()
 )]
-pub async fn add_files(_state: State<AppState>) -> impl IntoResponse {
+pub async fn add_files(
+    state: State<AppState>,
+    Query(params): Query<HashMap<String, String>>,
+    mut multipart: Multipart,
+) -> impl IntoResponse {
+    let target_folder_id = params.get("folder_id");
+    while let Some(field) = multipart.next_field().await.unwrap() {
+        let name = field.name().unwrap().to_string();
+        let file_name = field.file_name().unwrap().to_string();
+        let data = field.bytes().await.unwrap();
+
+        // // 生成一个唯一的文件名
+        // let file_name = format!("./uploads/{}-{}.upload", name, "xxx");
+
+        // // 将文件保存到磁盘
+        // let mut file = File::create(file_name).await.unwrap();
+        // file.write_all(&data).await.unwrap();
+    }
+
+    state.conn.get_folder_full_path(8).await;
+
     Json("ok")
 }
 
