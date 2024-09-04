@@ -30,7 +30,7 @@ import FileTreeHeader from "@/components/FileTreeHeader.vue";
 
 import Tag from "@/components/Tag.vue";
 import SmartSearchHeader from "@/pages/SmartSearchHeader.vue";
-import SmartSearch from "@/components/SmartSearch.vue";
+import SmartSearch from "@/pages/SmartSearch.vue";
 
 import { Splitpanes, Pane } from "splitpanes";
 import { onMounted } from "vue";
