@@ -1,21 +1,32 @@
 import { Directive, DirectiveBinding, watch } from "vue";
-import { computePosition, flip, shift, offset } from "@floating-ui/vue";
+import {
+  computePosition,
+  flip,
+  shift,
+  offset,
+  autoPlacement,
+  platform,
+  inline,
+} from "@floating-ui/vue";
 import { useElementHover } from "@vueuse/core";
 
 export const tooltip: Directive = {
   mounted(el: HTMLElement, binding: DirectiveBinding) {
     const tooltipParent = document.createElement("div");
-    tooltipParent.className = "tooltip";
-    tooltipParent.textContent = binding.value;
-
+    const tooltipContent = document.createElement("div");
     const isHover = useElementHover(el);
+    tooltipParent.className = "tooltip";
+    tooltipContent.textContent = binding.value;
+    tooltipContent.className = "tooltip-content";
+    tooltipParent.appendChild(tooltipContent);
 
     watch(isHover, (newV, _oldV) => {
       if (newV) {
-        el.insertAdjacentElement("afterend", tooltipParent);
+        document.body.insertAdjacentElement("beforeend", tooltipParent);
         computePosition(el, tooltipParent, {
           placement: "bottom",
-          middleware: [offset(6), flip(), shift()],
+          middleware: [offset(10), flip(), shift()],
+          strategy: "absolute",
         }).then(({ x, y }) => {
           Object.assign(tooltipParent.style, {
             left: `${x}px`,

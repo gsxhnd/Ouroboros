@@ -2,21 +2,23 @@
   <div class="modal" :class="{ 'is-active': preferencesStore.showModal }">
     <div class="modal-background"></div>
     <div class="modal-content" v-on-click-outside="closeModal">
-      <div class="left" @click="changeLanguage">123</div>
+      <div class="left" @click="changeLanguage">
+        <div v-tooltip="'123'">123</div>
+      </div>
       <div class="right"></div>
     </div>
   </div>
 </template>
 <style scoped lang="scss">
 .modal-content {
-  --bulma-modal-content-width: var(--app-setting-pane-width);
   height: 80vh;
   width: 60vw;
-  padding: 0;
+  // padding: 20px 0;
   display: flex;
   border-radius: 8px;
   color: white;
   .left {
+    padding: 20px 0;
     width: 30%;
     background-color: var(--app-pane-background-1);
   }
