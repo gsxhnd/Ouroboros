@@ -5,6 +5,7 @@ use sqlx::{
 };
 
 mod file;
+mod file_tag;
 mod folder;
 mod tag;
 

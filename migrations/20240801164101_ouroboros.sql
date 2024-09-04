@@ -40,8 +40,8 @@ CREATE INDEX IF NOT EXISTS "tag_index_0"
 
 CREATE TABLE IF NOT EXISTS "file_tag"
 (
-    "tag_id"     INTEGER,
+    "id"         INTEGER  NOT NULL UNIQUE,
     "file_id"    INTEGER,
-    "created_at" DATETIME NOT NULL default CURRENT_TIMESTAMP,
-    "updated_at" DATETIME
+    "tag_id"     INTEGER,
+    "created_at" DATETIME NOT NULL default CURRENT_TIMESTAMP
 );
