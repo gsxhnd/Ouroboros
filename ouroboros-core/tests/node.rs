@@ -1,5 +1,4 @@
-use ouroboros_core::node::{Dirs, Node};
-use std::{cell::RefCell, rc::Rc};
+use ouroboros_core::node::Dirs;
 
 #[test]
 fn test_dirs() {

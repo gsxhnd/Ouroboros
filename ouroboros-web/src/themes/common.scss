@@ -1,0 +1,27 @@
+@use "bulma/sass/base";
+// @use "bulma/sass/themes";
+@use "bulma/sass/grid";
+@use "bulma/sass/components/modal.scss";
+
+.modal {
+  --bulma-modal-background-background-color: var(
+    --app-model-background-background-color
+  );
+  .modal-content {
+    --bulma-modal-content-width: var(--app-setting-pane-width);
+  }
+}
+
+.tooltip {
+  position: absolute;
+  display: none;
+  top: 0;
+  left: 0;
+  background: var(--app-tooltip-background);
+  border-radius: 5px;
+  z-index: 999;
+  .tooltip-content {
+    color: var(--app-tooltip-color);
+    margin: 5px;
+  }
+}

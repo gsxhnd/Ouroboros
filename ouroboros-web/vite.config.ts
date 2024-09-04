@@ -11,7 +11,6 @@ console.log(mode);
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  root: "src/",
   base: "./",
   mode: mode,
   server: {
@@ -29,15 +28,18 @@ export default defineConfig({
       },
     }),
     vidstack(),
-    visualizer({ open: true }),
+    visualizer({ open: false }),
   ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
+
   build: {
+    emptyOutDir: true,
     outDir: "../dist/renderer",
+    cssTarget: "chrome61",
     sourcemap: isDev,
   },
 });

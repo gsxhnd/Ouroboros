@@ -3,8 +3,6 @@ import { usePreferencesStore } from "@/stores/preferences";
 
 import Home from "@/layout/Home.vue";
 import InitElectron from "@/pages/InitElectron.vue";
-import InitBrowser from "@/pages/InitBrowser.vue";
-import Setting from "@/pages/Setting.vue";
 import Dashboard from "@/pages/Dashboard.vue";
 
 const RootRoute: RouteRecordRaw = {
@@ -14,10 +12,7 @@ const RootRoute: RouteRecordRaw = {
   meta: {
     title: "Root",
   },
-  children: [
-    { path: "", name: "Dashboard", component: Dashboard },
-    { path: "setting", name: "Setting", component: Setting },
-  ],
+  children: [{ path: "", name: "Dashboard", component: Dashboard }],
 };
 
 const InitRouter: RouteRecordRaw = {
@@ -28,7 +23,6 @@ const InitRouter: RouteRecordRaw = {
   },
   children: [
     { path: "electron", name: "InitElectron", component: InitElectron },
-    { path: "browser", name: "InitBrowser", component: InitBrowser },
   ],
 };
 
@@ -38,27 +32,22 @@ const router = createRouter({
   strict: true,
 });
 
-router.beforeEach(async (to, _from) => {
+router.beforeEach(async (_to, _from) => {
   const preferencesStore = usePreferencesStore();
-  // await preferencesStore.getPreferences();
+  console.log(preferencesStore.useElectron);
 
-  if (to.name != "InitBrowser" && preferencesStore.useBrowser) {
-    // return { name: "InitBrowser" };
-  }
-
-  if (
-    to.name != "InitElectron" &&
-    !preferencesStore.useBrowser &&
-    (preferencesStore.preference === null ||
-      preferencesStore.preference.appConfig.libraries.length === 0)
-  ) {
-    return { name: "InitElectron" };
-  }
-
-  preferencesStore.preference?.appConfig.libraries.forEach((library) => {
-    const { path, use } = library;
-    console.log(path, use);
-  });
+  // if (
+  //   to.name != "InitElectron" &&
+  //   !preferencesStore.useBrowser &&
+  //   (preferencesStore.preference === null ||
+  //     preferencesStore.preference.appConfig.libraries.length === 0)
+  // ) {
+  //   preferencesStore.preference?.appConfig.libraries.forEach((library) => {
+  //     const { path, use } = library;
+  //     console.log(path, use);
+  //   });
+  //   return { name: "InitElectron" };
+  // }
 });
 
 export { router };

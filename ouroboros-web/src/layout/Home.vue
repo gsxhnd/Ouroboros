@@ -1,41 +1,25 @@
 <template>
-  <Splitter :pt="{}">
-    <SplitterPanel
-      :min-size="15"
-      :size="20"
-      class="flex align-items-center justify-content-center"
-    >
+  <splitpanes style="height: 100vh">
+    <pane min-size="10" size="20" class="">
       <left-pane></left-pane>
-    </SplitterPanel>
-    <SplitterPanel
-      :min-size="0"
-      :size="60"
-      class="flex align-items-center justify-content-center"
-    >
+    </pane>
+    <pane min-size="10" size="40" class="">
       <content-pane></content-pane>
-    </SplitterPanel>
-    <SplitterPanel
-      :min-size="15"
-      :size="20"
-      class="flex align-items-center justify-content-center"
-    >
+    </pane>
+    <pane min-size="10" size="20" class="">
       <right-pane></right-pane>
-    </SplitterPanel>
-  </Splitter>
+    </pane>
+  </splitpanes>
 </template>
 
 <script setup lang="ts">
+import { Splitpanes, Pane } from "splitpanes";
+
 import LeftPane from "./LeftPane.vue";
 import RightPane from "./RightPane.vue";
 import ContentPane from "./ContentPane.vue";
-
-import Splitter from "primevue/splitter";
-import SplitterPanel from "primevue/splitterpanel";
+// import { usePreferencesStore } from "@/stores/preferences";
+// const preferencesStore = usePreferencesStore();
 </script>
 
-<style scoped lang="less">
-.p-splitter {
-  height: 100vh;
-  border: none;
-}
-</style>
+<style scoped lang="scss"></style>

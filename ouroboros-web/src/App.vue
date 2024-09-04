@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, onBeforeMount } from "vue";
 import { usePreferencesStore } from "@/stores/preferences";
-import DynamicDialog from "primevue/dynamicdialog";
 const preferencesStore = usePreferencesStore();
 
+onBeforeMount(() => {
+  const doc = document.documentElement;
+  doc.dataset.theme = "oneDark";
+});
+
 onMounted(async () => {
-  console.log("onMount");
-  await preferencesStore.getPreferences();
-  console.log("onMount end");
+  await preferencesStore.init();
 });
 </script>
 
 <template>
-  <DynamicDialog class="preference-dialog" />
   <router-view class="router-view" />
 </template>
-
-<style scoped></style>
+<style scoped lang="scss"></style>

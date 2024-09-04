@@ -1,7 +1,22 @@
 use super::Database;
-use crate::model::Folder;
+use crate::model::{Folder, FolderPath};
 
 use sqlx::Error;
+
+static SELECT_FOLDER_PATH: &str = "WITH RECURSIVE folder_tree AS (SELECT id,
+                                      name,
+                                      pid
+                               FROM folder
+                               WHERE id = ?
+                               UNION ALL
+                               SELECT f.id,
+                                      f.name,
+                                      f.pid
+                               FROM folder f
+                                        INNER JOIN
+                                    folder_tree ft ON f.id = ft.pid)
+SELECT *
+FROM folder_tree;";
 
 impl Database {
     pub async fn get_folders(&self) -> Result<Option<Vec<Folder>>, Error> {
@@ -30,6 +45,21 @@ impl Database {
                 Error::RowNotFound => Ok(None),
                 _ => Err(e),
             },
+        }
+    }
+
+    pub async fn get_folder_full_path(&self, folder_id: u32) {
+        println!("get_folder_full_path");
+        let rows: Result<Vec<FolderPath>, Error> = sqlx::query_as(SELECT_FOLDER_PATH)
+            .bind(folder_id)
+            .fetch_all(&self.pool)
+            .await;
+
+        match rows {
+            Ok(v) => {
+                println!("{:?}", v)
+            }
+            Err(_) => todo!(),
         }
     }
 

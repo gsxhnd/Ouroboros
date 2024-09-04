@@ -1,1 +1,1 @@
-import "../ouroboros.d.ts";
+export * from "../ouroboros";

@@ -1,15 +1,16 @@
 <template>
-  <init-title-bar></init-title-bar>
+  <InitHeader />
   <div class="card">
-    <Button label="NewAssetLib" outlined @click="open" />
-    <Button label="SelectAssetLib" outlined @click="selectPath" />
+    <!-- <Button label="NewAssetLib" outlined @click="open" /> -->
+    <button label="NewAssetLib" outlined @click="open"></button>
+    <!-- <Button label="SelectAssetLib" outlined @click="selectPath" /> -->
+    <button label="SelectAssetLib" outlined @click="selectPath"></button>
     <input type="file" webkitdirectory directory />
   </div>
 </template>
 
 <script setup lang="ts">
-import InitTitleBar from "@/components/titlebar/InitTitleBar.vue";
-import Button from "primevue/button";
+import InitHeader from "@/layout/header/InitHeader.vue";
 import { useRouter } from "vue-router";
 const router = useRouter();
 

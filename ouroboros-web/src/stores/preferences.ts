@@ -1,43 +1,83 @@
 import { defineStore } from "pinia";
-import { i18n } from "@/locales/i18n";
-import { getPreferencesAPI, getPreferencesEAPI } from "@/api/preferences";
+import { i18n, Language } from "@/locales/i18n";
+import { localStore } from "@/utils/store";
 
-interface preferences {
-  useBrowser: boolean;
-  useLanuage: string;
-  preference: PreferencesData | null;
-}
+import { usePreferredLanguages } from "@vueuse/core";
+import { Ref, ref, computed } from "vue";
 
-export const usePreferencesStore = defineStore("preferences", {
-  state: (): preferences => ({
-    useBrowser: false,
-    useLanuage: "zh-CN",
-    preference: null,
-  }),
+const languages = usePreferredLanguages();
 
-  actions: {
-    async getPreferences() {
-      if (!window.electronAPI) {
-        this.useBrowser = true;
-        await getPreferencesAPI();
-      } else {
-        const preferences = await getPreferencesEAPI();
-        this.preference = preferences;
-      }
-    },
+export const usePreferencesStore = defineStore("preferences", () => {
+  const useBrowser: Ref<boolean> = ref(false);
+  const useElectron: Ref<boolean> = ref(false);
+  const target: Ref<string> = ref("");
+  const useLanguage: Ref<Language> = ref("en-US");
+  const showModal: Ref<boolean> = ref(false);
+  const showSidePanel: Ref<boolean> = ref(true);
+  const sidePanelSize: Ref<Array<number>> = ref([20, 60, 20]);
 
-    async sync() {
-      if (this.useBrowser) {
-      } else {
-      }
-    },
+  async function init() {
+    if (!window.electronAPI) {
+      useBrowser.value = true;
+      target.value = "web";
+    } else {
+      useElectron.value = true;
+      target.value = "desktop";
+    }
 
-    async changeLanuage(_l: string) {
-      if (i18n.locale.value === "en-US") {
-        i18n.locale.value = "zh-CN";
-      } else {
-        i18n.locale.value = "en-US";
-      }
-    },
-  },
+    let l = await localStore
+      .getItem<Language>("useLanguage")
+      .then((l) => {
+        if (l != null) return l;
+        if (languages.value[0] == "zh-CN") return "zh-CN";
+        return "en-US";
+      })
+      .then((v) => {
+        return localStore.setItem("useLanguage", v);
+      });
+    useLanguage.value = l;
+    i18n.locale.value = l;
+  }
+
+  async function changeLanguage(l: Language) {
+    localStore.setItem("useLanguage", l).then((v) => {
+      useLanguage.value = v;
+      i18n.locale.value = v;
+    });
+  }
+
+  async function changeTheme() {
+    // usePreset(oneDarkTheme);
+  }
+
+  async function toggleSidePanel() {
+    showSidePanel.value = !showSidePanel.value;
+  }
+
+  const getPanelSize = computed(() => {
+    if (showSidePanel) {
+      return sidePanelSize;
+    }
+    return ref([0, 100, 0]);
+  });
+
+  async function resizeSidePanel(size: Array<number>) {
+    sidePanelSize.value = size;
+  }
+
+  return {
+    useBrowser,
+    useElectron,
+    useLanguage,
+    target,
+    showSidePanel,
+    sidePanelSize,
+    showModal,
+    init,
+    changeLanguage,
+    toggleSidePanel,
+    changeTheme,
+    getPanelSize,
+    resizeSidePanel,
+  };
 });

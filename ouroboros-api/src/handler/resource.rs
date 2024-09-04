@@ -11,6 +11,12 @@ use axum::{
 use tokio_util::io::ReaderStream;
 use tracing::info;
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/resource/file/{file_id}",
+    tag = "resource",
+    responses()
+)]
 pub async fn file(
     _state: State<AppState>,
     extract::Path(file_id): extract::Path<String>,
@@ -43,6 +49,12 @@ pub async fn file(
     Ok(response)
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/resource/thumbnail/{file_id}",
+    tag = "resource",
+    responses()
+)]
 pub async fn thumbnail(
     _state: State<AppState>,
     extract::Path(file_id): extract::Path<String>,

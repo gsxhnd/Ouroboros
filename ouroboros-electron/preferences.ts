@@ -1,10 +1,10 @@
-import "./env.d.ts";
 import os from "os";
 import { JSONFilePreset, JSONFile } from "lowdb/node";
 import { Low } from "lowdb";
 import { userConfigPath, userConfigFile } from "./constants.ts";
 import { fileExist, createDir } from "./utils/file.ts";
 import { app } from "electron";
+import { PreferencesData } from "../ouroboros";
 
 const defaultPreferencesData: PreferencesData = {
   os: os.platform(),

@@ -5,6 +5,7 @@ use sqlx::{
 };
 
 mod file;
+mod file_tag;
 mod folder;
 mod tag;
 
@@ -21,8 +22,6 @@ impl Database {
         let pool_option = SqlitePoolOptions::new();
         let pool = pool_option.connect_with(conn_opt).await.unwrap();
 
-        // let pool = SqlitePool::connect(db_path).await.unwrap();
-
         Migrator::new(std::path::Path::new("./migrations"))
             .await
             .unwrap()
@@ -32,18 +31,4 @@ impl Database {
 
         Database { pool }
     }
-
-    pub async fn init(&self) {
-        Migrator::new(std::path::Path::new("./migrations"))
-            .await
-            .unwrap()
-            .run(&self.pool)
-            .await
-            .unwrap();
-    }
-}
-
-#[tokio::test]
-async fn test_new() {
-    let db = Database::new("").await;
 }

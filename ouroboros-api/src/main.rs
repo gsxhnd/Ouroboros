@@ -1,6 +1,6 @@
 use clap::Parser;
 use std::fs;
-use tracing::{self, info};
+use tracing::{self};
 
 mod config;
 mod doc;
@@ -46,6 +46,18 @@ async fn main() {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
+
+    match ouroboros_core::sync::init::init(cfg.clone().common.data_path).await {
+        Ok(_) => tracing::info!("init sync storage success"),
+        Err(e) => match e.kind() {
+            std::io::ErrorKind::AlreadyExists => {
+                tracing::info!("sync storage already exists");
+            }
+            _ => {
+                panic!("init failed error: {}", e)
+            }
+        },
+    }
 
     let state = state::AppState::new(config_path, cfg.clone()).await;
 

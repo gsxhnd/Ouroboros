@@ -1,10 +1,10 @@
 use crate::db::Database;
-use crate::model::{File, Folder};
+use crate::model::File;
 use crate::utils::md5::calculate_md5;
 
 use walkdir::WalkDir;
 
-mod init;
+pub mod init;
 
 pub async fn sync(db: Database, data_path: String) {
     // let data_path = Path::new(&data_path);

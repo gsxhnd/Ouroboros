@@ -23,13 +23,3 @@ impl AssetsLib {
         self.tree = Tree::new(path);
     }
 }
-
-#[cfg(test)]
-#[test]
-fn test_lib() {
-    use std::env;
-    let cp = env::current_dir().unwrap();
-    let path = cp.into_os_string().into_string().unwrap();
-
-    let a = AssetsLib::new(path);
-}

@@ -1,6 +1,6 @@
 use crate::node::Node;
 
-use std::{cell::RefCell, fs::FileType, os::unix::fs::FileExt, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 use walkdir::WalkDir;
 
 #[derive(Debug, Clone)]
