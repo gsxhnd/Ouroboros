@@ -46,20 +46,11 @@ export const usePreferencesStore = defineStore("preferences", () => {
     });
   }
 
-  async function changeTheme() {
-    // usePreset(oneDarkTheme);
-  }
+  async function changeTheme() {}
 
   async function toggleSidePanel() {
     showSidePanel.value = !showSidePanel.value;
   }
-
-  const getPanelSize = computed(() => {
-    if (showSidePanel) {
-      return sidePanelSize;
-    }
-    return ref([0, 100, 0]);
-  });
 
   async function resizeSidePanel(size: Array<number>) {
     sidePanelSize.value = size;
@@ -77,7 +68,6 @@ export const usePreferencesStore = defineStore("preferences", () => {
     changeLanguage,
     toggleSidePanel,
     changeTheme,
-    getPanelSize,
     resizeSidePanel,
   };
 });

@@ -2,6 +2,7 @@
 // @use "bulma/sass/themes";
 @use "bulma/sass/grid";
 @use "bulma/sass/components/modal.scss";
+@use "bulma/sass/components/menu.scss";
 
 .modal {
   --bulma-modal-background-background-color: var(
@@ -9,6 +10,26 @@
   );
   .modal-content {
     --bulma-modal-content-width: var(--app-setting-pane-width);
+  }
+}
+
+.menu {
+  .menu-label {
+    display: flex;
+    font-weight: 600;
+    color: var(--app-setting-menu-label-color);
+    --bulma-menu-label-color: var(--app-setting-menu-label-color);
+  }
+  .menu-list {
+    a {
+      &:hover {
+        background-color: var(--app-setting-menu-item-hover-background);
+      }
+      &.is-active {
+        background-color: var(--app-setting-menu-item-active-background);
+      }
+      --bulma-menu-item-radius: var(--app-setting-menu-item-radius);
+    }
   }
 }
 
