@@ -6,8 +6,8 @@
         <SettingSide />
       </div>
       <div class="right">
-        <template v-if="settingDialogStore.selectedItem == 'dashboard'"
-          ><div>dashboard</div>
+        <template v-if="settingDialogStore.selectedItem == 'dashboard'">
+          <SettingDashboard />
         </template>
       </div>
     </div>
@@ -27,6 +27,7 @@
   }
   .right {
     width: 70%;
+    padding: 20px 5px;
     background-color: var(--app-pane-background-2);
   }
 }
@@ -38,6 +39,7 @@ import { userSettingDialogStore } from "@/stores/settingDialog";
 import { Language } from "@/locales/i18n";
 import { vOnClickOutside } from "@vueuse/components";
 import SettingSide from "./SettingSide.vue";
+import SettingDashboard from "./SettingDashboard.vue";
 
 interface LanguageOption {
   name: string;

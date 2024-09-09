@@ -3,6 +3,8 @@
 @use "bulma/sass/grid";
 @use "bulma/sass/components/modal.scss";
 @use "bulma/sass/components/menu.scss";
+@use "bulma/sass/components/dropdown.scss";
+@use "bulma/sass/elements/button.scss";
 
 .modal {
   --bulma-modal-background-background-color: var(
@@ -30,6 +32,14 @@
       }
       --bulma-menu-item-radius: var(--app-setting-menu-item-radius);
     }
+  }
+}
+
+.dropdown {
+  &-content {
+    color: black;
+    background-color: var(--app-dropdown-content-background);
+    border-radius: var(--app-dropdown-content-border-radius);
   }
 }
 
