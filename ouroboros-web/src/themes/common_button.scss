@@ -1,0 +1,40 @@
+.button {
+  border-radius: 6px;
+  &.is-primary {
+    background-color: rgb(0, 209, 178);
+    &:hover {
+      background-color: rgb(248, 0, 0);
+    }
+  }
+  &.is-link {
+    // background-color: rgb(235, 255, 252);
+    &:hover {
+      background-color: rgb(248, 0, 0);
+    }
+  }
+  &.is-info {
+    // background-color: rgb(235, 255, 252);
+    &:hover {
+      background-color: rgb(248, 0, 0);
+    }
+  }
+
+  &.is-success {
+    // background-color: rgb(235, 255, 252);
+    &:hover {
+      background-color: rgb(248, 0, 0);
+    }
+  }
+  &.is-warning {
+    // background-color: rgb(235, 255, 252);
+    &:hover {
+      background-color: rgb(248, 0, 0);
+    }
+  }
+  &.is-danger {
+    // background-color: rgb(235, 255, 252);
+    &:hover {
+      background-color: rgb(248, 0, 0);
+    }
+  }
+}

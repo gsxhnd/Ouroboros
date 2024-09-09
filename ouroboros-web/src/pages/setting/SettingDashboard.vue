@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="language">
-      <div class="dropdown is-active">
+      <div class="dropdown">
         <div class="dropdown-trigger">
           <button
             class="button"

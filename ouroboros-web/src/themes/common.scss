@@ -6,6 +6,8 @@
 @use "bulma/sass/components/dropdown.scss";
 @use "bulma/sass/elements/button.scss";
 
+@use "./common_button.scss";
+
 .modal {
   --bulma-modal-background-background-color: var(
     --app-model-background-background-color
@@ -40,6 +42,9 @@
     color: black;
     background-color: var(--app-dropdown-content-background);
     border-radius: var(--app-dropdown-content-border-radius);
+    .dropdown-item {
+      display: flex;
+    }
   }
 }
 
