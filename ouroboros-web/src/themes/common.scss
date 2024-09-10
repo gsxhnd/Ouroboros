@@ -6,58 +6,9 @@
 @use "bulma/sass/components/dropdown.scss";
 @use "bulma/sass/elements/button.scss";
 
+@use "./scrollbar.scss";
 @use "./common_button.scss";
-
-.modal {
-  --bulma-modal-background-background-color: var(
-    --app-model-background-background-color
-  );
-  .modal-content {
-    --bulma-modal-content-width: var(--app-setting-pane-width);
-  }
-}
-
-.menu {
-  .menu-label {
-    display: flex;
-    font-weight: 600;
-    color: var(--app-setting-menu-label-color);
-    --bulma-menu-label-color: var(--app-setting-menu-label-color);
-  }
-  .menu-list {
-    a {
-      &:hover {
-        background-color: var(--app-setting-menu-item-hover-background);
-      }
-      &.is-active {
-        background-color: var(--app-setting-menu-item-active-background);
-      }
-      --bulma-menu-item-radius: var(--app-setting-menu-item-radius);
-    }
-  }
-}
-
-.dropdown {
-  &-content {
-    color: black;
-    background-color: var(--app-dropdown-content-background);
-    border-radius: var(--app-dropdown-content-border-radius);
-    .dropdown-item {
-      display: flex;
-    }
-  }
-}
-
-.tooltip {
-  position: absolute;
-  display: none;
-  top: 0;
-  left: 0;
-  background: var(--app-tooltip-background);
-  border-radius: 5px;
-  z-index: 999;
-  .tooltip-content {
-    color: var(--app-tooltip-color);
-    margin: 5px;
-  }
-}
+@use "./common_dropdown.scss";
+@use "./common_menu.scss";
+@use "./common_modal.scss";
+@use "./common_tooltip.scss";
