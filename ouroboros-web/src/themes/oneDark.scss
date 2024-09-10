@@ -1,17 +1,39 @@
 :root[data-theme="oneDark"] {
-  --font-color: green;
+  --app-font-color: rgb(238, 238, 238);
   --app-header-height: 40px;
   --app-pane-background-1: #414246;
   --app-pane-background-2: #37383c;
   --app-pane-padding-size: 0 8px;
-  --app-splitter-gutter-color-v: #37383c;
-  --app-splitter-gutter-color-h: #414246;
-  --app-splitter-gutter-hover: #006dff;
   --app-setting-pane-height: 60vh;
   --app-setting-pane-width: 60vw;
   --app-file-tree-hover: rgb(255, 255, 255, 10%);
   --app-file-tree-selected: rgb(255, 255, 255, 20%);
   --app-model-background-background-color: hsla(221, 14%, 4%, 0.86);
+  --app-setting-menu-label-color: rgba(202, 199, 191, 0.65);
+  --app-setting-menu-item-color: green;
+  --app-setting-menu-item-hover-background: rgb(240, 242, 244);
+  --app-setting-menu-item-active-background: rgb(41, 66, 255);
+  --app-setting-menu-item-radius: 0.25rem;
+  --app-dropdown-content-border-radius: 0.25rem;
+  --app-dropdown-content-background: rgba(230, 230, 230, 0.99);
+}
+
+// button
+:root[data-theme="oneDark"] {
+  --app-button-background: rgb(35, 38, 46);
+  --app-button-border-radius: 6px;
+  --app-button-border-color: rgb(23, 26, 31);
+}
+
+// splitter theme setting
+:root[data-theme="oneDark"] {
+  --app-splitter-gutter-color-v: #37383c;
+  --app-splitter-gutter-color-h: #414246;
+  --app-splitter-gutter-hover: #006dff;
+}
+
+// tooltip theme setting
+:root[data-theme="oneDark"] {
   --app-tooltip-color: white;
   --app-tooltip-background: #1f1f1fe5;
 }

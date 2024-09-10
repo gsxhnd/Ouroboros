@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { Folder } from "@type";
+import { Folder } from "@/ouroboros";
 import { ref, Ref } from "vue";
 import { usePreferencesStore } from "./preferences";
 import { getFolders as getFoldersApi } from "@/api/folder";

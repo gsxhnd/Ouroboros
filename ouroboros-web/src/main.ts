@@ -10,7 +10,6 @@ import "@imengyu/vue3-context-menu/lib/vue3-context-menu.css";
 import ContextMenu from "@imengyu/vue3-context-menu";
 import "splitpanes/dist/splitpanes.css";
 import "primeicons/primeicons.css";
-import "./themes/common.scss";
 import "./style.scss";
 
 import { tooltip } from "@/directive/tooltip.ts";

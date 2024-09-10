@@ -17,7 +17,7 @@
   <Setting />
 </template>
 <script setup lang="ts">
-import Setting from "@/components/Setting.vue";
+import Setting from "@/pages/setting/Setting.vue";
 import { usePreferencesStore } from "@/stores/preferences";
 const preferencesStore = usePreferencesStore();
 

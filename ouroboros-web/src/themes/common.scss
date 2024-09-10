@@ -2,26 +2,13 @@
 // @use "bulma/sass/themes";
 @use "bulma/sass/grid";
 @use "bulma/sass/components/modal.scss";
+@use "bulma/sass/components/menu.scss";
+@use "bulma/sass/components/dropdown.scss";
+@use "bulma/sass/elements/button.scss";
 
-.modal {
-  --bulma-modal-background-background-color: var(
-    --app-model-background-background-color
-  );
-  .modal-content {
-    --bulma-modal-content-width: var(--app-setting-pane-width);
-  }
-}
-
-.tooltip {
-  position: absolute;
-  display: none;
-  top: 0;
-  left: 0;
-  background: var(--app-tooltip-background);
-  border-radius: 5px;
-  z-index: 999;
-  .tooltip-content {
-    color: var(--app-tooltip-color);
-    margin: 5px;
-  }
-}
+@use "./scrollbar.scss";
+@use "./common_button.scss";
+@use "./common_dropdown.scss";
+@use "./common_menu.scss";
+@use "./common_modal.scss";
+@use "./common_tooltip.scss";
