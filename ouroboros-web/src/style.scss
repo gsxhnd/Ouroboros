@@ -1,5 +1,5 @@
-@import "./themes/common.scss";
 @import "./themes/oneDark";
+@import "./themes/common.scss";
 
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -25,10 +25,11 @@ body {
     min-height: 100vh;
     text-align: center;
     overflow: hidden;
-    .app-header-height {
-      height: var(--app-header-height);
-    }
   }
+}
+
+.app-header {
+  height: var(--app-header-height);
 }
 
 .splitpanes {

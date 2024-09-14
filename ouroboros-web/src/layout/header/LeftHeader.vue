@@ -1,5 +1,5 @@
 <template>
-  <div class="left-header electron-drag app-header-height">
+  <div class="left-header electron-drag app-header">
     <div class="button-group">
       <i
         v-tooltip="'setting'"

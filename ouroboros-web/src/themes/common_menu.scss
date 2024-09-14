@@ -5,7 +5,9 @@
     color: var(--app-setting-menu-label-color);
     --bulma-menu-label-color: var(--app-setting-menu-label-color);
   }
+
   .menu-list {
+    --bulma-menu-item-radius: var(--app-setting-menu-item-radius);
     a {
       &:hover {
         background-color: var(--app-setting-menu-item-hover-background);
@@ -13,7 +15,6 @@
       &.is-active {
         background-color: var(--app-setting-menu-item-active-background);
       }
-      --bulma-menu-item-radius: var(--app-setting-menu-item-radius);
     }
   }
 }
