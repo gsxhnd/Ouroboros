@@ -3,40 +3,39 @@
   border-color: var(--app-button-border-color);
   background-color: var(--app-button-background);
   &.is-primary {
-    background-color: rgb(0, 209, 178);
+    background-color: var(--app-button-primary-background);
     &:hover {
-      background-color: rgb(248, 0, 0);
+      background-color: var(--app-button-primary-hover);
     }
   }
   &.is-link {
-    // background-color: rgb(235, 255, 252);
+    background-color: var(--app-button-link-background);
     &:hover {
-      background-color: rgb(248, 0, 0);
+      background-color: var(--app-button-link-hover);
     }
   }
   &.is-info {
-    // background-color: rgb(235, 255, 252);
+    background-color: var(--app-button-info-background);
     &:hover {
-      background-color: rgb(248, 0, 0);
+      background-color: var(--app-button-info-hover);
     }
   }
-
   &.is-success {
-    // background-color: rgb(235, 255, 252);
+    background-color: var(--app-button-success-background);
     &:hover {
-      background-color: rgb(248, 0, 0);
+      background-color: var(--app-button-success-hover);
     }
   }
   &.is-warning {
-    // background-color: rgb(235, 255, 252);
+    background-color: var(--app-button-warning-background);
     &:hover {
-      background-color: rgb(248, 0, 0);
+      background-color: var(--app-button-warning-hover);
     }
   }
   &.is-danger {
-    // background-color: rgb(235, 255, 252);
+    background-color: var(--app-button-danger-background);
     &:hover {
-      background-color: rgb(248, 0, 0);
+      background-color: var(--app-button-danger-hover);
     }
   }
 }

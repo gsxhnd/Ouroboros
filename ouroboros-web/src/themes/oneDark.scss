@@ -15,9 +15,30 @@
 
 // button
 :root[data-theme="oneDark"] {
-  --app-button-background: rgb(35, 38, 46);
   --app-button-border-radius: 6px;
   --app-button-border-color: rgb(23, 26, 31);
+  --app-button-background: rgb(35, 38, 46);
+  --app-button-hover: rgb(35, 38, 46);
+  --app-button-primary-background: rgb(41, 66, 255);
+  --app-button-primary-hover: white;
+  --app-button-primary-light-background: rgb(41, 66, 255);
+  --app-button-primary-light-hover: white;
+  --app-button-info-background: rgb(41, 66, 255);
+  --app-button-info-hover: white;
+  --app-button-info-light-background: rgb(41, 66, 255);
+  --app-button-info-light-hover: white;
+  --app-button-success-background: rgb(41, 66, 255);
+  --app-button-success-hover: white;
+  --app-button-success-light-background: rgb(41, 66, 255);
+  --app-button-success-light-hover: white;
+  --app-button-warning-background: rgb(41, 66, 255);
+  --app-button-warning-hover: white;
+  --app-button-warning-light-background: rgb(41, 66, 255);
+  --app-button-warning-light-hover: white;
+  --app-button-danger-background: rgb(41, 66, 255);
+  --app-button-danger-hover: white;
+  --app-button-danger-light-background: rgb(41, 66, 255);
+  --app-button-danger-light-hover: white;
 }
 
 // splitter theme setting
@@ -33,6 +54,7 @@
   --app-tooltip-background: #1f1f1fe5;
 }
 
+// menu theme setting
 :root[data-theme="oneDark"] {
   --app-setting-menu-label-color: rgba(202, 199, 191, 0.65);
   --app-setting-menu-item-color: green;
