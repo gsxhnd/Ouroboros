@@ -32,22 +32,6 @@ body {
   height: var(--app-header-height);
 }
 
-.splitpanes {
-  color: white;
-  &.splitpanes--vertical > .splitpanes__splitter {
-    min-width: 3px !important;
-  }
-  &.splitpanes--horizontal > .splitpanes__splitter {
-    min-height: 3px !important;
-  }
-  .splitpanes__splitter {
-    background-color: var(--app-splitter-gutter-color-h);
-    &:hover {
-      background-color: var(--app-splitter-gutter-hover);
-    }
-  }
-}
-
 .electron-drag {
   -webkit-app-region: drag;
 }
