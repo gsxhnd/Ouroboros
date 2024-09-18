@@ -1,36 +1,26 @@
 <template>
-  <div>
-    <div class="language">
-      <div class="dropdown">
-        <div class="dropdown-trigger">
-          <button
-            class="button"
-            aria-haspopup="true"
-            aria-controls="dropdown-menu"
-          >
-            <span>Dropdown button</span>
-            <span class="icon is-small">
-              <i class="fas fa-angle-down" aria-hidden="true"></i>
-            </span>
-          </button>
-        </div>
-        <div class="dropdown-menu" id="dropdown-menu" role="menu">
-          <div class="dropdown-content">
-            <a href="#" class="dropdown-item"> Dropdown item </a>
-            <a class="dropdown-item"> Other dropdown item </a>
-            <a href="#" class="dropdown-item is-active">
-              Active dropdown item
-            </a>
-            <a href="#" class="dropdown-item"> Other dropdown item </a>
-            <hr class="dropdown-divider" />
-            <a href="#" class="dropdown-item"> With a divider </a>
-          </div>
-        </div>
-      </div>
+  <div></div>
+  <div class="columns is-desktop is-gapless">
+    <div class="column">1</div>
+    <div class="column">
+      <multiselect
+        v-model="value"
+        :options="options"
+        :searchable="false"
+        :show-labels="false"
+        :allow-empty="false"
+        placeholder="Pick a value"
+      ></multiselect>
     </div>
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import Multiselect from "vue-multiselect";
+import { ref } from "vue";
+
+const value = ref("");
+const options = ref(["list", "of", "options"]);
+</script>
 
 <style scoped lang="scss"></style>

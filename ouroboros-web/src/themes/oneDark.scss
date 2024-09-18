@@ -63,3 +63,9 @@
   --app-setting-menu-item-active-background: rgb(41, 66, 255);
   --app-setting-menu-item-radius: 0.25rem;
 }
+
+// multi-select theme setting
+:root[data-theme="oneDark"] {
+  --app-multi-select-color: white;
+  --app-multi-select-background: #1f1f1f;
+}

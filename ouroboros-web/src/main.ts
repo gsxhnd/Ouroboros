@@ -6,10 +6,11 @@ import { router } from "@/router";
 import i18nInstance from "./locales/i18n.ts";
 import { autoAnimatePlugin } from "@formkit/auto-animate/vue";
 
-import "@imengyu/vue3-context-menu/lib/vue3-context-menu.css";
 import ContextMenu from "@imengyu/vue3-context-menu";
+import "@imengyu/vue3-context-menu/lib/vue3-context-menu.css";
 import "splitpanes/dist/splitpanes.css";
 import "primeicons/primeicons.css";
+import "vue-multiselect/dist/vue-multiselect.min.css";
 import "./style.scss";
 
 import { tooltip } from "@/directive/tooltip.ts";
