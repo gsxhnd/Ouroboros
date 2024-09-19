@@ -11,7 +11,7 @@ export const usePreferencesStore = defineStore("preferences", () => {
   const useBrowser: Ref<boolean> = ref(false);
   const useElectron: Ref<boolean> = ref(false);
   const target: Ref<string> = ref("");
-  const useLanguage: Ref<Language> = ref("en-US");
+  const useLanguage: Ref<string> = ref("en-US");
   const showModal: Ref<boolean> = ref(false);
   const showSidePanel: Ref<boolean> = ref(true);
   const sidePanelSize: Ref<Array<number>> = ref([20, 60, 20]);
@@ -39,10 +39,13 @@ export const usePreferencesStore = defineStore("preferences", () => {
     i18n.locale.value = l;
   }
 
-  async function changeLanguage(l: Language) {
+  async function changeLanguage(l: string) {
     localStore.setItem("useLanguage", l).then((v) => {
-      useLanguage.value = v;
-      i18n.locale.value = v;
+      if (v === "zh-CN" || v === "en-US") {
+        // 处理中文的情况
+        useLanguage.value = v;
+        i18n.locale.value = v;
+      }
     });
   }
 

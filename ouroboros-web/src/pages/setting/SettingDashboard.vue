@@ -4,12 +4,15 @@
     <div class="column">1</div>
     <div class="column">
       <multiselect
-        v-model="value"
-        :options="options"
+        v-model="languageSelected"
+        :options="languageOptions"
         :searchable="false"
         :show-labels="false"
         :allow-empty="false"
+        label="label"
+        track-by="value"
         placeholder="Pick a value"
+        @update:modelValue="changeLanguage"
       ></multiselect>
     </div>
   </div>
@@ -17,10 +20,39 @@
 
 <script setup lang="ts">
 import Multiselect from "vue-multiselect";
-import { ref } from "vue";
+import { ref, onBeforeMount } from "vue";
 
-const value = ref("");
-const options = ref(["list", "of", "options"]);
+import { usePreferencesStore } from "@/stores/preferences";
+const preferencesStore = usePreferencesStore();
+
+interface languageOptions {
+  label: string;
+  value: string;
+}
+
+const languageSelected = ref({ label: "中文", value: "zh-CN" });
+const languageOptions = ref([
+  {
+    label: "中文",
+    value: "zh-CN",
+  },
+  {
+    label: "English",
+    value: "en-US",
+  },
+]);
+
+preferencesStore.$subscribe((_mutation, state) => {
+  languageOptions.value.findIndex((item) => {
+    if (item.value === state.useLanguage) {
+      languageSelected.value = item;
+    }
+  });
+});
+
+async function changeLanguage(value: languageOptions, id: any) {
+  await preferencesStore.changeLanguage(value.value);
+}
 </script>
 
 <style scoped lang="scss"></style>
