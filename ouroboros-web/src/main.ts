@@ -3,7 +3,7 @@ import "../../ouroboros.d.ts";
 import { createApp } from "vue";
 import { createPinia } from "pinia";
 import { router } from "@/router";
-import i18nInstance from "./locales/i18n.ts";
+import { i18n } from "@/locales/i18n.ts";
 import { autoAnimatePlugin } from "@formkit/auto-animate/vue";
 
 import ContextMenu from "@imengyu/vue3-context-menu";
@@ -19,7 +19,7 @@ import App from "./App.vue";
 const pinia = createPinia();
 const app = createApp(App);
 
-app.use(i18nInstance);
+app.use(i18n);
 app.use(pinia);
 app.use(router);
 app.use(autoAnimatePlugin);

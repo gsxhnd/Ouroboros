@@ -8,14 +8,14 @@
       </pane>
       <pane min-size="5" class="tag-pane">
         <div class="tag-header">
-          <span>{{ $t("message.Tag") }}</span>
+          <span>{{ t("message.Tag") }}</span>
         </div>
         <Tag />
       </pane>
       <pane min-size="5" class="search-pane">
         <SmartSearchHeader />
         <div class="search-header">
-          <span>{{ $t("message.SmartSearch") }}</span>
+          <span>{{ t("message.SmartSearch") }}</span>
         </div>
         <SmartSearch />
       </pane>
@@ -34,6 +34,8 @@ import SmartSearch from "@/pages/SmartSearch.vue";
 
 import { Splitpanes, Pane } from "splitpanes";
 import { onMounted } from "vue";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
 
 onMounted(() => {});
 </script>

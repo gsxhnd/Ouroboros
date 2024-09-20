@@ -3,14 +3,13 @@ import { onMounted, onBeforeMount } from "vue";
 import { usePreferencesStore } from "@/stores/preferences";
 const preferencesStore = usePreferencesStore();
 
-onBeforeMount(() => {
+onBeforeMount(async () => {
   const doc = document.documentElement;
   doc.dataset.theme = "oneDark";
-});
-
-onMounted(async () => {
   await preferencesStore.init();
 });
+
+onMounted(async () => {});
 </script>
 
 <template>

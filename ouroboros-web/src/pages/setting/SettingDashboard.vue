@@ -23,11 +23,12 @@ import Multiselect from "vue-multiselect";
 import { ref, onBeforeMount } from "vue";
 
 import { usePreferencesStore } from "@/stores/preferences";
+import { SupportLanguages } from "@/locales/i18n";
 const preferencesStore = usePreferencesStore();
 
 interface languageOptions {
   label: string;
-  value: string;
+  value: SupportLanguages;
 }
 
 const languageSelected = ref({ label: "中文", value: "zh-CN" });

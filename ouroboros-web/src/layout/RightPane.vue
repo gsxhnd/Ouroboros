@@ -1,7 +1,6 @@
 <template>
   <div class="right-pane">
     <RightHeader />
-    <span>{{ $t("message.hello") }}</span>
   </div>
 </template>
 <script setup lang="ts">

@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { i18n, Language } from "@/locales/i18n";
+import { i18n, SupportLanguages } from "@/locales/i18n";
 import { localStore } from "@/utils/store";
 
 import { usePreferredLanguages } from "@vueuse/core";
@@ -25,26 +25,23 @@ export const usePreferencesStore = defineStore("preferences", () => {
       target.value = "desktop";
     }
 
-    let l = await localStore
-      .getItem<Language>("useLanguage")
+    await localStore
+      .getItem<SupportLanguages>("useLanguage")
       .then((l) => {
         if (l != null) return l;
         if (languages.value[0] == "zh-CN") return "zh-CN";
         return "en-US";
       })
       .then((v) => {
-        return localStore.setItem("useLanguage", v);
+        changeLanguage(v);
       });
-    useLanguage.value = l;
-    i18n.locale.value = l;
   }
 
-  async function changeLanguage(l: string) {
-    localStore.setItem("useLanguage", l).then((v) => {
+  async function changeLanguage(l: SupportLanguages) {
+    await localStore.setItem("useLanguage", l).then((v) => {
       if (v === "zh-CN" || v === "en-US") {
-        // 处理中文的情况
         useLanguage.value = v;
-        i18n.locale.value = v;
+        i18n.global.locale.value = l;
       }
     });
   }
