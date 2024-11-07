@@ -2,7 +2,7 @@ import { BrowserWindow, ipcMain, session, dialog } from "electron";
 import { resolve } from "path";
 
 import { preferences } from "./preferences";
-import { isDev, isRelease, userConfigPath } from "./constants";
+import { isDev, isRelease, userConfigPath } from "./utils/constants";
 
 export class Application {
   private win: BrowserWindow;

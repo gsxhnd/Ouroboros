@@ -5,8 +5,8 @@
   "author": "gsxhnd",
   "license": "MIT",
   "scripts": {
-    "napi:build": "napi build --cargo-name napi ./ouroboros-electron/napi",
-    "napi:release": "napi build --cargo-name napi --release ./ouroboros-electron/napi",
+    "napi:build": "napi build --cargo-name napi ./ouroboros-electron/sdk",
+    "napi:release": "napi build --cargo-name napi --release ./ouroboros-electron/sdk",
     "electron:dev": "dotenvx run -f ./script/.dev.env -- ts-node electron.esbuild.ts",
     "electron:dev:start": "dotenvx run -f ./script/.dev.env -- electron .",
     "electron:start": "electron .",
@@ -19,7 +19,8 @@
   "dependencies": {
     "chokidar": "^3.6.0",
     "lowdb": "^7.0.1",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "winston": "^3.16.0"
   },
   "devDependencies": {
     "@dotenvx/dotenvx": "^1.14.0",
