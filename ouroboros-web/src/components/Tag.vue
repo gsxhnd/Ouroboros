@@ -12,6 +12,6 @@
 }
 </style>
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref } from "vue";
 const show = ref(false);
 </script>

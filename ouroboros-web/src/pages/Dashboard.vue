@@ -51,22 +51,22 @@
 </style>
 
 <script setup lang="ts">
-import { reactive, onBeforeMount, onMounted } from "vue";
+import { onBeforeMount, onMounted } from "vue";
 import { userFolderStore } from "@/stores/folder";
 import { useFileStore } from "@/stores/file";
 // import Viewer from "viewerjs";
 // import "viewerjs/dist/viewer.min.css";
 
-interface ItemOption {
-  id: number;
-  title: string;
-  url: string;
-  width: number;
-  height: number;
-  avatar: string;
-  user: string;
-  views: number;
-}
+// interface ItemOption {
+//   id: number;
+//   title: string;
+//   url: string;
+//   width: number;
+//   height: number;
+//   avatar: string;
+//   user: string;
+//   views: number;
+// }
 
 const folderStore = userFolderStore();
 const fileStore = useFileStore();

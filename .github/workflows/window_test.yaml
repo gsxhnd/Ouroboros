@@ -1,21 +1,15 @@
-name: Release
+name: Test window build napi
 
 on:
   push:
-    tags:
-      - "v*"
-      - "release-beta*"
+    branches:
+      - master
 
 jobs:
   release:
     name: build and release electron app
 
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, ubuntu-22.04, macos-latest, macos-13]
-
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
     steps:
       - name: checkout code
         uses: actions/checkout@v3
@@ -34,6 +28,7 @@ jobs:
 
       # build
       - run: yarn napi:release
+      - run: yarn electron:build
       - run: ls ./dist
       - run: yarn package
       - run: yarn make
@@ -41,12 +36,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ourobroros-${{ matrix.os }}
+          name: ourobroros-windows-test
           path: |
             out/**/*.zip
-
-      - name: Release
-        run: yarn publisher
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

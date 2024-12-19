@@ -1,5 +1,10 @@
 import { http } from "@/utils/http";
-import { File } from "@type";
+
+interface File {
+  id: number;
+  name: string;
+  size: number;
+}
 
 export const getFiles = async (target: string, folderId: number) => {
   if (target == "web") {

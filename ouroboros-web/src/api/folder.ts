@@ -1,5 +1,6 @@
 import { http } from "@/utils/http";
-import { Folder } from "@type";
+
+interface Folder {}
 
 export const getFolders = async (target: string) => {
   if (target == "web") {

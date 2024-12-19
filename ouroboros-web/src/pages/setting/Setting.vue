@@ -33,35 +33,34 @@
 }
 </style>
 <script setup lang="ts">
-import { ref, Ref, onBeforeMount } from "vue";
+import { ref, onBeforeMount } from "vue";
 import { usePreferencesStore } from "@/stores/preferences";
 import { userSettingDialogStore } from "@/stores/settingDialog";
-import { Language } from "@/locales/i18n";
+// import { Language } from "@/locales/i18n";
 import { vOnClickOutside } from "@vueuse/components";
 import SettingSide from "./SettingSide.vue";
 import SettingDashboard from "./SettingDashboard.vue";
 
-interface LanguageOption {
-  name: string;
-  code: Language;
-}
+// interface LanguageOption {
+//   name: string;
+//   code: Language;
+// }
 
 const isActive = ref(true);
 const preferencesStore = usePreferencesStore();
 const settingDialogStore = userSettingDialogStore();
 
-const selected: Ref<LanguageOption> = ref({ name: "中文", code: "zh-CN" });
-const options: Ref<Array<LanguageOption>> = ref([
-  { name: "中文", code: "zh-CN" },
-  { name: "English", code: "en-US" },
-]);
+// const selected: Ref<LanguageOption> = ref({ name: "中文", code: "zh-CN" });
+// const options: Ref<Array<LanguageOption>> = ref([
+//   { name: "中文", code: "zh-CN" },
+//   { name: "English", code: "en-US" },
+// ]);
 
 onBeforeMount(async () => {
-  let index = options.value.findIndex(
-    (item) => item.code === preferencesStore.useLanguage
-  );
-
-  selected.value = options.value[index];
+  // let index = options.value.findIndex(
+  //   (item) => item.code === preferencesStore.useLanguage
+  // );
+  // selected.value = options.value[index];
 });
 
 async function changeLanguage() {
@@ -70,7 +69,6 @@ async function changeLanguage() {
 }
 
 function closeModal() {
-  // alert("close");
   isActive.value = false;
   preferencesStore.showModal = false;
 }

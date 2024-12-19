@@ -15,8 +15,8 @@ export const userFolderStore = defineStore("folder", () => {
   });
 
   async function getFolders() {
-    return await getFoldersApi(target.value).then((f) => {
-      folders.value = f;
+    return await getFoldersApi(target.value).then((_f) => {
+      // folders.value = f;
     });
   }
 

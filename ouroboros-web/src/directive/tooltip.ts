@@ -1,13 +1,5 @@
 import { Directive, DirectiveBinding, watch } from "vue";
-import {
-  computePosition,
-  flip,
-  shift,
-  offset,
-  autoPlacement,
-  platform,
-  inline,
-} from "@floating-ui/vue";
+import { computePosition, flip, shift, offset } from "@floating-ui/vue";
 import { useElementHover } from "@vueuse/core";
 
 export const tooltip: Directive = {

@@ -3,7 +3,7 @@ import { i18n, SupportLanguages } from "@/locales/i18n";
 import { localStore } from "@/utils/store";
 
 import { usePreferredLanguages } from "@vueuse/core";
-import { Ref, ref, computed } from "vue";
+import { Ref, ref } from "vue";
 
 const languages = usePreferredLanguages();
 

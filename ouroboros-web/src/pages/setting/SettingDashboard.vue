@@ -3,7 +3,7 @@
   <div class="columns is-desktop is-gapless">
     <div class="column">1</div>
     <div class="column">
-      <multiselect
+      <!-- <multiselect
         v-model="languageSelected"
         :options="languageOptions"
         :searchable="false"
@@ -13,14 +13,14 @@
         track-by="value"
         placeholder="Pick a value"
         @update:modelValue="changeLanguage"
-      ></multiselect>
+      ></multiselect> -->
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import Multiselect from "vue-multiselect";
-import { ref, onBeforeMount } from "vue";
+// import Multiselect from "vue-multiselect";
+import { ref } from "vue";
 
 import { usePreferencesStore } from "@/stores/preferences";
 import { SupportLanguages } from "@/locales/i18n";
@@ -51,9 +51,9 @@ preferencesStore.$subscribe((_mutation, state) => {
   });
 });
 
-async function changeLanguage(value: languageOptions, id: any) {
-  await preferencesStore.changeLanguage(value.value);
-}
+// async function changeLanguage(value: languageOptions, _id: any) {
+//   await preferencesStore.changeLanguage(value.value);
+// }
 </script>
 
 <style scoped lang="scss"></style>
