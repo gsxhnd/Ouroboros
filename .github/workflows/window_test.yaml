@@ -27,7 +27,7 @@ jobs:
       - run: cargo check
 
       # build
-      - run: pwd
+      - run: pwd && ls -al
       - run: yarn run napi:release
       - run: yarn electron:build
       - run: ls ./dist
