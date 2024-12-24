@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 # ouroboros-core = { path = "../ouroboros-core" }
+owl-db = {path = "../owl-db"}
 
 axum = { version = "0.7", features = ["multipart"] }
 clap = { version = "4", features = ["derive", "env"] }
@@ -12,8 +13,8 @@ mime_guess = { version = "2" }
 multer = { version = "3" }
 toml = { version = "0.8" }
 rust-embed = { version = "8" }
-utoipa = { version = "5", features = ["axum_extras"] }
 
+utoipa = {workspace = true}
 serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }

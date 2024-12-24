@@ -1,7 +1,8 @@
-[common]
-data_path = "./data"
-server_listen = "0.0.0.0:8080"
+data_path = "data"
+
+[server]
+listen = "0.0.0.0:8080"
 
 [log]
 level = "info"
-path = "./logs"
+path = "logs"

@@ -1,0 +1,15 @@
+[package]
+name = "owl-db"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chrono = { workspace = true }
+napi = { workspace = true }
+napi-derive = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+surrealdb = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }
+utoipa = {workspace = true}
