@@ -1,16 +1,16 @@
-/target
-
-## nodejs
+# Logs
+logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-/node_modules
-/out
-/dist
-/extension
-/resources/*.wasm
+
+node_modules
+dist
+dist-ssr
+*.local
 
 # Editor directories and files
 .vscode/*
@@ -22,8 +22,3 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
-
-*.db
-testdata/
-testing
-data/
