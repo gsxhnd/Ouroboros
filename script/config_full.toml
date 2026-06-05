@@ -1,3 +1,0 @@
-[common]
-data_path = "./testing"
-server_listen = "0.0.0.0:8080"
