@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
-description = "Ourboros HTTP/gRPC server"
+description = "Ourboros HTTP server"
 
 [lib]
 name = "ourboros_server"

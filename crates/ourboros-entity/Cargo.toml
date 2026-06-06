@@ -1,0 +1,13 @@
+[package]
+name = "ourboros-entity"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Ourboros SeaORM entity definitions"
+
+[dependencies]
+sea-orm.workspace = true
+serde.workspace = true
+chrono.workspace = true
+uuid.workspace = true

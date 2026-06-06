@@ -60,16 +60,7 @@ export const http = {
 
 export async function resolveApiBaseUrl() {
   if (import.meta.env.VITE_API_BASE_URL) {
-    return apiBaseUrl
+    setApiBaseUrl(import.meta.env.VITE_API_BASE_URL)
   }
-
-  if ("__TAURI_INTERNALS__" in window) {
-    const { invoke } = await import("@tauri-apps/api/core")
-    const port = await invoke<number>("get_server_port")
-    setApiBaseUrl(`http://127.0.0.1:${port}`)
-    return apiBaseUrl
-  }
-
-  setApiBaseUrl("")
   return apiBaseUrl
 }

@@ -1,7 +1,5 @@
 use std::path::PathBuf;
 
-use thiserror::Error;
-
 pub mod config;
 pub mod error;
 pub mod library;

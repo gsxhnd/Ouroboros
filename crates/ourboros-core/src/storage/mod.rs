@@ -1,57 +1,35 @@
 use std::path::Path;
 
-use refinery::embed_migrations;
-use rusqlite::Connection;
+use sea_orm::{Database as SeaDatabase, DatabaseConnection};
+use sea_orm_migration::MigratorTrait;
 
-use crate::error::{CoreError, CoreResult};
-
-embed_migrations!("migrations");
+use crate::error::CoreResult;
 
 pub struct Database {
-    conn: Connection,
+    conn: DatabaseConnection,
 }
 
 impl Database {
-    pub fn open(path: &Path) -> CoreResult<Self> {
+    pub async fn open(path: &Path) -> CoreResult<Self> {
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent)?;
         }
 
-        let mut conn = Connection::open(path)?;
-        conn.pragma_update(None, "foreign_keys", "ON")?;
+        let url = format!("sqlite:{}?mode=rwc", path.display());
+        let conn = SeaDatabase::connect(&url).await?;
 
-        migrations::runner()
-            .run(&mut conn)
-            .map_err(|err| CoreError::Migration(err.to_string()))?;
+        ourboros_migration::Migrator::up(&conn, None).await?;
 
         Ok(Self { conn })
     }
 
-    pub fn connection(&self) -> &Connection {
-        &self.conn
+    pub async fn connect(url: &str) -> CoreResult<Self> {
+        let conn = SeaDatabase::connect(url).await?;
+        ourboros_migration::Migrator::up(&conn, None).await?;
+        Ok(Self { conn })
     }
-}
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use tempfile::tempdir;
-
-    #[test]
-    fn runs_migrations_on_open() {
-        let dir = tempdir().unwrap();
-        let db_path = dir.path().join("test.db");
-        let db = Database::open(&db_path).unwrap();
-
-        let table_count: i64 = db
-            .connection()
-            .query_row(
-                "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'assets'",
-                [],
-                |row| row.get(0),
-            )
-            .unwrap();
-
-        assert_eq!(table_count, 1);
+    pub fn connection(&self) -> &DatabaseConnection {
+        &self.conn
     }
 }

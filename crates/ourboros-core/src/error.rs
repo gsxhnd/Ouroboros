@@ -21,10 +21,7 @@ pub enum CoreError {
     Io(#[from] std::io::Error),
 
     #[error("database error: {0}")]
-    Database(#[from] rusqlite::Error),
-
-    #[error("migration error: {0}")]
-    Migration(String),
+    Database(#[from] sea_orm::DbErr),
 
     #[error("config error: {0}")]
     Config(#[from] toml::de::Error),

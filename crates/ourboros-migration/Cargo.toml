@@ -1,0 +1,10 @@
+[package]
+name = "ourboros-migration"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Ourboros database migrations"
+
+[dependencies]
+sea-orm-migration.workspace = true

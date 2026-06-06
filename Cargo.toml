@@ -3,7 +3,9 @@ resolver = "2"
 members = [
     "crates/ourboros-core",
     "crates/ourboros-server",
-    "crates/ourboros-tauri",
+    "crates/ourboros-entity",
+    "crates/ourboros-migration",
+    "crates/ourboros-app",
 ]
 
 [workspace.package]
@@ -22,9 +24,14 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tokio = { version = "1", features = ["full"] }
 axum = "0.8"
 tower-http = { version = "0.6", features = ["cors", "trace"] }
-rusqlite = { version = "0.26", features = ["bundled"] }
-refinery = { version = "0.8", features = ["rusqlite"] }
 uuid = { version = "1", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 toml = "0.8"
 clap = { version = "4", features = ["derive"] }
+sea-orm = { version = "1", features = ["sqlx-sqlite", "sqlx-postgres", "sqlx-mysql", "runtime-tokio-rustls", "macros", "with-chrono", "with-uuid", "with-json"] }
+sea-orm-migration = { version = "1", features = ["sqlx-sqlite", "sqlx-postgres", "sqlx-mysql", "runtime-tokio-rustls"] }
+tray-icon = "0.19"
+muda = "0.15"
+tao = "0.31"
+open = "5"
+image = "0.25"

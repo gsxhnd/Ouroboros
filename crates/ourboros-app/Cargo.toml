@@ -1,0 +1,24 @@
+[package]
+name = "ourboros-app"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Ourboros desktop application"
+
+[[bin]]
+name = "ourboros-app"
+path = "src/main.rs"
+
+[dependencies]
+ourboros-server = { path = "../ourboros-server" }
+ourboros-core = { path = "../ourboros-core" }
+tray-icon.workspace = true
+muda.workspace = true
+tao.workspace = true
+open.workspace = true
+tokio.workspace = true
+axum.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+image.workspace = true

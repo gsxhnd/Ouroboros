@@ -62,15 +62,14 @@ struct ApiError {
 
 impl ApiError {
     fn from_core(error: CoreError) -> Self {
-        let (status, message) = match error {
+        let (status, message) = match &error {
             CoreError::AlreadyOpen => (StatusCode::CONFLICT, error.to_string()),
             CoreError::NotOpen => (StatusCode::NOT_FOUND, error.to_string()),
-            CoreError::NotFound(path) => (StatusCode::NOT_FOUND, path),
-            CoreError::AlreadyExists(path) => (StatusCode::CONFLICT, path),
-            CoreError::InvalidPath(path) => (StatusCode::BAD_REQUEST, path),
-            other => (StatusCode::INTERNAL_SERVER_ERROR, other.to_string()),
+            CoreError::NotFound(_) => (StatusCode::NOT_FOUND, error.to_string()),
+            CoreError::AlreadyExists(_) => (StatusCode::CONFLICT, error.to_string()),
+            CoreError::InvalidPath(_) => (StatusCode::BAD_REQUEST, error.to_string()),
+            _ => (StatusCode::INTERNAL_SERVER_ERROR, error.to_string()),
         };
-
         Self { status, message }
     }
 }
@@ -92,16 +91,11 @@ async fn health() -> &'static str {
 }
 
 async fn system_info(State(state): State<AppState>) -> Json<SystemInfoResponse> {
-    let library_open = state
-        .library_manager
-        .lock()
-        .map(|manager| manager.is_open())
-        .unwrap_or(false);
-
+    let manager = state.library_manager.read().await;
     Json(SystemInfoResponse {
         name: "ourboros",
         version: state.version.clone(),
-        library_open,
+        library_open: manager.is_open(),
     })
 }
 
@@ -109,15 +103,11 @@ async fn create_library(
     State(state): State<AppState>,
     Json(payload): Json<CreateLibraryRequest>,
 ) -> Result<Json<ourboros_core::LibraryInfo>, ApiError> {
-    let mut manager = state.library_manager.lock().map_err(|_| ApiError {
-        status: StatusCode::INTERNAL_SERVER_ERROR,
-        message: "library manager lock poisoned".to_string(),
-    })?;
-
+    let mut manager = state.library_manager.write().await;
     let info = manager
         .create(&payload.path, &payload.name)
+        .await
         .map_err(ApiError::from_core)?;
-
     Ok(Json(info))
 }
 
@@ -125,41 +115,26 @@ async fn open_library(
     State(state): State<AppState>,
     Json(payload): Json<OpenLibraryRequest>,
 ) -> Result<Json<ourboros_core::LibraryInfo>, ApiError> {
-    let mut manager = state.library_manager.lock().map_err(|_| ApiError {
-        status: StatusCode::INTERNAL_SERVER_ERROR,
-        message: "library manager lock poisoned".to_string(),
-    })?;
-
+    let mut manager = state.library_manager.write().await;
     let info = manager
         .open(&payload.path)
+        .await
         .map_err(ApiError::from_core)?;
-
     Ok(Json(info))
 }
 
 async fn library_info(
     State(state): State<AppState>,
 ) -> Result<Json<ourboros_core::LibraryInfo>, ApiError> {
-    let manager = state.library_manager.lock().map_err(|_| ApiError {
-        status: StatusCode::INTERNAL_SERVER_ERROR,
-        message: "library manager lock poisoned".to_string(),
-    })?;
-
-    manager
-        .info()
-        .map(Json)
-        .ok_or_else(|| ApiError {
-            status: StatusCode::NOT_FOUND,
-            message: CoreError::NotOpen.to_string(),
-        })
+    let manager = state.library_manager.read().await;
+    manager.info().map(Json).ok_or_else(|| ApiError {
+        status: StatusCode::NOT_FOUND,
+        message: CoreError::NotOpen.to_string(),
+    })
 }
 
 async fn close_library(State(state): State<AppState>) -> Result<StatusCode, ApiError> {
-    let mut manager = state.library_manager.lock().map_err(|_| ApiError {
-        status: StatusCode::INTERNAL_SERVER_ERROR,
-        message: "library manager lock poisoned".to_string(),
-    })?;
-
+    let mut manager = state.library_manager.write().await;
     manager.close().map_err(ApiError::from_core)?;
     Ok(StatusCode::NO_CONTENT)
 }

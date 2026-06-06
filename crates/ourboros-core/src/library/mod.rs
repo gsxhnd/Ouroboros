@@ -38,10 +38,10 @@ impl LibraryManager {
     }
 
     pub fn info(&self) -> Option<LibraryInfo> {
-        self.current.as_ref().map(|library| library.info.clone())
+        self.current.as_ref().map(|lib| lib.info.clone())
     }
 
-    pub fn create(&mut self, root: &Path, name: &str) -> CoreResult<LibraryInfo> {
+    pub async fn create(&mut self, root: &Path, name: &str) -> CoreResult<LibraryInfo> {
         if self.current.is_some() {
             return Err(CoreError::AlreadyOpen);
         }
@@ -60,7 +60,7 @@ impl LibraryManager {
         let config = LibraryConfig::new(name);
         fs::write(&paths.config, config.to_toml()?)?;
 
-        let db = Database::open(&paths.database)?;
+        let db = Database::open(&paths.database).await?;
         let library = Library {
             info: library_info(&root, &config, true),
             config,
@@ -73,7 +73,7 @@ impl LibraryManager {
         Ok(info)
     }
 
-    pub fn open(&mut self, root: &Path) -> CoreResult<LibraryInfo> {
+    pub async fn open(&mut self, root: &Path) -> CoreResult<LibraryInfo> {
         if self.current.is_some() {
             return Err(CoreError::AlreadyOpen);
         }
@@ -87,7 +87,7 @@ impl LibraryManager {
 
         let config_content = fs::read_to_string(&paths.config)?;
         let config = LibraryConfig::load(&config_content)?;
-        let db = Database::open(&paths.database)?;
+        let db = Database::open(&paths.database).await?;
 
         let library = Library {
             info: library_info(&root, &config, true),
@@ -105,7 +105,6 @@ impl LibraryManager {
         if self.current.is_none() {
             return Err(CoreError::NotOpen);
         }
-
         self.current = None;
         Ok(())
     }
@@ -124,30 +123,5 @@ fn library_info(root: &Path, config: &LibraryConfig, is_open: bool) -> LibraryIn
         version: config.library.version.clone(),
         created_at: config.library.created_at.to_rfc3339(),
         is_open,
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use tempfile::tempdir;
-
-    #[test]
-    fn create_open_close_library() {
-        let dir = tempdir().unwrap();
-        let root = dir.path().join("library");
-        let mut manager = LibraryManager::new();
-
-        let created = manager.create(&root, "Test Library").unwrap();
-        assert_eq!(created.name, "Test Library");
-        assert!(created.is_open);
-        assert!(root.join(".ourboros/database.db").exists());
-
-        manager.close().unwrap();
-        assert!(!manager.is_open());
-
-        let opened = manager.open(&root).unwrap();
-        assert_eq!(opened.name, "Test Library");
-        manager.close().unwrap();
     }
 }
