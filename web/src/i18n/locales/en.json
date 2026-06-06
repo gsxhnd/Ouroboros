@@ -1,0 +1,37 @@
+{
+  "app": {
+    "name": "Ourboros",
+    "tagline": "Local asset library manager"
+  },
+  "nav": {
+    "home": "Home",
+    "library": "Library",
+    "settings": "Settings"
+  },
+  "home": {
+    "title": "Welcome to Ourboros",
+    "description": "Organize images, documents, fonts, and audio in local libraries.",
+    "openLibrary": "Open Library",
+    "createLibrary": "Create Library",
+    "recentLibraries": "Recent Libraries"
+  },
+  "library": {
+    "title": "Library",
+    "current": "Current Library",
+    "none": "No library is open",
+    "path": "Path",
+    "version": "Version",
+    "createdAt": "Created At",
+    "close": "Close Library",
+    "refresh": "Refresh"
+  },
+  "settings": {
+    "title": "Settings",
+    "theme": "Theme",
+    "language": "Language"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong"
+  }
+}

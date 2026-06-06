@@ -1,0 +1,37 @@
+{
+  "app": {
+    "name": "Ourboros",
+    "tagline": "本地素材库管理器"
+  },
+  "nav": {
+    "home": "首页",
+    "library": "资源库",
+    "settings": "设置"
+  },
+  "home": {
+    "title": "欢迎使用 Ourboros",
+    "description": "在本地资源库中管理图片、文档、字体和音频。",
+    "openLibrary": "打开资源库",
+    "createLibrary": "创建资源库",
+    "recentLibraries": "最近打开"
+  },
+  "library": {
+    "title": "资源库",
+    "current": "当前资源库",
+    "none": "尚未打开资源库",
+    "path": "路径",
+    "version": "版本",
+    "createdAt": "创建时间",
+    "close": "关闭资源库",
+    "refresh": "刷新"
+  },
+  "settings": {
+    "title": "设置",
+    "theme": "主题",
+    "language": "语言"
+  },
+  "common": {
+    "loading": "加载中...",
+    "error": "出错了"
+  }
+}

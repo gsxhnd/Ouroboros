@@ -6,11 +6,23 @@ authors.workspace = true
 license.workspace = true
 description = "Ourboros HTTP/gRPC server"
 
+[lib]
+name = "ourboros_server"
+path = "src/lib.rs"
+
 [[bin]]
 name = "ourboros-server"
 path = "src/main.rs"
 
 [dependencies]
 ourboros-core = { path = "../ourboros-core" }
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
+tokio.workspace = true
+axum.workspace = true
+tower-http.workspace = true
+clap.workspace = true
