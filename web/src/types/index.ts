@@ -15,3 +15,20 @@ export interface SystemInfo {
 export interface ApiError {
   error: string
 }
+
+export type WsEventType =
+  | "asset.created"
+  | "asset.deleted"
+  | "asset.modified"
+  | "asset.moved"
+
+export interface WsEventPayload {
+  id: string
+  file_path: string
+  timestamp: string
+}
+
+export interface WsEvent {
+  type: WsEventType
+  payload: WsEventPayload
+}

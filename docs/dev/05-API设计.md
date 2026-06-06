@@ -62,39 +62,17 @@ GET    /api/search/color            颜色搜索
 
 ```
 GET    /api/system/info             系统信息
-WebSocket /ws/events                实时事件推送
 ```
 
-## gRPC Services (Proto 定义)
+## WebSocket（实时通信）
 
-```protobuf
-service LibraryService {
-  rpc Create(CreateLibraryRequest) returns (Library);
-  rpc Open(OpenLibraryRequest) returns (Library);
-  rpc GetInfo(Empty) returns (Library);
-}
+前端通过 WebSocket 接收服务端推送，替代原 gRPC 流式接口（如资源事件订阅）。
 
-service AssetService {
-  rpc List(ListAssetsRequest) returns (ListAssetsResponse);
-  rpc Get(GetAssetRequest) returns (Asset);
-  rpc Update(UpdateAssetRequest) returns (Asset);
-  rpc Delete(DeleteAssetRequest) returns (Empty);
-  rpc GetThumbnail(GetThumbnailRequest) returns (stream Chunk);
-  rpc WatchEvents(Empty) returns (stream AssetEvent);
-}
-
-service SearchService {
-  rpc Search(SearchRequest) returns (SearchResponse);
-  rpc SearchByColor(ColorSearchRequest) returns (SearchResponse);
-}
-
-service TagService {
-  rpc List(Empty) returns (ListTagsResponse);
-  rpc Create(CreateTagRequest) returns (Tag);
-  rpc Update(UpdateTagRequest) returns (Tag);
-  rpc Delete(DeleteTagRequest) returns (Empty);
-}
 ```
+WS     /ws/events                   资源变更事件推送（服务端 → 客户端）
+```
+
+连接建立后，服务端在文件监听检测到变更时主动推送事件，客户端无需轮询。
 
 ## WebSocket 事件格式
 
