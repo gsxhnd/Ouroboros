@@ -2,25 +2,23 @@
   "name": "ourboros",
   "private": true,
   "version": "0.1.0",
-  "type": "module",
+  "workspaces": [
+    "web"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "tauri": "tauri"
-  },
-  "dependencies": {
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "@tauri-apps/api": "^2",
-    "@tauri-apps/plugin-opener": "^2"
+    "dev": "npm run dev -w web",
+    "build": "npm run build -w web",
+    "preview": "npm run preview -w web",
+    "lint": "npm run lint -w web",
+    "format": "npm run format -w web",
+    "typecheck": "npm run typecheck -w web",
+    "tauri": "tauri dev --config crates/ourboros-tauri/tauri.conf.json",
+    "tauri:dev": "tauri dev --config crates/ourboros-tauri/tauri.conf.json",
+    "tauri:build": "tauri build --config crates/ourboros-tauri/tauri.conf.json",
+    "cargo:check": "cargo check --workspace",
+    "cargo:build": "cargo build --workspace"
   },
   "devDependencies": {
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
-    "@vitejs/plugin-react": "^4.6.0",
-    "typescript": "~5.8.3",
-    "vite": "^7.0.4",
     "@tauri-apps/cli": "^2"
   }
 }

@@ -1,0 +1,16 @@
+[package]
+name = "ourboros-server"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Ourboros HTTP/gRPC server"
+
+[[bin]]
+name = "ourboros-server"
+path = "src/main.rs"
+
+[dependencies]
+ourboros-core = { path = "../ourboros-core" }
+tracing.workspace = true
+tracing-subscriber.workspace = true

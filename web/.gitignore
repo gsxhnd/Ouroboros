@@ -10,9 +10,6 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
-
-# Rust
-/target/
 *.local
 
 # Editor directories and files
