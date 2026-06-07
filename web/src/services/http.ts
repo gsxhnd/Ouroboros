@@ -40,6 +40,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const http = {
+  getHealth: () => request<string>("/health"),
   getSystemInfo: () => request<SystemInfo>("/api/system/info"),
   getLibraryInfo: () => request<LibraryInfo>("/api/library/info"),
   createLibrary: (path: string, name: string) =>

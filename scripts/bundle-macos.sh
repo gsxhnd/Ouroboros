@@ -1,18 +1,27 @@
 #!/bin/bash
-# Build ourboros-app and package it as a macOS .app bundle
-set -e
+# Package release artifacts as a macOS .app bundle (does not compile).
+set -euo pipefail
 
-PROFILE="${1:-release}"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "${ROOT}"
+
 APP_NAME="Ourboros"
-BINARY_NAME="ourboros-app"
-BUNDLE_ID="xyz.gsxhnd.ourboros"
+EXECUTABLE_NAME="Ourboros"
+RELEASE_BINARY_NAME="ourboros"
+BUNDLE_ID="dev.newma.ourboros"
+BINARY_PATH="target/release/${RELEASE_BINARY_NAME}"
+WEB_DIST="web/dist"
 
-if [ "$PROFILE" = "release" ]; then
-    cargo build -p ourboros-app --release
-    BINARY_PATH="target/release/${BINARY_NAME}"
-else
-    cargo build -p ourboros-app
-    BINARY_PATH="target/debug/${BINARY_NAME}"
+if [ ! -f "${BINARY_PATH}" ]; then
+    echo "error: missing release binary: ${BINARY_PATH}" >&2
+    echo "Run: cargo build -p ourboros --release" >&2
+    exit 1
+fi
+
+if [ ! -f "${WEB_DIST}/index.html" ]; then
+    echo "error: missing web dist: ${WEB_DIST}/index.html" >&2
+    echo "Run: npm run build (in web/)" >&2
+    exit 1
 fi
 
 APP_DIR="target/${APP_NAME}.app"
@@ -24,9 +33,12 @@ rm -rf "${APP_DIR}"
 mkdir -p "${MACOS_DIR}"
 mkdir -p "${RESOURCES_DIR}"
 
-cp "${BINARY_PATH}" "${MACOS_DIR}/${BINARY_NAME}"
+cp "${BINARY_PATH}" "${MACOS_DIR}/${EXECUTABLE_NAME}"
+chmod +x "${MACOS_DIR}/${EXECUTABLE_NAME}"
 
-# Create Info.plist
+cp -R "${WEB_DIST}" "${RESOURCES_DIR}/web"
+echo "Bundled web UI from ${WEB_DIST}"
+
 # LSUIElement=true tells macOS this is an agent app (no Dock icon, no terminal)
 cat > "${CONTENTS_DIR}/Info.plist" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -44,7 +56,7 @@ cat > "${CONTENTS_DIR}/Info.plist" << EOF
     <key>CFBundleShortVersionString</key>
     <string>0.1.0</string>
     <key>CFBundleExecutable</key>
-    <string>${BINARY_NAME}</string>
+    <string>${EXECUTABLE_NAME}</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>LSUIElement</key>
@@ -53,11 +65,25 @@ cat > "${CONTENTS_DIR}/Info.plist" << EOF
     <string>10.13</string>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <key>LSEnvironment</key>
+    <dict>
+        <key>OURBOROS_APP_BUNDLE</key>
+        <string>1</string>
+    </dict>
 </dict>
 </plist>
 EOF
+
+# Ad-hoc sign so Finder/Gatekeeper allows launching the unsigned dev bundle.
+if command -v codesign >/dev/null 2>&1; then
+    codesign --force --deep -s - "${APP_DIR}"
+    echo "Signed: ${APP_DIR} (ad-hoc)"
+else
+    echo "warning: codesign not found; Finder may block the unsigned bundle" >&2
+fi
 
 echo "Built: ${APP_DIR}"
 echo ""
 echo "To run: open ${APP_DIR}"
 echo "To install: cp -r ${APP_DIR} /Applications/"
+echo "Note: LSUIElement hides the Dock icon; use the menu bar tray icon or visit http://127.0.0.1:8080"

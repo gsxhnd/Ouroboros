@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 const navItems = [
   { to: "/", labelKey: "nav.home" },
   { to: "/library", labelKey: "nav.library" },
+  { to: "/system", labelKey: "nav.system" },
   { to: "/settings", labelKey: "nav.settings" },
 ] as const
 

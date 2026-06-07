@@ -61,8 +61,33 @@ GET    /api/search/color            颜色搜索
 ### 系统
 
 ```
-GET    /api/system/info             系统信息
+GET    /health                      健康检查（返回 "ok"）
+GET    /api/system/info             系统信息（含当前资源库摘要）
 ```
+
+#### `GET /api/system/info` 响应示例
+
+```json
+{
+  "name": "ourboros",
+  "version": "0.1.0",
+  "library_open": true,
+  "library_name": "My Library",
+  "library_path": "/path/to/library"
+}
+```
+
+未打开资源库时 `library_open` 为 `false`，`library_name` / `library_path` 为 `null`。
+
+### 静态 UI（非 REST）
+
+当通过 `--web-dir` 或 `OURBOROS_WEB_DIR` 配置了有效目录时：
+
+```
+GET    /*                           静态文件（SPA fallback → index.html）
+```
+
+API 路由（`/api/*`、`/health`）优先于静态 fallback。
 
 ## WebSocket（实时通信）
 

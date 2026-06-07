@@ -1,45 +1,45 @@
-// Prevent console window on Windows
-#![windows_subsystem = "windows"]
-
 use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
 use std::sync::Arc;
 
 use muda::{Menu, MenuEvent, MenuItem, PredefinedMenuItem};
+use ourboros::tray::icon;
+use ourboros::tray::server::{self, ServerHandle};
+use ourboros::web;
 use tao::event::{Event, StartCause};
 use tao::event_loop::{ControlFlow, EventLoopBuilder};
 use tray_icon::TrayIconBuilder;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
-mod icon;
-mod server;
+use super::AppArgs;
 
-fn main() {
-    tracing_subscriber::registry()
-        .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()))
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+pub fn run(args: AppArgs) {
+    let web_dir = web::resolve_web_dir(args.web_dir);
+    if let Some(path) = &web_dir {
+        tracing::info!(web_dir = %path.display(), "Serving web UI");
+    } else {
+        tracing::info!(
+            "No web UI directory found. Place dist files next to the binary or set OURBOROS_WEB_DIR."
+        );
+    }
 
-    // macOS: hide from Dock, only show tray icon
     #[cfg(target_os = "macos")]
     {
         use tao::platform::macos::{ActivationPolicy, EventLoopExtMacOS};
         let mut event_loop = EventLoopBuilder::new().build();
         event_loop.set_activation_policy(ActivationPolicy::Accessory);
-        run_app(event_loop);
+        run_tray(event_loop, web_dir);
     }
 
     #[cfg(not(target_os = "macos"))]
     {
         let event_loop = EventLoopBuilder::new().build();
-        run_app(event_loop);
+        run_tray(event_loop, web_dir);
     }
 }
 
-fn run_app(event_loop: tao::event_loop::EventLoop<()>) {
+fn run_tray(event_loop: tao::event_loop::EventLoop<()>, web_dir: Option<std::path::PathBuf>) {
     let server_running = Arc::new(AtomicBool::new(false));
     let server_port = Arc::new(AtomicU16::new(8080));
 
-    // Build menu
     let menu = Menu::new();
     let open_item = MenuItem::new("Open Interface", true, None);
     let start_item = MenuItem::new("Start Server", true, None);
@@ -53,36 +53,32 @@ fn run_app(event_loop: tao::event_loop::EventLoop<()>) {
     menu.append(&PredefinedMenuItem::separator()).unwrap();
     menu.append(&quit_item).unwrap();
 
-    // Load tray icon
-    let icon = icon::load_icon();
-
-    let _tray_icon = TrayIconBuilder::new()
+    let tray_icon = TrayIconBuilder::new()
         .with_menu(Box::new(menu))
         .with_tooltip("Ourboros")
-        .with_icon(icon)
+        .with_icon(icon::load_icon())
         .build()
         .expect("failed to build tray icon");
 
-    // Store menu item IDs for event matching
     let open_id = open_item.id().clone();
     let start_id = start_item.id().clone();
     let stop_id = stop_item.id().clone();
     let quit_id = quit_item.id().clone();
 
-    // Server management
-    let server_handle = Arc::new(std::sync::Mutex::new(None::<server::ServerHandle>));
+    let server_handle = Arc::new(std::sync::Mutex::new(None::<ServerHandle>));
 
-    // Start server automatically on launch
     {
-        let handle = server::start_server(server_port.clone());
+        let handle = server::start_server(server_port.clone(), web_dir.clone());
         server_running.store(true, Ordering::SeqCst);
         start_item.set_enabled(false);
         stop_item.set_enabled(true);
         *server_handle.lock().unwrap() = Some(handle);
-        tracing::info!(
-            "Server started on port {}",
-            server_port.load(Ordering::SeqCst)
-        );
+        let port = server_port.load(Ordering::SeqCst);
+        tracing::info!("Server started on port {}", port);
+        let url = format!("http://127.0.0.1:{}", port);
+        if let Err(e) = open::that(&url) {
+            tracing::warn!("Failed to open browser: {}", e);
+        }
     }
 
     let menu_channel = MenuEvent::receiver();
@@ -91,7 +87,7 @@ fn run_app(event_loop: tao::event_loop::EventLoop<()>) {
         *control_flow = ControlFlow::Wait;
 
         if let Event::NewEvents(StartCause::Init) = event {
-            // Keep tray icon alive
+            let _ = &tray_icon;
         }
 
         if let Ok(event) = menu_channel.try_recv() {
@@ -103,7 +99,7 @@ fn run_app(event_loop: tao::event_loop::EventLoop<()>) {
                 }
             } else if event.id == start_id {
                 if !server_running.load(Ordering::SeqCst) {
-                    let handle = server::start_server(server_port.clone());
+                    let handle = server::start_server(server_port.clone(), web_dir.clone());
                     server_running.store(true, Ordering::SeqCst);
                     start_item.set_enabled(false);
                     stop_item.set_enabled(true);

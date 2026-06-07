@@ -6,6 +6,7 @@
   "nav": {
     "home": "Home",
     "library": "Library",
+    "system": "Status",
     "settings": "Settings"
   },
   "home": {
@@ -29,6 +30,23 @@
     "title": "Settings",
     "theme": "Theme",
     "language": "Language"
+  },
+  "system": {
+    "title": "Service Status",
+    "description": "View Ourboros service health and the current library.",
+    "service": "Service",
+    "library": "Current Library",
+    "refresh": "Refresh",
+    "apiUrl": "API URL",
+    "serviceName": "Service Name",
+    "version": "Version",
+    "lastChecked": "Last Checked",
+    "statusOnline": "Online",
+    "statusOffline": "Offline",
+    "libraryName": "Name",
+    "libraryUnavailable": "Service is offline. Library details are unavailable.",
+    "openLibraryHint": "Open a library from Home",
+    "unknown": "Unknown"
   },
   "common": {
     "loading": "Loading...",

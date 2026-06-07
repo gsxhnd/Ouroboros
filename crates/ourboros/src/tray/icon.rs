@@ -21,7 +21,7 @@ pub fn load_icon() -> Icon {
 
             if dist <= radius {
                 // Teal color: #2dd4bf
-                rgba[idx] = 45;     // R
+                rgba[idx] = 45;      // R
                 rgba[idx + 1] = 212; // G
                 rgba[idx + 2] = 191; // B
                 rgba[idx + 3] = 255; // A

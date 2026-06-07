@@ -37,6 +37,8 @@ struct SystemInfoResponse {
     name: &'static str,
     version: String,
     library_open: bool,
+    library_name: Option<String>,
+    library_path: Option<PathBuf>,
 }
 
 #[derive(Deserialize)]
@@ -92,10 +94,13 @@ async fn health() -> &'static str {
 
 async fn system_info(State(state): State<AppState>) -> Json<SystemInfoResponse> {
     let manager = state.library_manager.read().await;
+    let library = manager.info();
     Json(SystemInfoResponse {
         name: "ourboros",
         version: state.version.clone(),
         library_open: manager.is_open(),
+        library_name: library.as_ref().map(|info| info.name.clone()),
+        library_path: library.map(|info| info.path),
     })
 }
 

@@ -6,6 +6,7 @@
   "nav": {
     "home": "首页",
     "library": "资源库",
+    "system": "服务状态",
     "settings": "设置"
   },
   "home": {
@@ -29,6 +30,23 @@
     "title": "设置",
     "theme": "主题",
     "language": "语言"
+  },
+  "system": {
+    "title": "服务状态",
+    "description": "查看 Ourboros 服务运行状态与当前资源库信息。",
+    "service": "服务",
+    "library": "当前资源库",
+    "refresh": "刷新",
+    "apiUrl": "API 地址",
+    "serviceName": "服务名称",
+    "version": "版本",
+    "lastChecked": "上次检查",
+    "statusOnline": "运行中",
+    "statusOffline": "离线",
+    "libraryName": "名称",
+    "libraryUnavailable": "服务离线，无法获取资源库信息。",
+    "openLibraryHint": "前往首页打开资源库",
+    "unknown": "未知"
   },
   "common": {
     "loading": "加载中...",

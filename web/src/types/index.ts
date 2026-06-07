@@ -10,6 +10,18 @@ export interface SystemInfo {
   name: string
   version: string
   library_open: boolean
+  library_name: string | null
+  library_path: string | null
+}
+
+export type ServiceStatus = "online" | "offline" | "unknown"
+
+export interface SystemStatus {
+  status: ServiceStatus
+  info: SystemInfo | null
+  libraryDetail: LibraryInfo | null
+  apiBaseUrl: string
+  checkedAt: string | null
 }
 
 export interface ApiError {

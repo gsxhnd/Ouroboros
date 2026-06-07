@@ -1,18 +1,22 @@
 [package]
-name = "ourboros-server"
+name = "ourboros"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
-description = "Ourboros HTTP server"
+description = "Ourboros application (HTTP server and optional system tray)"
 
 [lib]
-name = "ourboros_server"
+name = "ourboros"
 path = "src/lib.rs"
 
 [[bin]]
-name = "ourboros-server"
+name = "ourboros"
 path = "src/main.rs"
+
+[features]
+default = ["tray"]
+tray = ["dep:tray-icon", "dep:muda", "dep:tao", "dep:open", "dep:image"]
 
 [dependencies]
 ourboros-core = { path = "../ourboros-core" }
@@ -26,3 +30,8 @@ tokio.workspace = true
 axum.workspace = true
 tower-http.workspace = true
 clap.workspace = true
+tray-icon = { workspace = true, optional = true }
+muda = { workspace = true, optional = true }
+tao = { workspace = true, optional = true }
+open = { workspace = true, optional = true }
+image = { workspace = true, optional = true }

@@ -1,7 +1,9 @@
 use std::net::SocketAddr;
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicU16, Ordering};
 use std::sync::Arc;
 
+use crate::{bind, run_with_shutdown, AppState, ServerOptions};
 use tokio::runtime::Runtime;
 use tokio::sync::oneshot;
 
@@ -10,30 +12,32 @@ pub struct ServerHandle {
     runtime: Runtime,
 }
 
-pub fn start_server(port_store: Arc<AtomicU16>) -> ServerHandle {
+pub fn start_server(port_store: Arc<AtomicU16>, web_dir: Option<PathBuf>) -> ServerHandle {
     let (shutdown_tx, shutdown_rx) = oneshot::channel::<()>();
 
     let runtime = Runtime::new().expect("failed to create tokio runtime");
 
     runtime.spawn(async move {
-        let addr: SocketAddr = "127.0.0.1:0".parse().unwrap();
-        let state = ourboros_server::AppState::new();
+        let addr: SocketAddr = "127.0.0.1:0".parse().expect("invalid localhost address");
+        let state = AppState::new();
 
-        let (listener, port) = ourboros_server::bind(addr)
+        let (listener, port) = bind(addr)
             .await
             .expect("failed to bind server");
 
         port_store.store(port, Ordering::SeqCst);
         tracing::info!("ourboros-server listening on http://127.0.0.1:{port}");
 
-        let app = ourboros_server::router(state);
-
-        axum::serve(listener, app)
-            .with_graceful_shutdown(async {
+        run_with_shutdown(
+            listener,
+            state,
+            ServerOptions { web_dir },
+            async {
                 let _ = shutdown_rx.await;
-            })
-            .await
-            .expect("server error");
+            },
+        )
+        .await
+        .expect("server error");
     });
 
     ServerHandle {
