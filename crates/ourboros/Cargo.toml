@@ -15,7 +15,8 @@ name = "ourboros"
 path = "src/main.rs"
 
 [features]
-default = ["tray"]
+default = []
+app = ["tray"]
 tray = ["dep:tray-icon", "dep:muda", "dep:tao", "dep:open", "dep:image"]
 
 [dependencies]

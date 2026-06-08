@@ -5,7 +5,9 @@ mod app;
 
 use std::path::PathBuf;
 
-use clap::{CommandFactory, Parser, Subcommand};
+#[cfg(not(feature = "tray"))]
+use clap::CommandFactory;
+use clap::{Parser, Subcommand};
 use ourboros::web;
 
 #[derive(Parser, Debug)]
@@ -31,6 +33,9 @@ impl Cli {
                     )
                 }
             }
+            #[cfg(feature = "tray")]
+            None => Ok(Command::App(AppArgs::default())),
+            #[cfg(not(feature = "tray"))]
             None => {
                 Cli::command().print_help()?;
                 std::process::exit(0);
@@ -41,6 +46,8 @@ impl Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Command {
+    /// Print version information
+    Version,
     /// Run HTTP server (headless, for NAS or CLI)
     Server(ServerArgs),
     /// Run with system tray (desktop)
@@ -70,9 +77,11 @@ pub struct AppArgs {
 
 pub fn dispatch(command: Command) -> anyhow::Result<()> {
     match command {
-        Command::Server(args) => {
-            tokio::runtime::Runtime::new()?.block_on(server::run(args))
+        Command::Version => {
+            println!("ourboros v{}", env!("CARGO_PKG_VERSION"));
+            Ok(())
         }
+        Command::Server(args) => tokio::runtime::Runtime::new()?.block_on(server::run(args)),
         #[cfg(feature = "tray")]
         Command::App(args) => {
             app::run(args);

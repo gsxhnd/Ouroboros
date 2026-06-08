@@ -1,3 +1,6 @@
+// When built with `app` feature, hide the console window on Windows.
+#![cfg_attr(feature = "tray", windows_subsystem = "windows")]
+
 mod cli;
 
 use clap::Parser;

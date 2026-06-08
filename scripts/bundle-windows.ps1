@@ -8,7 +8,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$ROOT = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+$ROOT = Split-Path -Parent $PSScriptRoot
 Push-Location $ROOT
 
 # Configuration
