@@ -51,5 +51,18 @@
   "common": {
     "loading": "加载中...",
     "error": "出错了"
+  },
+  "layout": {
+    "primary": {
+      "title": "导航"
+    },
+    "secondary": {
+      "title": "检查器",
+      "placeholder": "选择资源以查看详情"
+    },
+    "header": {
+      "searchPlaceholder": "搜索资源…",
+      "toggleInspector": "切换检查器面板"
+    }
   }
 }

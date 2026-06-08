@@ -1,6 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router"
 
-import { AppLayout } from "@/components/layout/app-layout"
+import { AppLayout } from "@/layout"
 import { HomePage } from "@/pages/home-page"
 import { LibraryPage } from "@/pages/library-page"
 import { SettingsPage } from "@/pages/settings-page"

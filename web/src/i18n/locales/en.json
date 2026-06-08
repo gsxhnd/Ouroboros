@@ -51,5 +51,18 @@
   "common": {
     "loading": "Loading...",
     "error": "Something went wrong"
+  },
+  "layout": {
+    "primary": {
+      "title": "Navigation"
+    },
+    "secondary": {
+      "title": "Inspector",
+      "placeholder": "Select an asset to view details"
+    },
+    "header": {
+      "searchPlaceholder": "Search assets…",
+      "toggleInspector": "Toggle inspector panel"
+    }
   }
 }
