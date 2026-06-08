@@ -1,14 +1,9 @@
 mod server;
 
-#[cfg(feature = "tray")]
-mod app;
-
 use std::path::PathBuf;
 
-#[cfg(not(feature = "tray"))]
 use clap::CommandFactory;
 use clap::{Parser, Subcommand};
-use ourboros::web;
 
 #[derive(Parser, Debug)]
 #[command(name = "ourboros", about = "Ourboros resource library manager")]
@@ -21,21 +16,6 @@ impl Cli {
     pub fn resolve_command(self) -> anyhow::Result<Command> {
         match self.command {
             Some(command) => Ok(command),
-            None if web::is_macos_app_bundle() => {
-                #[cfg(feature = "tray")]
-                {
-                    Ok(Command::App(AppArgs::default()))
-                }
-                #[cfg(not(feature = "tray"))]
-                {
-                    anyhow::bail!(
-                        "this build has no tray support; rebuild with the `tray` feature enabled"
-                    )
-                }
-            }
-            #[cfg(feature = "tray")]
-            None => Ok(Command::App(AppArgs::default())),
-            #[cfg(not(feature = "tray"))]
             None => {
                 Cli::command().print_help()?;
                 std::process::exit(0);
@@ -48,11 +28,8 @@ impl Cli {
 pub enum Command {
     /// Print version information
     Version,
-    /// Run HTTP server (headless, for NAS or CLI)
+    /// Run HTTP server
     Server(ServerArgs),
-    /// Run with system tray (desktop)
-    #[cfg(feature = "tray")]
-    App(AppArgs),
 }
 
 #[derive(Parser, Debug)]
@@ -68,13 +45,6 @@ pub struct ServerArgs {
     pub web_dir: Option<PathBuf>,
 }
 
-#[derive(Parser, Debug, Default)]
-pub struct AppArgs {
-    /// Directory containing built web assets (index.html).
-    #[arg(long, value_name = "DIR")]
-    pub web_dir: Option<PathBuf>,
-}
-
 pub fn dispatch(command: Command) -> anyhow::Result<()> {
     match command {
         Command::Version => {
@@ -82,10 +52,5 @@ pub fn dispatch(command: Command) -> anyhow::Result<()> {
             Ok(())
         }
         Command::Server(args) => tokio::runtime::Runtime::new()?.block_on(server::run(args)),
-        #[cfg(feature = "tray")]
-        Command::App(args) => {
-            app::run(args);
-            Ok(())
-        }
     }
 }
