@@ -2,10 +2,6 @@ pub mod http;
 pub mod state;
 pub mod web;
 
-#[cfg(feature = "tray")]
-pub mod tray;
-
-use std::future::Future;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 
@@ -19,22 +15,13 @@ pub struct ServerOptions {
     pub web_dir: Option<PathBuf>,
 }
 
-pub async fn run(listener: TcpListener, state: AppState, options: ServerOptions) -> anyhow::Result<()> {
-    let app = build_router(state, &options);
-    axum::serve(listener, app).await?;
-    Ok(())
-}
-
-pub async fn run_with_shutdown(
+pub async fn run(
     listener: TcpListener,
     state: AppState,
     options: ServerOptions,
-    shutdown: impl Future<Output = ()> + Send + 'static,
 ) -> anyhow::Result<()> {
     let app = build_router(state, &options);
-    axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown)
-        .await?;
+    axum::serve(listener, app).await?;
     Ok(())
 }
 
