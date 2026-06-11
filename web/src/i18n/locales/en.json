@@ -52,6 +52,14 @@
     "loading": "Loading...",
     "error": "Something went wrong"
   },
+  "bootstrap": {
+    "loading": "Connecting to service…",
+    "failureTitle": "Unable to start",
+    "failureDescription": "Ourboros could not connect to the backend service. Make sure the service is running and try again.",
+    "retry": "Retry",
+    "retrying": "Retrying…",
+    "sameOrigin": "Same origin (current host)"
+  },
   "layout": {
     "primary": {
       "title": "Navigation"

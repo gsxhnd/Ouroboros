@@ -12,7 +12,7 @@ export function getApiBaseUrl() {
   return apiBaseUrl
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+async function fetchResponse(path: string, init?: RequestInit) {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     headers: {
       "Content-Type": "application/json",
@@ -32,6 +32,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(message)
   }
 
+  return response
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetchResponse(path, init)
+
   if (response.status === 204) {
     return undefined as T
   }
@@ -39,8 +45,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T
 }
 
+async function requestText(path: string, init?: RequestInit): Promise<string> {
+  const response = await fetchResponse(path, init)
+  return (await response.text()).trim()
+}
+
 export const http = {
-  getHealth: () => request<string>("/health"),
+  getHealth: () => requestText("/health"),
   getSystemInfo: () => request<SystemInfo>("/api/system/info"),
   getLibraryInfo: () => request<LibraryInfo>("/api/library/info"),
   createLibrary: (path: string, name: string) =>

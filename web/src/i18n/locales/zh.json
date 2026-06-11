@@ -52,6 +52,14 @@
     "loading": "加载中...",
     "error": "出错了"
   },
+  "bootstrap": {
+    "loading": "正在连接服务…",
+    "failureTitle": "无法启动",
+    "failureDescription": "Ourboros 无法连接到后端服务。请确认服务已启动，然后重试。",
+    "retry": "重试",
+    "retrying": "重试中…",
+    "sameOrigin": "同源（当前主机）"
+  },
   "layout": {
     "primary": {
       "title": "导航"
