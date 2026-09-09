@@ -57,11 +57,11 @@ jobs:
 
             - name: Build (native)
               if: ${{ !matrix.use_cross }}
-              run: cargo build --release -p ourboros --features app --target ${{ matrix.target }}
+              run: cargo build --release -p ourboros --target ${{ matrix.target }}
 
             - name: Build (cross)
               if: ${{ matrix.use_cross }}
-              run: cross build --release -p ourboros --features app --target ${{ matrix.target }}
+              run: cross build --release -p ourboros --target ${{ matrix.target }}
 
             - name: Prepare artifact
               shell: bash

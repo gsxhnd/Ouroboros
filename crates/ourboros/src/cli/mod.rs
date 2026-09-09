@@ -4,7 +4,6 @@ use std::path::PathBuf;
 
 use clap::CommandFactory;
 use clap::{Parser, Subcommand};
-use ourboros_core::RcloneSettings;
 
 #[derive(Parser, Debug)]
 #[command(name = "ourboros", about = "Web UI for rclone")]
@@ -41,17 +40,33 @@ pub struct ServerArgs {
     #[arg(long, default_value = "127.0.0.1")]
     pub host: String,
 
-    /// Directory containing built web assets (index.html). Omit for API-only mode.
-    #[arg(long, value_name = "DIR")]
+    /// Directory that contains the built web UI (`index.html`).
+    /// Also available as `--web-dir` or `OURBOROS_WEB_DIR`.
+    #[arg(
+        long = "webui",
+        visible_alias = "web-dir",
+        env = "OURBOROS_WEB_DIR",
+        value_name = "DIR"
+    )]
     pub web_dir: Option<PathBuf>,
 
-    /// rclone binary path or name
-    #[arg(long, default_value = "rclone", env = "RCLONE_BIN")]
-    pub rclone_bin: String,
+    /// Application data directory for workspace and settings JSON
+    #[arg(long, env = "OURBOROS_DATA_DIR")]
+    pub data_dir: Option<PathBuf>,
+
+    /// rclone binary path or name. Overrides saved settings for this process.
+    #[arg(long, env = "RCLONE_BIN")]
+    pub rclone_bin: Option<String>,
 
     /// Attach to an existing rclone RC URL instead of spawning rcd
     #[arg(long, env = "RCLONE_RC_URL")]
     pub rclone_url: Option<String>,
+
+    #[arg(long, env = "RCLONE_RC_USER")]
+    pub rclone_user: Option<String>,
+
+    #[arg(long, env = "RCLONE_RC_PASS")]
+    pub rclone_pass: Option<String>,
 
     /// Path to rclone.conf
     #[arg(long, env = "RCLONE_CONFIG")]
@@ -62,16 +77,6 @@ pub struct ServerArgs {
     pub no_auto_rclone: bool,
 }
 
-impl ServerArgs {
-    pub fn rclone_settings(&self) -> RcloneSettings {
-        RcloneSettings {
-            bin: self.rclone_bin.clone(),
-            rc_url: self.rclone_url.clone(),
-            config: self.rclone_config.clone(),
-        }
-    }
-}
-
 pub fn dispatch(command: Command) -> anyhow::Result<()> {
     match command {
         Command::Version => {
@@ -79,5 +84,47 @@ pub fn dispatch(command: Command) -> anyhow::Result<()> {
             Ok(())
         }
         Command::Server(args) => tokio::runtime::Runtime::new()?.block_on(server::run(args)),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::{CommandFactory, Parser};
+
+    #[test]
+    fn server_should_accept_webui_path() {
+        let cli = Cli::parse_from(["ourboros", "server", "--webui", "/tmp/ui"]);
+        match cli.command {
+            Some(Command::Server(args)) => {
+                assert_eq!(
+                    args.web_dir.as_deref(),
+                    Some(std::path::Path::new("/tmp/ui"))
+                );
+            }
+            other => panic!("unexpected command: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn server_should_accept_web_dir_alias() {
+        let cli = Cli::parse_from(["ourboros", "server", "--web-dir", "/tmp/ui"]);
+        match cli.command {
+            Some(Command::Server(args)) => {
+                assert_eq!(
+                    args.web_dir.as_deref(),
+                    Some(std::path::Path::new("/tmp/ui"))
+                );
+            }
+            other => panic!("unexpected command: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn server_help_should_mention_webui() {
+        let help = ServerArgs::command().render_help().to_string();
+        assert!(help.contains("--webui"));
+        assert!(help.contains("--web-dir"));
+        assert!(help.contains("OURBOROS_WEB_DIR"));
     }
 }

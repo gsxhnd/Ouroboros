@@ -16,13 +16,13 @@ npm install
 npm run dev
 ```
 
-浏览器打开 `http://127.0.0.1:1420`（Vite 会把 `/api` 代理到 8080）。
+浏览器打开 `http://127.0.0.1:1420`（Vite 会把 `/api` 和 `/health` 代理到 8080）。首页是后端接口演示页。
 
 生产环境可同时托管 UI：
 
 ```bash
 cd web && npm run build
-cargo run -p ourboros --release -- server --web-dir ./web/dist
+cargo run -p ourboros --release -- server --webui ./web/dist
 ```
 
 ## 常用参数
@@ -30,7 +30,7 @@ cargo run -p ourboros --release -- server --web-dir ./web/dist
 | 参数 | 说明 |
 |------|------|
 | `--host` / `--port` | HTTP 监听地址，默认 `127.0.0.1:8080` |
-| `--web-dir` | 静态 UI 目录；也可用 `OURBOROS_WEB_DIR` |
+| `--webui` / `--web-dir` | 静态 UI 目录；也可用 `OURBOROS_WEB_DIR`。显式指定但缺少 `index.html` 时拒绝启动 |
 | `--rclone-bin` | rclone 可执行文件，默认 `rclone` |
 | `--rclone-url` | 连接到已有 RC，而不是启动 `rclone rcd` |
 | `--rclone-config` | `rclone.conf` 路径 |

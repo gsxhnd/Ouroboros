@@ -1,6 +1,13 @@
+pub mod events;
 pub mod http;
+pub mod jobs;
+pub mod mounts;
+pub mod persist;
+pub mod scheduler;
+pub mod settings;
 pub mod state;
 pub mod web;
+pub mod workspace;
 
 use std::net::SocketAddr;
 use std::path::PathBuf;
@@ -8,7 +15,7 @@ use std::path::PathBuf;
 use axum::Router;
 use tokio::net::TcpListener;
 
-pub use state::AppState;
+pub use state::{AppState, RuntimeConfig};
 
 #[derive(Debug, Clone, Default)]
 pub struct ServerOptions {
@@ -38,4 +45,14 @@ pub fn build_router(state: AppState, options: &ServerOptions) -> Router {
 
 pub fn router(state: AppState) -> Router {
     http::router(state)
+}
+
+pub fn assert_bind_host(host: &str) -> anyhow::Result<()> {
+    if ourboros_core::rclone::is_loopback_host(host) {
+        Ok(())
+    } else {
+        anyhow::bail!(
+            "refusing to bind {host}: HTTP authentication is not implemented; use 127.0.0.1"
+        )
+    }
 }

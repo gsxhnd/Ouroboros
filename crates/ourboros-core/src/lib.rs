@@ -1,8 +1,15 @@
 pub mod error;
+pub mod paths;
 pub mod rclone;
 
 pub use error::{CoreError, CoreResult};
-pub use rclone::{RcResponse, RcloneMode, RcloneSettings, RcloneStatus, RcloneSupervisor};
+pub use paths::{FileLocator, PathKind};
+pub use rclone::{
+    current_release, managed_binary_path, normalize_version, parse_attach_url, read_version,
+    release_for_platform, scan, spawn_mount, validate_proxy_command, DownloadManager,
+    DownloadSnapshot, DownloadStatus, RcResponse, RcloneCandidate, RcloneMode, RcloneRelease,
+    RcloneSettings, RcloneSourceKind, RcloneStatus, RcloneSupervisor, SpawnedMount,
+};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 

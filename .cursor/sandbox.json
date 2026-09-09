@@ -1,0 +1,8 @@
+{
+  "type": "workspace_readwrite",
+  "enableSharedBuildCache": true,
+  "additionalReadwritePaths": [
+    "./target",
+    "./web/node_modules"
+  ]
+}
