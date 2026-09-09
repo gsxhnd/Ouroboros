@@ -1,25 +1,21 @@
+use std::path::PathBuf;
 use std::sync::Arc;
 
-use ourboros_core::{LibraryManager, VERSION};
-use tokio::sync::RwLock;
+use ourboros_core::{home_dir, RcloneSettings, RcloneSupervisor, VERSION};
 
 #[derive(Clone)]
 pub struct AppState {
-    pub library_manager: Arc<RwLock<LibraryManager>>,
+    pub rclone: Arc<RcloneSupervisor>,
     pub version: String,
+    pub home_dir: Option<PathBuf>,
 }
 
 impl AppState {
-    pub fn new() -> Self {
+    pub fn new(settings: RcloneSettings) -> Self {
         Self {
-            library_manager: Arc::new(RwLock::new(LibraryManager::new())),
+            rclone: Arc::new(RcloneSupervisor::new(settings)),
             version: VERSION.to_string(),
+            home_dir: home_dir(),
         }
-    }
-}
-
-impl Default for AppState {
-    fn default() -> Self {
-        Self::new()
     }
 }

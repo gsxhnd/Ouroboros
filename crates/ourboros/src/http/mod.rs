@@ -1,14 +1,16 @@
 use std::path::PathBuf;
 
 use axum::{
-    extract::State,
+    body::Bytes,
+    extract::{Path, State},
     http::StatusCode,
     response::{IntoResponse, Response},
     routing::{get, post},
     Json, Router,
 };
-use ourboros_core::CoreError;
-use serde::{Deserialize, Serialize};
+use ourboros_core::{CoreError, RcloneStatus};
+use serde::Serialize;
+use serde_json::Value;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 
@@ -16,12 +18,12 @@ use crate::state::AppState;
 
 pub fn router(state: AppState) -> Router {
     Router::new()
-        .route("/api/system/info", get(system_info))
-        .route("/api/library/create", post(create_library))
-        .route("/api/library/open", post(open_library))
-        .route("/api/library/info", get(library_info))
-        .route("/api/library/close", post(close_library))
         .route("/health", get(health))
+        .route("/api/system/info", get(system_info))
+        .route("/api/rclone/status", get(rclone_status))
+        .route("/api/rclone/start", post(rclone_start))
+        .route("/api/rclone/stop", post(rclone_stop))
+        .route("/api/rc/{*command}", post(proxy_rc))
         .with_state(state)
         .layer(
             CorsLayer::new()
@@ -36,20 +38,8 @@ pub fn router(state: AppState) -> Router {
 struct SystemInfoResponse {
     name: &'static str,
     version: String,
-    library_open: bool,
-    library_name: Option<String>,
-    library_path: Option<PathBuf>,
-}
-
-#[derive(Deserialize)]
-struct CreateLibraryRequest {
-    path: PathBuf,
-    name: String,
-}
-
-#[derive(Deserialize)]
-struct OpenLibraryRequest {
-    path: PathBuf,
+    home_dir: Option<PathBuf>,
+    rclone: RcloneStatus,
 }
 
 #[derive(Serialize)]
@@ -64,15 +54,19 @@ struct ApiError {
 
 impl ApiError {
     fn from_core(error: CoreError) -> Self {
-        let (status, message) = match &error {
-            CoreError::AlreadyOpen => (StatusCode::CONFLICT, error.to_string()),
-            CoreError::NotOpen => (StatusCode::NOT_FOUND, error.to_string()),
-            CoreError::NotFound(_) => (StatusCode::NOT_FOUND, error.to_string()),
-            CoreError::AlreadyExists(_) => (StatusCode::CONFLICT, error.to_string()),
-            CoreError::InvalidPath(_) => (StatusCode::BAD_REQUEST, error.to_string()),
-            _ => (StatusCode::INTERNAL_SERVER_ERROR, error.to_string()),
+        let status = match error {
+            CoreError::AlreadyRunning => StatusCode::CONFLICT,
+            CoreError::NotRunning | CoreError::ReadyTimeout | CoreError::BinaryNotFound(_) => {
+                StatusCode::SERVICE_UNAVAILABLE
+            }
+            CoreError::InvalidCommand(_) => StatusCode::BAD_REQUEST,
+            CoreError::Transport(_) | CoreError::Io(_) => StatusCode::BAD_GATEWAY,
         };
-        Self { status, message }
+
+        Self {
+            status,
+            message: error.to_string(),
+        }
     }
 }
 
@@ -93,53 +87,51 @@ async fn health() -> &'static str {
 }
 
 async fn system_info(State(state): State<AppState>) -> Json<SystemInfoResponse> {
-    let manager = state.library_manager.read().await;
-    let library = manager.info();
     Json(SystemInfoResponse {
         name: "ourboros",
         version: state.version.clone(),
-        library_open: manager.is_open(),
-        library_name: library.as_ref().map(|info| info.name.clone()),
-        library_path: library.map(|info| info.path),
+        home_dir: state.home_dir.clone(),
+        rclone: state.rclone.status().await,
     })
 }
 
-async fn create_library(
-    State(state): State<AppState>,
-    Json(payload): Json<CreateLibraryRequest>,
-) -> Result<Json<ourboros_core::LibraryInfo>, ApiError> {
-    let mut manager = state.library_manager.write().await;
-    let info = manager
-        .create(&payload.path, &payload.name)
+async fn rclone_status(State(state): State<AppState>) -> Json<RcloneStatus> {
+    Json(state.rclone.status().await)
+}
+
+async fn rclone_start(State(state): State<AppState>) -> Result<Json<RcloneStatus>, ApiError> {
+    let status = state
+        .rclone
+        .ensure_running()
         .await
         .map_err(ApiError::from_core)?;
-    Ok(Json(info))
+    Ok(Json(status))
 }
 
-async fn open_library(
+async fn rclone_stop(State(state): State<AppState>) -> Result<Json<RcloneStatus>, ApiError> {
+    let status = state.rclone.stop().await.map_err(ApiError::from_core)?;
+    Ok(Json(status))
+}
+
+async fn proxy_rc(
     State(state): State<AppState>,
-    Json(payload): Json<OpenLibraryRequest>,
-) -> Result<Json<ourboros_core::LibraryInfo>, ApiError> {
-    let mut manager = state.library_manager.write().await;
-    let info = manager
-        .open(&payload.path)
+    Path(command): Path<String>,
+    body: Bytes,
+) -> Result<Response, ApiError> {
+    let payload = if body.is_empty() {
+        Value::Object(Default::default())
+    } else {
+        serde_json::from_slice(&body).map_err(|error| ApiError {
+            status: StatusCode::BAD_REQUEST,
+            message: error.to_string(),
+        })?
+    };
+    let response = state
+        .rclone
+        .call(&command, payload)
         .await
         .map_err(ApiError::from_core)?;
-    Ok(Json(info))
-}
 
-async fn library_info(
-    State(state): State<AppState>,
-) -> Result<Json<ourboros_core::LibraryInfo>, ApiError> {
-    let manager = state.library_manager.read().await;
-    manager.info().map(Json).ok_or_else(|| ApiError {
-        status: StatusCode::NOT_FOUND,
-        message: CoreError::NotOpen.to_string(),
-    })
-}
-
-async fn close_library(State(state): State<AppState>) -> Result<StatusCode, ApiError> {
-    let mut manager = state.library_manager.write().await;
-    manager.close().map_err(ApiError::from_core)?;
-    Ok(StatusCode::NO_CONTENT)
+    let status = StatusCode::from_u16(response.status).unwrap_or(StatusCode::BAD_GATEWAY);
+    Ok((status, Json(response.body)).into_response())
 }

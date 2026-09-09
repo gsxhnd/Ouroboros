@@ -2,32 +2,26 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum CoreError {
-    #[error("library already open")]
-    AlreadyOpen,
+    #[error("rclone is not running")]
+    NotRunning,
 
-    #[error("no library is open")]
-    NotOpen,
+    #[error("rclone is already running")]
+    AlreadyRunning,
 
-    #[error("library not found at {0}")]
-    NotFound(String),
+    #[error("rclone binary not found: {0}")]
+    BinaryNotFound(String),
 
-    #[error("library already exists at {0}")]
-    AlreadyExists(String),
+    #[error("rclone did not become ready in time")]
+    ReadyTimeout,
 
-    #[error("invalid library path: {0}")]
-    InvalidPath(String),
+    #[error("invalid rclone rc command: {0}")]
+    InvalidCommand(String),
+
+    #[error("failed to contact rclone: {0}")]
+    Transport(String),
 
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
-
-    #[error("database error: {0}")]
-    Database(#[from] sea_orm::DbErr),
-
-    #[error("config error: {0}")]
-    Config(#[from] toml::de::Error),
-
-    #[error("config write error: {0}")]
-    ConfigWrite(#[from] toml::ser::Error),
 }
 
 pub type CoreResult<T> = Result<T, CoreError>;
