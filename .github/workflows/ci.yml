@@ -6,20 +6,16 @@ on:
   pull_request:
 
 jobs:
-  rust:
+  go:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-go@v5
         with:
-          components: rustfmt, clippy
-      - uses: Swatinem/rust-cache@v2
-      - name: Format
-        run: cargo fmt --all -- --check
-      - name: Clippy
-        run: cargo clippy --workspace --all-targets -- -D warnings
-      - name: Test workspace
-        run: cargo test --workspace
+          go-version: "1.26"
+          cache: true
+      - name: Test
+        run: go test ./internal/... ./cmd/ourboros
 
   web:
     runs-on: ubuntu-latest

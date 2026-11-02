@@ -1,3 +1,5 @@
 [tools]
 node = "24"
-rust = "latest"
+go = "1.26"
+
+"go:github.com/wailsapp/wails/v3/cmd/wails3" = "v3.1.0"

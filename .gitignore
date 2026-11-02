@@ -16,6 +16,11 @@ dist-ssr
 /target/
 *.local
 
+# Go
+/bin/
+/ourboros
+*.exe
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
