@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { useTranslation } from "react-i18next"
 
 import { Label } from "@/components/ui/label"
 import { cn } from "cn"
@@ -78,23 +79,24 @@ export function EmptyHint({ children }: { children: ReactNode }) {
 
 type Tone = "ok" | "busy" | "bad" | "idle"
 
-const STATUS_META: Record<string, { label: string; tone: Tone }> = {
-  running: { label: "运行中", tone: "ok" },
-  mounted: { label: "已挂载", tone: "ok" },
-  succeeded: { label: "已完成", tone: "ok" },
-  completed: { label: "已完成", tone: "ok" },
-  starting: { label: "启动中", tone: "busy" },
-  stopping: { label: "停止中", tone: "busy" },
-  queued: { label: "排队中", tone: "busy" },
-  cancelling: { label: "取消中", tone: "busy" },
-  downloading: { label: "下载中", tone: "busy" },
-  verifying: { label: "校验中", tone: "busy" },
-  extracting: { label: "解压中", tone: "busy" },
-  failed: { label: "失败", tone: "bad" },
-  partial_failed: { label: "部分失败", tone: "bad" },
-  stopped: { label: "已停止", tone: "idle" },
-  cancelled: { label: "已取消", tone: "idle" },
-  expired: { label: "已过期", tone: "idle" },
+/** 已知状态的色调；文案统一走 status.* 语言包，未知状态原样显示。 */
+const STATUS_TONES: Record<string, Tone> = {
+  running: "ok",
+  mounted: "ok",
+  succeeded: "ok",
+  completed: "ok",
+  starting: "busy",
+  stopping: "busy",
+  queued: "busy",
+  cancelling: "busy",
+  downloading: "busy",
+  verifying: "busy",
+  extracting: "busy",
+  failed: "bad",
+  partial_failed: "bad",
+  stopped: "idle",
+  cancelled: "idle",
+  expired: "idle",
 }
 
 const TONE_CLASS: Record<Tone, string> = {
@@ -113,22 +115,23 @@ const DOT_CLASS: Record<Tone, string> = {
 
 /** 任务、挂载、rclone 等状态的统一标签，颜色表达成功 / 进行中 / 失败 / 空闲。 */
 export function StatusChip({ status }: { status: string | null }) {
+  const { t } = useTranslation()
   if (!status) {
     return <span className="text-muted-foreground">—</span>
   }
-  const meta = STATUS_META[status] ?? { label: status, tone: "idle" as Tone }
+  const tone = STATUS_TONES[status] ?? ("idle" as Tone)
   return (
     <span
       className={cn(
         "inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs font-medium",
-        TONE_CLASS[meta.tone]
+        TONE_CLASS[tone]
       )}
     >
       <span
-        className={cn("size-1.5 rounded-full", DOT_CLASS[meta.tone])}
+        className={cn("size-1.5 rounded-full", DOT_CLASS[tone])}
         aria-hidden
       />
-      {meta.label}
+      {t(`status.${status}`, { defaultValue: status })}
     </span>
   )
 }

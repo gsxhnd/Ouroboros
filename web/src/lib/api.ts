@@ -1,3 +1,5 @@
+import i18n from "@/i18n"
+
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
 
 export type ApiResult = {
@@ -89,7 +91,7 @@ export function openEventSource(
   source.onerror = () => {
     // CONNECTING means the browser is retrying; only CLOSED means it gave up.
     if (source.readyState === EventSource.CLOSED) {
-      onError("实时连接已断开")
+      onError(i18n.t("errors.realtimeDisconnected"))
     }
   }
 

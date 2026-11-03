@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { PlusIcon, RefreshCcwIcon, TrashIcon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -21,7 +22,7 @@ import {
 } from "@/components/ui/dialog"
 import { call, callQuiet } from "@/lib/client"
 import { openEventSource, parseEventPayload } from "@/lib/api"
-import { useWorkspace } from "@/lib/workspace-hook"
+import { useWorkspace } from "@/stores/workspace"
 import type { MountSnapshot, StorageNode } from "@/lib/types"
 
 /** 正在启动或卸载中，此时不允许再次点击。 */
@@ -34,6 +35,7 @@ const ATTACHED: ReadonlySet<string> = new Set([
 ])
 
 export function MountsPage() {
+  const { t } = useTranslation()
   const { doc, reload } = useWorkspace()
   const [mounts, setMounts] = useState<MountSnapshot[]>([])
   const [pending, setPending] = useState<ReadonlySet<string>>(() => new Set())
@@ -100,9 +102,9 @@ export function MountsPage() {
           { method: "POST", body: {} }
         )
         if (snapshot.status === "failed") {
-          toast.error("挂载失败", { description: snapshot.error })
+          toast.error(t("mounts.failed"), { description: snapshot.error })
         } else {
-          toast.success("挂载已启动")
+          toast.success(t("mounts.started"))
         }
         setMounts((current) => upsertMount(current, snapshot))
       } catch {
@@ -128,7 +130,7 @@ export function MountsPage() {
       return
     }
     if (!sourceId || !targetId) {
-      toast.error("请选择 remote 节点与本地节点")
+      toast.error(t("mounts.selectNodes"))
       return
     }
     try {
@@ -145,7 +147,7 @@ export function MountsPage() {
     } catch {
       return
     }
-    toast.success("已创建挂载连接，点“挂载”把它挂到本地目录")
+    toast.success(t("mounts.created"))
     setOpen(false)
     setSourceId("")
     setTargetId("")
@@ -156,7 +158,7 @@ export function MountsPage() {
     if (!doc) {
       return
     }
-    if (!window.confirm("删除这条挂载连接？")) {
+    if (!window.confirm(t("mounts.deleteConfirm"))) {
       return
     }
     try {
@@ -176,16 +178,14 @@ export function MountsPage() {
         <CardHeader>
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
-              <CardTitle>挂载连接</CardTitle>
-              <CardDescription>
-                把 remote 挂载到本地目录，方向必须是 remote → 本地目录。
-              </CardDescription>
+              <CardTitle>{t("mounts.title")}</CardTitle>
+              <CardDescription>{t("mounts.description")}</CardDescription>
             </div>
             <div className="flex gap-2">
               <Button
                 size="sm"
                 variant="outline"
-                aria-label="刷新挂载状态"
+                aria-label={t("mounts.ariaRefresh")}
                 onClick={() => {
                   void reload()
                   void loadMounts()
@@ -198,17 +198,14 @@ export function MountsPage() {
                 disabled={!canCreate}
                 onClick={() => setOpen(true)}
               >
-                <PlusIcon /> 新建挂载
+                <PlusIcon /> {t("mounts.create")}
               </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           {mountEdges.length === 0 ? (
-            <EmptyHint>
-              还没有挂载连接。需要先有一个 remote
-              节点和一个本地目录节点（可在“同步任务”页添加）。
-            </EmptyHint>
+            <EmptyHint>{t("mounts.empty")}</EmptyHint>
           ) : (
             mountEdges.map((edge) => {
               const mount = mountOf(edge.id)
@@ -248,7 +245,7 @@ export function MountsPage() {
                         disabled={busy}
                         onClick={() => void stop(edge.id)}
                       >
-                        卸载
+                        {t("mounts.unmount")}
                       </Button>
                     ) : (
                       <Button
@@ -256,13 +253,13 @@ export function MountsPage() {
                         disabled={busy}
                         onClick={() => void start(edge.id)}
                       >
-                        挂载
+                        {t("mounts.mount")}
                       </Button>
                     )}
                     <Button
                       size="icon-xs"
                       variant="ghost"
-                      aria-label="删除挂载连接"
+                      aria-label={t("mounts.ariaDelete")}
                       disabled={attached}
                       onClick={() => void deleteEdge(edge.id)}
                     >
@@ -278,39 +275,37 @@ export function MountsPage() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
-          <DialogHeader>新建挂载连接</DialogHeader>
+          <DialogHeader>{t("mounts.dialogTitle")}</DialogHeader>
           <div className="flex flex-col gap-3">
             <SelectField
-              label="remote 节点（源）"
+              label={t("mounts.source")}
               value={sourceId}
               options={remoteNodes.map((node) => ({
                 value: node.id,
                 label: node.label,
               }))}
               onChange={setSourceId}
-              placeholder="选择 remote 节点"
+              placeholder={t("mounts.sourcePlaceholder")}
             />
             <SelectField
-              label="本地节点（目标目录）"
+              label={t("mounts.target")}
               value={targetId}
               options={localNodes.map((node) => ({
                 value: node.id,
                 label: node.label,
               }))}
               onChange={setTargetId}
-              placeholder="选择本地节点"
+              placeholder={t("mounts.targetPlaceholder")}
             />
             {!canCreate ? (
-              <p className="text-xs text-destructive">
-                需要先在“同步任务”页添加一个 remote 节点和一个本地目录节点。
-              </p>
+              <p className="text-xs text-destructive">{t("mounts.needNodes")}</p>
             ) : null}
           </div>
           <DialogFooter>
             <DialogClose render={<Button variant="outline" />}>
-              取消
+              {t("common.cancel")}
             </DialogClose>
-            <Button onClick={() => void createMountEdge()}>创建</Button>
+            <Button onClick={() => void createMountEdge()}>{t("common.create")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

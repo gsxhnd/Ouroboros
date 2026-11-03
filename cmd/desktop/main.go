@@ -98,9 +98,10 @@ func main() {
 		app.Quit()
 	}()
 
-	shell := newTrayShell(ctx, app, win, running.State)
+	shell := newTrayShell(ctx, app, win, running.State, running.URL+"/?platform="+runtime.GOOS)
 	app.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(*application.ApplicationEvent) {
 		go shell.run()
+		go shell.watchSettings(running.State.Events)
 	})
 
 	if err := app.Run(); err != nil {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -22,15 +23,43 @@ type Document struct {
 	RcloneRCURL   *string           `json:"rclone_rc_url"`
 	AutoStart     bool              `json:"auto_start"`
 	WorkspacePath *string           `json:"workspace_path"`
-	UpdatedAt     time.Time         `json:"updated_at"`
+	// Shortcuts maps an action ID (see ShortcutActions) to an accelerator such
+	// as "CmdOrCtrl+Shift+O". Missing actions use DefaultShortcuts.
+	Shortcuts map[string]string `json:"shortcuts"`
+	UpdatedAt time.Time         `json:"updated_at"`
+}
+
+// ShortcutActions lists the actions a shortcut can trigger, in display order.
+var ShortcutActions = []string{"show_main", "toggle_panel", "toggle_rclone", "quit"}
+
+// DefaultShortcuts are used for any action without a stored accelerator.
+var DefaultShortcuts = map[string]string{
+	"show_main":     "CmdOrCtrl+Shift+O",
+	"toggle_panel":  "CmdOrCtrl+Shift+P",
+	"toggle_rclone": "CmdOrCtrl+Shift+R",
+	"quit":          "CmdOrCtrl+Q",
 }
 
 func DefaultDocument() Document {
 	return Document{
 		SchemaVersion: SchemaVersion,
 		RcloneSource:  rclone.SourceSystem,
+		Shortcuts:     map[string]string{},
 		UpdatedAt:     time.Now().UTC(),
 	}
+}
+
+// ResolvedShortcuts returns the accelerator for every action, applying
+// defaults where the document has no value.
+func (d Document) ResolvedShortcuts() map[string]string {
+	out := make(map[string]string, len(DefaultShortcuts))
+	for action, fallback := range DefaultShortcuts {
+		out[action] = fallback
+		if value, ok := d.Shortcuts[action]; ok && value != "" {
+			out[action] = value
+		}
+	}
+	return out
 }
 
 type Nullable[T any] struct {
@@ -59,6 +88,9 @@ type Patch struct {
 	RcloneRCURL   Nullable[string]   `json:"rclone_rc_url"`
 	AutoStart     *bool              `json:"auto_start"`
 	WorkspacePath Nullable[string]   `json:"workspace_path"`
+	// Shortcuts merges per-action accelerators. An empty value resets that
+	// action to its default.
+	Shortcuts map[string]string `json:"shortcuts"`
 }
 
 type Store struct {
@@ -92,9 +124,43 @@ func (s *Store) Get() Document {
 	return s.doc
 }
 
+// shortcutModifiers mirrors the modifiers Wails understands in accelerators.
+var shortcutModifiers = map[string]bool{
+	"cmdorctrl": true, "cmd": true, "command": true, "ctrl": true,
+	"optionoralt": true, "alt": true, "option": true, "shift": true, "super": true,
+}
+
+// validateAccelerator checks the shape of an accelerator: zero or more known
+// modifiers followed by exactly one key. Wails rejects unknown keys when the
+// binding is registered.
+func validateAccelerator(accelerator string) error {
+	parts := strings.Split(accelerator, "+")
+	key := parts[len(parts)-1]
+	if strings.TrimSpace(key) == "" {
+		return core.InvalidRequest("shortcut has no key: " + accelerator)
+	}
+	for _, modifier := range parts[:len(parts)-1] {
+		if !shortcutModifiers[strings.ToLower(modifier)] {
+			return core.InvalidRequest("unknown shortcut modifier: " + modifier)
+		}
+	}
+	return nil
+}
+
 func (s *Store) Patch(patch Patch) (Document, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	for action, accelerator := range patch.Shortcuts {
+		if _, known := DefaultShortcuts[action]; !known {
+			return Document{}, core.InvalidRequest("unknown shortcut action: " + action)
+		}
+		if accelerator == "" {
+			continue
+		}
+		if err := validateAccelerator(accelerator); err != nil {
+			return Document{}, err
+		}
+	}
 	if patch.RcloneSource != nil {
 		s.doc.RcloneSource = *patch.RcloneSource
 	}
@@ -112,6 +178,18 @@ func (s *Store) Patch(patch Patch) (Document, error) {
 	}
 	if patch.WorkspacePath.Set {
 		s.doc.WorkspacePath = patch.WorkspacePath.Value
+	}
+	if len(patch.Shortcuts) > 0 {
+		if s.doc.Shortcuts == nil {
+			s.doc.Shortcuts = map[string]string{}
+		}
+		for action, accelerator := range patch.Shortcuts {
+			if accelerator == "" {
+				delete(s.doc.Shortcuts, action)
+				continue
+			}
+			s.doc.Shortcuts[action] = accelerator
+		}
 	}
 	s.doc.UpdatedAt = time.Now().UTC()
 	if err := persist.AtomicWriteJSON(s.path, s.doc); err != nil {

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
 import {
   MoonIcon,
   PlayIcon,
@@ -67,6 +68,7 @@ type SystemInfo = {
 }
 
 export function ApiPlayground() {
+  const { t } = useTranslation()
   const [selectedId, setSelectedId] = useState(ENDPOINTS[0]?.id ?? "")
   const [query, setQuery] = useState("")
   const [method, setMethod] = useState<HttpMethod>(
@@ -173,7 +175,7 @@ export function ApiPlayground() {
       sseRef.current?.()
       sseRef.current = null
       setListening(false)
-      toast.info("SSE disconnected")
+      toast.info(t("api.sseDisconnected"))
       return
     }
 
@@ -194,7 +196,7 @@ export function ApiPlayground() {
         toast.error(message)
       }
     )
-    toast.success("SSE connected")
+    toast.success(t("api.sseConnected"))
   }
 
   const filtered = filterEndpoints(query)
@@ -305,6 +307,7 @@ function PlaygroundHeader({
   revision: number | undefined
   onInsertRevision: () => void
 }) {
+  const { t } = useTranslation()
   const { theme, setTheme } = useTheme()
   const nextTheme = theme === "dark" ? "light" : "dark"
 
@@ -312,29 +315,29 @@ function PlaygroundHeader({
     <header className="flex items-center gap-3 border-b px-4 py-3">
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="font-heading text-base font-medium">
-            Ourboros API 演示
-          </h1>
+          <h1 className="font-heading text-base font-medium">{t("api.title")}</h1>
           <Badge variant={online ? "secondary" : "destructive"}>
-            {online == null ? "检测中" : online ? "后端在线" : "后端离线"}
+            {online == null
+              ? t("api.checking")
+              : online
+                ? t("api.online")
+                : t("api.offline")}
           </Badge>
           <Badge variant={rcloneRunning ? "default" : "outline"}>
-            rclone {rcloneRunning ? "running" : "stopped"}
+            {rcloneRunning ? t("api.rcloneRunning") : t("api.rcloneStopped")}
           </Badge>
           {info?.version ? (
             <Badge variant="outline">v{info.version}</Badge>
           ) : null}
         </div>
         <p className="truncate text-xs text-muted-foreground">
-          {info?.home_dir
-            ? `HOME ${info.home_dir}`
-            : "开发时 Vite 会把 /api 和 /health 代理到 127.0.0.1:8080"}
+          {info?.home_dir ? `HOME ${info.home_dir}` : t("api.homeHint")}
         </p>
       </div>
       <div className="flex items-center gap-2">
         {revision !== undefined ? (
           <Button variant="outline" size="sm" onClick={onInsertRevision}>
-            填入 revision {revision}
+            {t("api.insertRevision", { revision })}
           </Button>
         ) : null}
         <Button
@@ -365,21 +368,22 @@ function EndpointSidebar({
   selectedId: string
   onSelect: (endpoint: Endpoint) => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="flex h-full min-h-80 flex-col gap-3 p-3">
       <Field>
-        <FieldLabel htmlFor="endpoint-filter">接口</FieldLabel>
+        <FieldLabel htmlFor="endpoint-filter">{t("api.filterLabel")}</FieldLabel>
         <Input
           id="endpoint-filter"
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}
-          placeholder="过滤 method / path / 名称"
+          placeholder={t("api.filterPlaceholder")}
         />
       </Field>
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex flex-col gap-4 pr-3">
           {groups.length === 0 ? (
-            <p className="text-sm text-muted-foreground">没有匹配的接口</p>
+            <p className="text-sm text-muted-foreground">{t("api.noMatch")}</p>
           ) : (
             groups.map((group) => (
               <div key={group} className="flex flex-col gap-1">
@@ -395,6 +399,7 @@ function EndpointSidebar({
                         endpoint.id === selectedId ? "secondary" : "ghost"
                       }
                       className="h-auto w-full justify-start py-2"
+                      title={t(endpoint.descriptionKey)}
                       onClick={() => onSelect(endpoint)}
                     >
                       <Badge
@@ -440,13 +445,12 @@ function RequestForm({
   onSend: () => void
   onSseToggle: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <Card size="sm" className="h-full rounded-none ring-0">
       <CardHeader className="border-b">
-        <CardTitle>请求</CardTitle>
-        <CardDescription>
-          把路径里的 {"{id}"} / {"{edge_id}"} 换成真实值后再发送。
-        </CardDescription>
+        <CardTitle>{t("api.request")}</CardTitle>
+        <CardDescription>{t("api.requestDescription")}</CardDescription>
       </CardHeader>
       <CardContent>
         <form
@@ -494,12 +498,10 @@ function RequestForm({
                 value={body}
                 onChange={(event) => onBodyChange(event.target.value)}
                 className="min-h-40 font-mono text-xs"
-                placeholder={sse ? "SSE 不需要 body" : "{ }"}
+                placeholder={sse ? t("api.sseNoBody") : "{ }"}
                 disabled={sse || method === "GET" || method === "DELETE"}
               />
-              <FieldDescription>
-                GET / DELETE 使用 query；POST / PUT / PATCH 发送 JSON。
-              </FieldDescription>
+              <FieldDescription>{t("api.methodsHint")}</FieldDescription>
             </Field>
           </FieldGroup>
           <div className="flex flex-wrap items-center gap-2">
@@ -510,7 +512,7 @@ function RequestForm({
                 ) : (
                   <PlugZapIcon data-icon="inline-start" />
                 )}
-                {listening ? "断开 SSE" : "连接 SSE"}
+                {listening ? t("api.disconnectSse") : t("api.connectSse")}
               </Button>
             ) : (
               <Button type="submit" disabled={pending}>
@@ -519,11 +521,11 @@ function RequestForm({
                 ) : (
                   <PlayIcon data-icon="inline-start" />
                 )}
-                发送
+                {t("common.send")}
               </Button>
             )}
             <span className="text-xs text-muted-foreground">
-              按 <Kbd>d</Kbd> 切换深色模式
+              {t("api.darkHintPrefix")} <Kbd>d</Kbd> {t("api.darkHintSuffix")}
             </span>
           </div>
         </form>
@@ -541,13 +543,14 @@ function ResponsePane({
   sseLog: string
   listening: boolean
 }) {
+  const { t } = useTranslation()
   const output = sseLog || (result ? formatResponseBody(result) : "")
 
   return (
     <Card size="sm" className="h-full rounded-none ring-0">
       <CardHeader className="border-b">
         <div className="flex items-center gap-2">
-          <CardTitle>响应</CardTitle>
+          <CardTitle>{t("api.response")}</CardTitle>
           {result ? (
             <Badge variant={result.ok ? "secondary" : "destructive"}>
               {result.status || "ERR"} {result.statusText}
@@ -556,9 +559,7 @@ function ResponsePane({
           {result ? <Badge variant="outline">{result.ms}ms</Badge> : null}
           {listening ? <Badge variant="default">SSE live</Badge> : null}
         </div>
-        <CardDescription>
-          JSON 会格式化显示；健康检查等纯文本保持原样。
-        </CardDescription>
+        <CardDescription>{t("api.responseDescription")}</CardDescription>
       </CardHeader>
       <CardContent className="min-h-0 flex-1">
         <pre
@@ -566,7 +567,7 @@ function ResponsePane({
             "h-full min-h-48 overflow-auto rounded-lg bg-muted/50 p-3 font-mono text-xs leading-relaxed"
           )}
         >
-          {output || "发送请求或连接 SSE 后，结果会显示在这里。"}
+          {output || t("api.responseEmpty")}
         </pre>
       </CardContent>
     </Card>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 
 import { call } from "@/lib/client"
+import i18n from "@/i18n"
 import type { WorkspaceDocument } from "@/lib/types"
 
 export function useWorkspace() {
@@ -12,7 +13,7 @@ export function useWorkspace() {
       setDoc(await call<WorkspaceDocument>("/api/workspace"))
       setError(null)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "加载失败")
+      setError(cause instanceof Error ? cause.message : i18n.t("errors.loadFailed"))
     }
   }, [])
 

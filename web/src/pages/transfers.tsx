@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { PlusIcon, RefreshCcwIcon, TrashIcon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -28,7 +29,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { call, callQuiet, errorMessage, formatBytes } from "@/lib/client"
 import { openEventSource, parseEventPayload } from "@/lib/api"
-import { useWorkspace } from "@/lib/workspace-hook"
+import { useWorkspace } from "@/stores/workspace"
 import type {
   JobSnapshot,
   NodeKind,
@@ -93,6 +94,7 @@ function upsertJob(list: JobSnapshot[], next: JobSnapshot): JobSnapshot[] {
 }
 
 export function TransfersPage() {
+  const { t } = useTranslation()
   const { doc, reload } = useWorkspace()
   const [jobs, setJobs] = useState<JobSnapshot[]>([])
   const [remotes, setRemotes] = useState<RemoteInfo[]>([])
@@ -154,7 +156,7 @@ export function TransfersPage() {
   const submitNode = async () => {
     const label = nodeForm.label.trim()
     if (!label) {
-      toast.error("请填写名称")
+      toast.error(t("transfers.needName"))
       return
     }
     const body: Record<string, unknown> = {
@@ -166,13 +168,13 @@ export function TransfersPage() {
     if (nodeForm.kind === "local") {
       const path = nodeForm.localPath.trim()
       if (!path) {
-        toast.error("本地节点需要路径")
+        toast.error(t("transfers.localNeedsPath"))
         return
       }
       body.local_path = path
     } else {
       if (!nodeForm.remoteName) {
-        toast.error("远程节点需要 remote 名称")
+        toast.error(t("transfers.remoteNeedsName"))
         return
       }
       body.remote = {
@@ -181,7 +183,7 @@ export function TransfersPage() {
       }
     }
     await call("/api/workspace/nodes", { method: "POST", body })
-    toast.success(`已添加节点 ${label}`)
+    toast.success(t("transfers.nodeAdded", { name: label }))
     setNodeOpen(false)
     setNodeForm(EMPTY_NODE)
     await reload()
@@ -191,7 +193,7 @@ export function TransfersPage() {
     if (!doc) {
       return
     }
-    if (!window.confirm(`删除节点 ${nodeLabel(id)}？连接它的边也会被删除。`)) {
+    if (!window.confirm(t("transfers.deleteNodeConfirm", { name: nodeLabel(id) }))) {
       return
     }
     await call(
@@ -200,7 +202,7 @@ export function TransfersPage() {
         method: "DELETE",
       }
     )
-    toast.success("已删除节点")
+    toast.success(t("transfers.nodeDeleted"))
     await reload()
   }
 
@@ -209,11 +211,11 @@ export function TransfersPage() {
       return
     }
     if (!edgeForm.source || !edgeForm.target) {
-      toast.error("请选择起点和终点")
+      toast.error(t("transfers.needEnds"))
       return
     }
     if (edgeForm.source === edgeForm.target) {
-      toast.error("起点和终点不能相同")
+      toast.error(t("transfers.sameEnds"))
       return
     }
     await call("/api/workspace/edges", {
@@ -233,7 +235,7 @@ export function TransfersPage() {
         enabled: edgeForm.enabled,
       },
     })
-    toast.success("已创建同步连接")
+    toast.success(t("transfers.edgeCreated"))
     setEdgeOpen(false)
     setEdgeForm(EMPTY_EDGE)
     await reload()
@@ -254,7 +256,7 @@ export function TransfersPage() {
     if (!doc) {
       return
     }
-    if (!window.confirm("删除这条同步连接？")) {
+    if (!window.confirm(t("transfers.deleteEdgeConfirm"))) {
       return
     }
     await call(
@@ -263,7 +265,7 @@ export function TransfersPage() {
         method: "DELETE",
       }
     )
-    toast.success("已删除连接")
+    toast.success(t("transfers.edgeDeleted"))
     await reload()
   }
 
@@ -272,7 +274,7 @@ export function TransfersPage() {
       `/api/sync/${encodeURIComponent(id)}/run`,
       { method: "POST", body: {} }
     )
-    toast.success(`已启动任务 ${snapshot.id.slice(0, 8)}`)
+    toast.success(t("transfers.jobStarted", { id: snapshot.id.slice(0, 8) }))
     await loadJobs()
   }
 
@@ -297,32 +299,30 @@ export function TransfersPage() {
         <CardHeader>
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
-              <CardTitle>存储节点</CardTitle>
-              <CardDescription>
-                同步和挂载连接的两端。这是列表视图，不涉及画布。
-              </CardDescription>
+              <CardTitle>{t("transfers.nodesTitle")}</CardTitle>
+              <CardDescription>{t("transfers.nodesDescription")}</CardDescription>
             </div>
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={() => void reload()}>
                 <RefreshCcwIcon />
               </Button>
               <Button size="sm" onClick={() => setNodeOpen(true)}>
-                <PlusIcon /> 添加节点
+                <PlusIcon /> {t("transfers.addNode")}
               </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           {(doc?.nodes.length ?? 0) === 0 ? (
-            <EmptyHint>还没有节点，先添加本地目录或 remote。</EmptyHint>
+            <EmptyHint>{t("transfers.nodesEmpty")}</EmptyHint>
           ) : (
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left text-xs text-muted-foreground">
-                  <th className="px-1 py-2 font-medium">名称</th>
-                  <th className="px-1 py-2 font-medium">类型</th>
-                  <th className="px-1 py-2 font-medium">位置</th>
-                  <th className="px-1 py-2 font-medium">操作</th>
+                  <th className="px-1 py-2 font-medium">{t("common.name")}</th>
+                  <th className="px-1 py-2 font-medium">{t("common.type")}</th>
+                  <th className="px-1 py-2 font-medium">{t("transfers.columnLocation")}</th>
+                  <th className="px-1 py-2 font-medium">{t("common.actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -341,7 +341,7 @@ export function TransfersPage() {
                       <Button
                         variant="ghost"
                         size="icon-xs"
-                        aria-label="删除节点"
+                        aria-label={t("transfers.ariaDeleteNode")}
                         onClick={() => void deleteNode(node.id)}
                       >
                         <TrashIcon />
@@ -359,23 +359,21 @@ export function TransfersPage() {
         <CardHeader>
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
-              <CardTitle>同步连接</CardTitle>
-              <CardDescription>
-                点"立即执行"跑一次 copy / move / sync；也可以开启定时。
-              </CardDescription>
+              <CardTitle>{t("transfers.edgesTitle")}</CardTitle>
+              <CardDescription>{t("transfers.edgesDescription")}</CardDescription>
             </div>
             <Button
               size="sm"
               disabled={!canRun}
               onClick={() => setEdgeOpen(true)}
             >
-              <PlusIcon /> 新建连接
+              <PlusIcon /> {t("transfers.newEdge")}
             </Button>
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           {edges.length === 0 ? (
-            <EmptyHint>还没有同步连接。</EmptyHint>
+            <EmptyHint>{t("transfers.edgesEmpty")}</EmptyHint>
           ) : (
             edges.map((edge) => {
               const sync = edge.sync
@@ -390,14 +388,14 @@ export function TransfersPage() {
                   </span>
                   <span className="font-medium">{nodeLabel(edge.target)}</span>
                   <Badge variant={sync?.enabled ? "default" : "outline"}>
-                    {sync?.enabled ? "已启用" : "已禁用"}
+                    {sync?.enabled ? t("transfers.enabled") : t("transfers.disabled")}
                   </Badge>
                   {sync?.schedule?.enabled ? (
                     <Badge variant="secondary">{sync.schedule.preset}</Badge>
                   ) : null}
                   {sync?.last_result ? (
                     <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                      上次 <StatusChip status={sync.last_result.status} />
+                      {t("transfers.lastRun")} <StatusChip status={sync.last_result.status} />
                     </span>
                   ) : null}
                   <div className="ms-auto flex gap-1.5">
@@ -408,19 +406,19 @@ export function TransfersPage() {
                         void toggleEdge({ id: edge.id, enabled: sync?.enabled })
                       }
                     >
-                      {sync?.enabled ? "禁用" : "启用"}
+                      {sync?.enabled ? t("transfers.disable") : t("transfers.enable")}
                     </Button>
                     <Button
                       size="xs"
                       onClick={() => void runEdge(edge.id)}
                       disabled={!sync?.enabled}
                     >
-                      立即执行
+                      {t("transfers.runNow")}
                     </Button>
                     <Button
                       size="icon-xs"
                       variant="ghost"
-                      aria-label="删除连接"
+                      aria-label={t("transfers.ariaDeleteEdge")}
                       onClick={() => void deleteEdge(edge.id)}
                     >
                       <TrashIcon />
@@ -435,14 +433,12 @@ export function TransfersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>运行中的任务</CardTitle>
-          <CardDescription>
-            进度实时推送；连接断开后会自动补齐。
-          </CardDescription>
+          <CardTitle>{t("transfers.jobsTitle")}</CardTitle>
+          <CardDescription>{t("transfers.jobsDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           {runningJobs.length === 0 ? (
-            <EmptyHint>当前没有正在运行的任务。</EmptyHint>
+            <EmptyHint>{t("transfers.jobsEmpty")}</EmptyHint>
           ) : (
             runningJobs.map((job) => (
               <JobRow
@@ -458,9 +454,9 @@ export function TransfersPage() {
       {recentJobs.length > 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>最近完成</CardTitle>
+            <CardTitle>{t("transfers.recentTitle")}</CardTitle>
             <CardDescription>
-              最近 {RECENT_LIMIT} 条已结束的任务。
+              {t("transfers.recentDescription", { count: RECENT_LIMIT })}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
@@ -473,24 +469,24 @@ export function TransfersPage() {
 
       <Dialog open={nodeOpen} onOpenChange={setNodeOpen}>
         <DialogContent>
-          <DialogHeader>添加节点</DialogHeader>
+          <DialogHeader>{t("transfers.addNode")}</DialogHeader>
           <div className="flex flex-col gap-3">
             <SelectField
-              label="类型"
+              label={t("common.type")}
               value={nodeForm.kind}
               options={[
-                { value: "local", label: "本地目录" },
-                { value: "remote", label: "远程 remote" },
+                { value: "local", label: t("transfers.kindLocal") },
+                { value: "remote", label: t("transfers.kindRemote") },
               ]}
               onChange={(kind) =>
                 setNodeForm((current) => ({ ...current, kind }))
               }
             />
             <div className="flex flex-col gap-1.5">
-              <Label>名称</Label>
+              <Label>{t("common.name")}</Label>
               <Input
                 value={nodeForm.label}
-                placeholder="备份盘"
+                placeholder={t("transfers.namePlaceholder")}
                 onChange={(e) =>
                   setNodeForm((current) => ({
                     ...current,
@@ -501,10 +497,10 @@ export function TransfersPage() {
             </div>
             {nodeForm.kind === "local" ? (
               <div className="flex flex-col gap-1.5">
-                <Label>本地路径</Label>
+                <Label>{t("transfers.localPath")}</Label>
                 <Input
                   value={nodeForm.localPath}
-                  placeholder="/absolute/path(以 /、~ 开头)"
+                  placeholder={t("transfers.localPathPlaceholder")}
                   className="font-mono"
                   onChange={(e) =>
                     setNodeForm((current) => ({
@@ -528,13 +524,11 @@ export function TransfersPage() {
                   }
                   disabled={remotes.length === 0}
                   placeholder={
-                    remotes.length === 0
-                      ? "先在 rclone 中创建 remote"
-                      : undefined
+                    remotes.length === 0 ? t("transfers.noRemotes") : undefined
                   }
                 />
                 <div className="flex flex-col gap-1.5">
-                  <Label>remote 内路径（可选）</Label>
+                  <Label>{t("transfers.remotePath")}</Label>
                   <Input
                     value={nodeForm.remotePath}
                     placeholder="backup/photos"
@@ -552,19 +546,19 @@ export function TransfersPage() {
           </div>
           <DialogFooter>
             <DialogClose render={<Button variant="outline" />}>
-              取消
+              {t("common.cancel")}
             </DialogClose>
-            <Button onClick={() => void submitNode()}>添加</Button>
+            <Button onClick={() => void submitNode()}>{t("common.add")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={edgeOpen} onOpenChange={setEdgeOpen}>
         <DialogContent>
-          <DialogHeader>新建同步连接</DialogHeader>
+          <DialogHeader>{t("transfers.edgeDialogTitle")}</DialogHeader>
           <div className="flex flex-col gap-3">
             <SelectField
-              label="起点（源）"
+              label={t("transfers.source")}
               value={edgeForm.source}
               options={(doc?.nodes ?? []).map((node) => ({
                 value: node.id,
@@ -573,10 +567,10 @@ export function TransfersPage() {
               onChange={(source) =>
                 setEdgeForm((current) => ({ ...current, source }))
               }
-              placeholder="选择节点"
+              placeholder={t("transfers.selectNode")}
             />
             <SelectField
-              label="终点（目标）"
+              label={t("transfers.target")}
               value={edgeForm.target}
               options={(doc?.nodes ?? []).map((node) => ({
                 value: node.id,
@@ -585,35 +579,35 @@ export function TransfersPage() {
               onChange={(target) =>
                 setEdgeForm((current) => ({ ...current, target }))
               }
-              placeholder="选择节点"
+              placeholder={t("transfers.selectNode")}
             />
             <SelectField
-              label="操作"
+              label={t("transfers.operation")}
               value={edgeForm.operation}
               options={[
-                { value: "copy", label: "copy（复制）" },
-                { value: "move", label: "move（移动，删除源）" },
-                { value: "sync", label: "sync（镜像，可能删除目标文件）" },
+                { value: "copy", label: t("transfers.opCopy") },
+                { value: "move", label: t("transfers.opMove") },
+                { value: "sync", label: t("transfers.opSync") },
               ]}
               onChange={(operation) =>
                 setEdgeForm((current) => ({ ...current, operation }))
               }
             />
             <SelectField
-              label="定时"
+              label={t("transfers.schedule")}
               value={edgeForm.schedule}
               options={[
-                { value: "manual", label: "手动" },
-                { value: "hourly", label: "每小时" },
-                { value: "daily", label: "每天" },
-                { value: "weekly", label: "每周" },
+                { value: "manual", label: t("transfers.scheduleManual") },
+                { value: "hourly", label: t("transfers.scheduleHourly") },
+                { value: "daily", label: t("transfers.scheduleDaily") },
+                { value: "weekly", label: t("transfers.scheduleWeekly") },
               ]}
               onChange={(schedule) =>
                 setEdgeForm((current) => ({ ...current, schedule }))
               }
             />
             <SwitchField
-              label="默认启用"
+              label={t("transfers.defaultEnabled")}
               checked={edgeForm.enabled}
               onCheckedChange={(enabled) =>
                 setEdgeForm((current) => ({ ...current, enabled }))
@@ -622,7 +616,7 @@ export function TransfersPage() {
           </div>
           <DialogFooter>
             <DialogClose render={<Button variant="outline" />}>
-              取消
+              {t("common.cancel")}
             </DialogClose>
             <Button
               onClick={() =>
@@ -633,19 +627,13 @@ export function TransfersPage() {
                 )
               }
             >
-              创建
+              {t("common.create")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
   )
-}
-
-const OPERATION_LABEL: Record<string, string> = {
-  copy: "复制",
-  move: "移动",
-  sync: "同步",
 }
 
 /** 与后端 paths.Locator.CombinedFS 的拼接规则保持一致。 */
@@ -662,12 +650,14 @@ function locatorText(locator: Record<string, unknown>): string {
 }
 
 function JobRow({ job, onStop }: { job: JobSnapshot; onStop?: () => void }) {
+  const { t, i18n } = useTranslation()
   const percentage = job.progress.percentage
+  const opKey = `transfers.operationLabels.${job.operation}`
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-sm">
       <StatusChip status={job.status} />
       <Badge variant="outline">
-        {OPERATION_LABEL[job.operation] ?? job.operation}
+        {i18n.exists(opKey) ? i18n.t(opKey) : job.operation}
       </Badge>
       <span
         className="min-w-0 flex-1 truncate font-mono text-xs text-muted-foreground"
@@ -678,8 +668,10 @@ function JobRow({ job, onStop }: { job: JobSnapshot; onStop?: () => void }) {
       <span className="text-xs text-muted-foreground tabular-nums">
         {formatBytes(job.progress.bytes)}
         {percentage > 0 ? ` · ${percentage.toFixed(0)}%` : ""}
-        {` · ${job.progress.transfers} 个传输`}
-        {job.progress.errors > 0 ? ` · ${job.progress.errors} 个错误` : ""}
+        {` · ${t("transfers.jobTransfers", { count: job.progress.transfers })}`}
+        {job.progress.errors > 0
+          ? ` · ${t("transfers.jobErrors", { count: job.progress.errors })}`
+          : ""}
       </span>
       <div className="ms-auto flex items-center gap-1.5">
         {onStop ? (
@@ -689,7 +681,7 @@ function JobRow({ job, onStop }: { job: JobSnapshot; onStop?: () => void }) {
             disabled={job.status === "cancelling"}
             onClick={onStop}
           >
-            停止
+            {t("common.stop")}
           </Button>
         ) : null}
         {job.error ? (

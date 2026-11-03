@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { ChevronDownIcon, PencilIcon, PlusIcon, RefreshCcwIcon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -41,7 +42,7 @@ import {
   type FieldValue,
   type FieldValues,
 } from "@/lib/remote-form"
-import { useRcloneStore } from "@/lib/rclone-store"
+import { useRcloneStore } from "@/stores/rclone-store"
 import type {
   RemoteDetail,
   RemoteInfo,
@@ -65,21 +66,6 @@ const FEATURED = [
   "azureblob",
 ]
 
-const FEATURED_LABEL: Record<string, string> = {
-  s3: "S3 对象存储",
-  sftp: "SFTP",
-  webdav: "WebDAV",
-  drive: "Google 云端硬盘",
-  dropbox: "Dropbox",
-  onedrive: "OneDrive",
-  b2: "Backblaze B2",
-  ftp: "FTP",
-  smb: "SMB / 共享",
-  alias: "别名",
-  local: "本地磁盘",
-  azureblob: "Azure Blob",
-}
-
 type FormState = {
   name: string
   type: string
@@ -97,6 +83,7 @@ const EMPTY_FORM: FormState = {
 }
 
 export function RemotesPage() {
+  const { t, i18n } = useTranslation()
   const running = useRcloneStore((state) => state.status?.running ?? false)
   const [remotes, setRemotes] = useState<RemoteInfo[]>([])
   const [providers, setProviders] = useState<RemoteProvider[]>([])
@@ -105,6 +92,15 @@ export function RemotesPage() {
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [open, setOpen] = useState(false)
   const [loadingForm, setLoadingForm] = useState(false)
+
+  /** 已收录的存储类型走语言包，未收录的显示 rclone 原始类型名。 */
+  const providerLabel = (type: string | null | undefined) => {
+    if (!type) {
+      return t("remotes.untyped")
+    }
+    const key = `remotes.providers.${type}`
+    return i18n.exists(key) ? i18n.t(key) : type
+  }
 
   const load = useCallback(async () => {
     try {
@@ -116,8 +112,18 @@ export function RemotesPage() {
   }, [])
 
   useEffect(() => {
-    void load()
-  }, [load])
+    let active = true
+    call<{ remotes: RemoteInfo[] }>("/api/remotes")
+      .then((data) => {
+        if (active) setRemotes(data.remotes)
+      })
+      .catch(() => {
+        if (active) setRemotes([])
+      })
+    return () => {
+      active = false
+    }
+  }, [])
 
   const loadProviders = async () => {
     const data = await call<{ providers: RemoteProvider[] }>(
@@ -183,7 +189,7 @@ export function RemotesPage() {
 
   const submit = async () => {
     if (!selected && !form.editing) {
-      toast.error("先选择一种存储类型")
+      toast.error(t("remotes.needType"))
       return
     }
     const built = parametersFromValues(
@@ -201,18 +207,18 @@ export function RemotesPage() {
         method: "PATCH",
         body: { parameters: built.parameters },
       })
-      toast.success(`已更新 ${form.editing}`)
+      toast.success(t("remotes.updated", { name: form.editing }))
     } else {
       const name = form.name.trim().replace(/:$/, "")
       if (!name || /[\s:/\\]/.test(name)) {
-        toast.error("名称不能为空，也不能包含空格、冒号或斜杠")
+        toast.error(t("remotes.nameInvalid"))
         return
       }
       await call("/api/remotes", {
         method: "POST",
         body: { name, type: form.type, parameters: built.parameters },
       })
-      toast.success(`已创建 ${name}`)
+      toast.success(t("remotes.created", { name }))
     }
     setOpen(false)
     await load()
@@ -248,26 +254,22 @@ export function RemotesPage() {
         <CardHeader>
           <div className="flex items-start gap-3">
             <div className="min-w-0 flex-1">
-              <CardTitle>远程存储</CardTitle>
-              <CardDescription>
-                选类型、填地址和账号即可。凭据由 rclone 保管，不会回到浏览器。
-              </CardDescription>
+              <CardTitle>{t("remotes.title")}</CardTitle>
+              <CardDescription>{t("remotes.description")}</CardDescription>
             </div>
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={() => void load()}>
-                <RefreshCcwIcon data-icon="inline-start" /> 刷新
+                <RefreshCcwIcon data-icon="inline-start" /> {t("common.refresh")}
               </Button>
               <Button size="sm" onClick={() => void openCreate()}>
-                <PlusIcon data-icon="inline-start" /> 新建
+                <PlusIcon data-icon="inline-start" /> {t("remotes.create")}
               </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           {remotes.length === 0 ? (
-            <EmptyHint>
-              还没有远程存储。rclone 运行后点「新建」，勾选并填写即可。
-            </EmptyHint>
+            <EmptyHint>{t("remotes.empty")}</EmptyHint>
           ) : (
             remotes.map((remote) => (
               <div
@@ -280,7 +282,7 @@ export function RemotesPage() {
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium">{remote.name}</div>
                   <div className="truncate text-xs text-muted-foreground">
-                    {FEATURED_LABEL[remote.type ?? ""] ?? remote.type ?? "未标注类型"}
+                    {providerLabel(remote.type)}
                   </div>
                 </div>
                 <Button
@@ -289,12 +291,14 @@ export function RemotesPage() {
                   onClick={() => void openUpdate(remote.name)}
                 >
                   <PencilIcon data-icon="inline-start" />
-                  编辑
+                  {t("common.edit")}
                 </Button>
               </div>
             ))
           )}
-          <p className="text-xs text-muted-foreground">共 {remotes.length} 个。</p>
+          <p className="text-xs text-muted-foreground">
+            {t("remotes.count", { count: remotes.length })}
+          </p>
         </CardContent>
       </Card>
 
@@ -302,21 +306,21 @@ export function RemotesPage() {
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>
-              {form.editing ? `编辑 ${form.editing}` : "新建远程存储"}
+              {form.editing
+                ? t("remotes.editTitle", { name: form.editing })
+                : t("remotes.createTitle")}
             </DialogTitle>
-            <DialogDescription>
-              常用项直接填写。高级设置默认收起，不改就沿用 rclone 的默认值。
-            </DialogDescription>
+            <DialogDescription>{t("remotes.formDescription")}</DialogDescription>
           </DialogHeader>
           {loadingForm ? (
-            <p className="text-sm text-muted-foreground">正在读取 rclone 的存储类型…</p>
+            <p className="text-sm text-muted-foreground">{t("remotes.loadingTypes")}</p>
           ) : !running && providers.length === 0 ? (
-            <EmptyHint>先在概览里启动或连接 rclone，再创建远程存储。</EmptyHint>
+            <EmptyHint>{t("remotes.startFirst")}</EmptyHint>
           ) : (
             <div className="flex max-h-[min(32rem,62svh)] flex-col gap-4 overflow-y-auto pe-1">
               <FieldGroup>
                 <Field>
-                  <FieldLabel htmlFor="remote-name">名称</FieldLabel>
+                  <FieldLabel htmlFor="remote-name">{t("common.name")}</FieldLabel>
                   <Input
                     id="remote-name"
                     value={form.name}
@@ -330,16 +334,14 @@ export function RemotesPage() {
                       }))
                     }
                   />
-                  <FieldDescription>在文件和同步里用这个名字引用。</FieldDescription>
+                  <FieldDescription>{t("remotes.nameHint")}</FieldDescription>
                 </Field>
               </FieldGroup>
 
               {form.editing ? (
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="text-muted-foreground">类型</span>
-                  <Badge variant="secondary">
-                    {FEATURED_LABEL[form.type] ?? form.type}
-                  </Badge>
+                  <span className="text-muted-foreground">{t("common.type")}</span>
+                  <Badge variant="secondary">{providerLabel(form.type)}</Badge>
                 </div>
               ) : (
                 <TypePicker
@@ -380,7 +382,7 @@ export function RemotesPage() {
                             !advancedOpen && "-rotate-90"
                           )}
                         />
-                        高级设置
+                        {t("remotes.advanced")}
                         <Badge variant="outline">{advanced.length}</Badge>
                       </Button>
                       {advancedOpen
@@ -402,7 +404,9 @@ export function RemotesPage() {
             </div>
           )}
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" />}>取消</DialogClose>
+            <DialogClose render={<Button variant="outline" />}>
+              {t("common.cancel")}
+            </DialogClose>
             <Button
               disabled={loadingForm || (!form.editing && !form.type)}
               onClick={() =>
@@ -413,7 +417,7 @@ export function RemotesPage() {
                 )
               }
             >
-              保存
+              {t("common.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -435,6 +439,7 @@ function TypePicker({
   onQuery: (query: string) => void
   onSelect: (type: string) => void
 }) {
+  const { t, i18n } = useTranslation()
   const needle = query.trim().toLowerCase()
   const matches = useMemo(() => {
     const ranked = needle
@@ -463,17 +468,18 @@ function TypePicker({
   return (
     <div className="flex flex-col gap-2">
       <Field>
-        <FieldLabel htmlFor="remote-type-search">类型</FieldLabel>
+        <FieldLabel htmlFor="remote-type-search">{t("common.type")}</FieldLabel>
         <Input
           id="remote-type-search"
           value={query}
-          placeholder="搜索，例如 s3、sftp、网盘"
+          placeholder={t("remotes.typeSearchPlaceholder")}
           onChange={(event) => onQuery(event.target.value)}
         />
       </Field>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {matches.map((item) => {
           const active = item.name === selected
+          const key = `remotes.providers.${item.name}`
           return (
             <button
               key={item.name}
@@ -486,7 +492,7 @@ function TypePicker({
               )}
             >
               <span className="block truncate text-sm font-medium">
-                {FEATURED_LABEL[item.name] ?? item.name}
+                {i18n.exists(key) ? i18n.t(key) : item.name}
               </span>
               <span className="line-clamp-2 text-xs text-muted-foreground">
                 {item.name}
@@ -496,11 +502,13 @@ function TypePicker({
         })}
       </div>
       {matches.length === 0 ? (
-        <p className="text-xs text-muted-foreground">没有匹配的类型。</p>
+        <p className="text-xs text-muted-foreground">{t("remotes.noTypeMatch")}</p>
       ) : null}
       {!needle ? (
         <p className="text-xs text-muted-foreground">
-          先显示常用类型。搜索可以找到其余 {Math.max(providers.length - matches.length, 0)} 种。
+          {t("remotes.moreTypes", {
+            count: Math.max(providers.length - matches.length, 0),
+          })}
         </p>
       ) : null}
     </div>
@@ -520,6 +528,7 @@ function OptionControl({
   editing: boolean
   onChange: (value: FieldValue) => void
 }) {
+  const { t } = useTranslation()
   const id = `remote-opt-${option.name}`
   const help = helpSummary(option.help)
   const secret = isCredential(option)
@@ -549,10 +558,10 @@ function OptionControl({
       <SelectField
         label={option.name}
         value={text}
-        placeholder="使用默认"
+        placeholder={t("remotes.useDefault")}
         options={[
-          { value: "true", label: "是" },
-          { value: "false", label: "否" },
+          { value: "true", label: t("common.yes") },
+          { value: "false", label: t("common.no") },
         ]}
         onChange={onChange}
       />
@@ -565,7 +574,7 @@ function OptionControl({
         <SelectField
           label={optionLabel(option)}
           value={examples.some((example) => example.value === text) ? text : ""}
-          placeholder={option.required ? "请选择" : "不设置"}
+          placeholder={option.required ? t("remotes.selectRequired") : t("remotes.unset")}
           options={examples.map((example) => ({
             value: example.value,
             label:
@@ -606,7 +615,7 @@ function OptionControl({
         autoComplete="off"
         className={secret ? undefined : "font-mono"}
         placeholder={
-          secret && editing ? "留空则保持原值" : (option.default ?? "")
+          secret && editing ? t("remotes.keepOriginal") : (option.default ?? "")
         }
         onChange={(event) => onChange(event.target.value)}
       />

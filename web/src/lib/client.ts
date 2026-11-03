@@ -1,9 +1,8 @@
 import { toast } from "sonner"
 
 import { sendApiRequest, type HttpMethod } from "@/lib/api"
+import i18n from "@/i18n"
 import type { ApiErrorBody } from "@/lib/types"
-
-const NETWORK_ERROR_MESSAGE = "无法连接到 Ourboros 服务，请确认它仍在运行。"
 
 /** 执行一次 API 调用，成功时返回解析后的 JSON，失败时弹 toast 并抛出错误。 */
 export async function call<T = unknown>(
@@ -14,8 +13,8 @@ export async function call<T = unknown>(
   const body = options.body === undefined ? "" : JSON.stringify(options.body)
   const response = await sendApiRequest({ method, path, body })
   if (response.status === 0) {
-    toast.error(NETWORK_ERROR_MESSAGE)
-    throw new Error(NETWORK_ERROR_MESSAGE)
+    toast.error(i18n.t("errors.network"))
+    throw new Error(i18n.t("errors.network"))
   }
   if (!response.ok) {
     const message = errorMessage(response.json)
@@ -41,35 +40,38 @@ export async function callQuiet<T = unknown>(
   return response.json as T
 }
 
-/** 后端错误码到中文提示的映射；未收录的错误码沿用后端返回的 message。 */
-const ERROR_CODE_MESSAGES: Record<string, string> = {
-  already_running: "rclone 已经在运行。",
-  forbidden_command: "不允许执行这个 rclone 操作。",
-  invalid_command: "rclone 命令无效。",
-  not_found: "找不到对应的对象，它可能已被删除。",
-  io_error: "读写本地文件失败。",
+/**
+ * 后端错误码到本地化提示的映射（errors.codes.*）；
+ * 未收录的错误码沿用后端返回的 message。
+ */
+function codeMessage(code: string): string {
+  const key = `errors.codes.${code}`
+  return i18n.exists(key) ? i18n.t(key) : ""
 }
 
 export function errorMessage(json: unknown): string {
   const error = (json as ApiErrorBody | null)?.error
   if (!error) {
-    return "请求失败"
+    return i18n.t("errors.requestFailed")
   }
   if (error.code === "rclone_unavailable") {
     return error.message === "rclone is not running"
-      ? "rclone 未运行，请先在“概览”页启动。"
-      : `rclone 不可用：${error.message ?? ""}`
+      ? i18n.t("errors.rcloneNotRunning")
+      : i18n.t("errors.rcloneUnavailable", { message: error.message ?? "" })
   }
   if (
     error.code === "conflict" &&
     error.message?.includes("overridden by CLI")
   ) {
-    return "该设置由启动参数指定，无法在页面中修改。"
+    return i18n.t("errors.cliOverride")
   }
-  if (error.code && ERROR_CODE_MESSAGES[error.code]) {
-    return ERROR_CODE_MESSAGES[error.code]
+  if (error.code) {
+    const translated = codeMessage(error.code)
+    if (translated) {
+      return translated
+    }
   }
-  return error.message ?? "请求失败"
+  return error.message ?? i18n.t("errors.requestFailed")
 }
 
 export function formatBytes(bytes: number | null): string {

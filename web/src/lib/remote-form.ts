@@ -1,4 +1,5 @@
 import type { RemoteOption } from "@/lib/types"
+import i18n from "@/i18n"
 
 export type FieldValue = string | boolean
 export type FieldValues = Record<string, FieldValue>
@@ -141,7 +142,7 @@ export function parametersFromValues(
     const text = typeof value === "string" ? value.trim() : ""
     if (!text) {
       if (option.required && !(editing && isCredential(option))) {
-        return { ok: false, error: `请填写 ${option.name}` }
+        return { ok: false, error: i18n.t("errors.fillField", { name: option.name }) }
       }
       continue
     }
@@ -151,7 +152,7 @@ export function parametersFromValues(
     if (option.type === "int") {
       const parsed = Number(text)
       if (!Number.isInteger(parsed)) {
-        return { ok: false, error: `${option.name} 需要整数` }
+        return { ok: false, error: i18n.t("errors.integerRequired", { name: option.name }) }
       }
       parameters[option.name] = parsed
       continue

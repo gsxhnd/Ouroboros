@@ -6,7 +6,8 @@ export type Endpoint = {
   name: string
   method: HttpMethod
   path: string
-  description: string
+  /** 描述文案的语言包 key（api.endpoints.<id>）。 */
+  descriptionKey: string
   body?: string
   sse?: boolean
 }
@@ -20,7 +21,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Health",
     method: "GET",
     path: "/health",
-    description: "进程探活，返回纯文本 ok。",
+    descriptionKey: "api.endpoints.health",
   },
   {
     id: "system-info",
@@ -28,7 +29,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "System info",
     method: "GET",
     path: "/api/system/info",
-    description: "Ourboros 版本、HOME 和不含 RC URL 的 rclone 状态。",
+    descriptionKey: "api.endpoints.system-info",
   },
   {
     id: "rclone-status",
@@ -36,7 +37,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "rclone status",
     method: "GET",
     path: "/api/rclone/status",
-    description: "当前 rclone 进程状态。",
+    descriptionKey: "api.endpoints.rclone-status",
   },
   {
     id: "rclone-start",
@@ -44,7 +45,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Start rclone",
     method: "POST",
     path: "/api/rclone/start",
-    description: "启动或连接到 rclone RC。",
+    descriptionKey: "api.endpoints.rclone-start",
   },
   {
     id: "rclone-stop",
@@ -52,7 +53,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Stop rclone",
     method: "POST",
     path: "/api/rclone/stop",
-    description: "停止由 Ourboros 拉起的 rclone。",
+    descriptionKey: "api.endpoints.rclone-stop",
   },
   {
     id: "rclone-scan",
@@ -60,7 +61,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Scan rclone binaries",
     method: "POST",
     path: "/api/rclone/scan",
-    description: "扫描系统、自定义和托管 rclone。",
+    descriptionKey: "api.endpoints.rclone-scan",
   },
   {
     id: "rclone-select",
@@ -68,7 +69,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Select rclone",
     method: "POST",
     path: "/api/rclone/select",
-    description: "选择本次进程使用的 rclone 来源。",
+    descriptionKey: "api.endpoints.rclone-select",
     body: json({ source: "system", path: "rclone" }),
   },
   {
@@ -77,7 +78,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "List releases",
     method: "GET",
     path: "/api/rclone/releases",
-    description: "查询可下载的官方 rclone 版本。",
+    descriptionKey: "api.endpoints.rclone-releases",
   },
   {
     id: "rclone-download",
@@ -85,7 +86,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Start download",
     method: "POST",
     path: "/api/rclone/downloads",
-    description: "下载托管 rclone 版本。",
+    descriptionKey: "api.endpoints.rclone-download",
     body: json({ version: "v1.74.0" }),
   },
   {
@@ -94,7 +95,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Download events",
     method: "GET",
     path: "/api/rclone/downloads/{id}/events",
-    description: "下载进度 SSE。",
+    descriptionKey: "api.endpoints.rclone-download-events",
     sse: true,
   },
   {
@@ -103,7 +104,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Cancel download",
     method: "POST",
     path: "/api/rclone/downloads/{id}/cancel",
-    description: "取消进行中的下载。",
+    descriptionKey: "api.endpoints.rclone-download-cancel",
   },
   {
     id: "rclone-activate",
@@ -111,7 +112,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Activate version",
     method: "POST",
     path: "/api/rclone/versions/{version}/activate",
-    description: "激活已下载的托管版本。",
+    descriptionKey: "api.endpoints.rclone-activate",
   },
   {
     id: "rclone-delete-version",
@@ -119,7 +120,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Delete version",
     method: "DELETE",
     path: "/api/rclone/versions/{version}",
-    description: "删除托管 rclone 版本目录。",
+    descriptionKey: "api.endpoints.rclone-delete-version",
   },
   {
     id: "workspace-get",
@@ -127,7 +128,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Get workspace",
     method: "GET",
     path: "/api/workspace",
-    description: "读取当前 workspace 文档和 revision。",
+    descriptionKey: "api.endpoints.workspace-get",
   },
   {
     id: "workspace-put",
@@ -135,7 +136,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Replace workspace",
     method: "PUT",
     path: "/api/workspace",
-    description: "整体替换 workspace，必须带期望 revision。",
+    descriptionKey: "api.endpoints.workspace-put",
     body: json({
       revision: 0,
       nodes: [],
@@ -149,7 +150,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Create node",
     method: "POST",
     path: "/api/workspace/nodes",
-    description: "新增 local 或 remote 节点。",
+    descriptionKey: "api.endpoints.workspace-create-node",
     body: json({
       revision: 0,
       kind: "local",
@@ -164,7 +165,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Patch node",
     method: "PATCH",
     path: "/api/workspace/nodes/{id}",
-    description: "更新节点标签、位置或路径。",
+    descriptionKey: "api.endpoints.workspace-patch-node",
     body: json({ revision: 0, label: "Renamed" }),
   },
   {
@@ -173,7 +174,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Delete node",
     method: "DELETE",
     path: "/api/workspace/nodes/{id}?revision=0",
-    description: "按 revision 删除节点。",
+    descriptionKey: "api.endpoints.workspace-delete-node",
   },
   {
     id: "workspace-create-edge",
@@ -181,7 +182,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Create edge",
     method: "POST",
     path: "/api/workspace/edges",
-    description: "新增 sync 或 mount 边。",
+    descriptionKey: "api.endpoints.workspace-create-edge",
     body: json({
       revision: 0,
       source: "node-id",
@@ -197,7 +198,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Patch edge",
     method: "PATCH",
     path: "/api/workspace/edges/{id}",
-    description: "更新边的同步配置。",
+    descriptionKey: "api.endpoints.workspace-patch-edge",
     body: json({ revision: 0, enabled: true }),
   },
   {
@@ -206,7 +207,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Delete edge",
     method: "DELETE",
     path: "/api/workspace/edges/{id}?revision=0",
-    description: "按 revision 删除边。",
+    descriptionKey: "api.endpoints.workspace-delete-edge",
   },
   {
     id: "remotes-list",
@@ -214,7 +215,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "List remotes",
     method: "GET",
     path: "/api/remotes",
-    description: "列出 rclone remotes（不含凭据）。",
+    descriptionKey: "api.endpoints.remotes-list",
   },
   {
     id: "remotes-create",
@@ -222,7 +223,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Create remote",
     method: "POST",
     path: "/api/remotes",
-    description: "创建 remote。alias 示例不会写入真实云凭据。",
+    descriptionKey: "api.endpoints.remotes-create",
     body: json({
       name: "demo-alias",
       type: "alias",
@@ -235,7 +236,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Update remote",
     method: "PATCH",
     path: "/api/remotes/{name}",
-    description: "更新 remote 参数。",
+    descriptionKey: "api.endpoints.remotes-update",
     body: json({ parameters: { remote: "/tmp" } }),
   },
   {
@@ -244,7 +245,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "List files",
     method: "GET",
     path: "/api/files?fs=/tmp&remote=",
-    description: "列出 fs/remote 下的文件。需要 rclone 已运行。",
+    descriptionKey: "api.endpoints.files-list",
   },
   {
     id: "files-mkdir",
@@ -252,7 +253,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Create directory",
     method: "POST",
     path: "/api/files/mkdir",
-    description: "创建目录。",
+    descriptionKey: "api.endpoints.files-mkdir",
     body: json({ fs: "/tmp", path: "ourboros-demo" }),
   },
   {
@@ -261,7 +262,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Copy files",
     method: "POST",
     path: "/api/files/copy",
-    description: "复制文件或目录。",
+    descriptionKey: "api.endpoints.files-copy",
     body: json({
       src_fs: "/tmp",
       src_path: "ourboros-demo",
@@ -276,7 +277,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Move files",
     method: "POST",
     path: "/api/files/move",
-    description: "移动文件或目录。",
+    descriptionKey: "api.endpoints.files-move",
     body: json({
       src_fs: "/tmp",
       src_path: "ourboros-demo-copy",
@@ -291,7 +292,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Delete file",
     method: "DELETE",
     path: "/api/files?fs=/tmp&remote=ourboros-demo&purge=true",
-    description: "删除文件；purge=true 会删除目录及其内容。",
+    descriptionKey: "api.endpoints.files-delete",
   },
   {
     id: "sync-run",
@@ -299,7 +300,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Run sync edge",
     method: "POST",
     path: "/api/sync/{edge_id}/run",
-    description: "立刻执行一条 sync 边。",
+    descriptionKey: "api.endpoints.sync-run",
   },
   {
     id: "sync-jobs",
@@ -307,7 +308,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "List jobs",
     method: "GET",
     path: "/api/sync/jobs",
-    description: "当前同步任务快照。",
+    descriptionKey: "api.endpoints.sync-jobs",
   },
   {
     id: "sync-events",
@@ -315,7 +316,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Job events",
     method: "GET",
     path: "/api/sync/jobs/events",
-    description: "同步任务 SSE。",
+    descriptionKey: "api.endpoints.sync-events",
     sse: true,
   },
   {
@@ -324,7 +325,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Stop job",
     method: "POST",
     path: "/api/sync/jobs/{job_id}/stop",
-    description: "停止运行中的同步任务。",
+    descriptionKey: "api.endpoints.sync-stop",
   },
   {
     id: "mounts-list",
@@ -332,7 +333,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "List mounts",
     method: "GET",
     path: "/api/mounts",
-    description: "挂载状态快照。",
+    descriptionKey: "api.endpoints.mounts-list",
   },
   {
     id: "mount-events",
@@ -340,7 +341,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Mount events",
     method: "GET",
     path: "/api/mounts/events",
-    description: "挂载状态 SSE。",
+    descriptionKey: "api.endpoints.mount-events",
     sse: true,
   },
   {
@@ -349,7 +350,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Start mount",
     method: "POST",
     path: "/api/mounts/{edge_id}/start",
-    description: "启动 remote → local 挂载边。",
+    descriptionKey: "api.endpoints.mount-start",
   },
   {
     id: "mount-stop",
@@ -357,7 +358,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Stop mount",
     method: "POST",
     path: "/api/mounts/{edge_id}/stop",
-    description: "停止挂载。",
+    descriptionKey: "api.endpoints.mount-stop",
   },
   {
     id: "settings-get",
@@ -365,7 +366,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Get settings",
     method: "GET",
     path: "/api/settings",
-    description: "读取非凭据设置。",
+    descriptionKey: "api.endpoints.settings-get",
   },
   {
     id: "settings-patch",
@@ -373,7 +374,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "Patch settings",
     method: "PATCH",
     path: "/api/settings",
-    description: "更新 rclone 来源、自动启动等设置。",
+    descriptionKey: "api.endpoints.settings-patch",
     body: json({ auto_start: true }),
   },
   {
@@ -382,7 +383,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "RC core/version",
     method: "POST",
     path: "/api/rc/core/version",
-    description: "受限 RC 代理。rclone 一律 POST + JSON。",
+    descriptionKey: "api.endpoints.rc-version",
     body: json({}),
   },
   {
@@ -391,7 +392,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "RC config/listremotes",
     method: "POST",
     path: "/api/rc/config/listremotes",
-    description: "允许的 RC 命令示例。",
+    descriptionKey: "api.endpoints.rc-listremotes",
     body: json({}),
   },
   {
@@ -400,7 +401,7 @@ export const ENDPOINTS: Endpoint[] = [
     name: "RC config/dump (forbidden)",
     method: "POST",
     path: "/api/rc/config/dump",
-    description: "应返回 400：凭据导出命令被禁止。",
+    descriptionKey: "api.endpoints.rc-forbidden",
     body: json({}),
   },
 ]

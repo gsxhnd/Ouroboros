@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/gsxhnd/ourboros/internal/events"
 	"github.com/gsxhnd/ourboros/internal/jobs"
@@ -141,7 +142,9 @@ func (s *State) Close() {
 		s.Mounts.StopAll()
 	}
 	if s.Rclone != nil {
-		_, _ = s.Rclone.Stop(context.Background())
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		_, _ = s.Rclone.Stop(ctx)
 	}
 }
 

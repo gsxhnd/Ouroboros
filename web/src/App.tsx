@@ -2,15 +2,21 @@ import { useState } from "react"
 
 import { AppShell, type PageId } from "@/components/app-shell"
 import { ApiPlayground } from "@/components/api-playground"
-import { FilesPage } from "@/components/pages/files"
-import { MountsPage } from "@/components/pages/mounts"
-import { OverviewPage } from "@/components/pages/overview"
-import { RemotesPage } from "@/components/pages/remotes"
-import { SettingsPage } from "@/components/pages/settings"
-import { TransfersPage } from "@/components/pages/transfers"
+import { TrayPanel } from "@/components/tray-panel"
+import { isTrayView } from "@/lib/platform"
+import { FilesPage } from "@/pages/files"
+import { MountsPage } from "@/pages/mounts"
+import { OverviewPage } from "@/pages/overview"
+import { RemotesPage } from "@/pages/remotes"
+import { SettingsPage } from "@/pages/settings"
+import { TransfersPage } from "@/pages/transfers"
 
 export function App() {
   const [page, setPage] = useState<PageId>("overview")
+
+  if (isTrayView) {
+    return <TrayPanel />
+  }
 
   return (
     <AppShell page={page} onPageChange={setPage}>

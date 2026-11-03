@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { DownloadIcon, PlayIcon, SquareIcon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -16,7 +17,7 @@ import {
 
 import { call, formatBytes } from "@/lib/client"
 import type { HttpMethod } from "@/lib/api"
-import { useRcloneStore } from "@/lib/rclone-store"
+import { useRcloneStore } from "@/stores/rclone-store"
 import type { RcloneStatus, SettingsDocument } from "@/lib/types"
 
 type Candidate = {
@@ -47,6 +48,7 @@ type DownloadSnapshot = {
 }
 
 export function OverviewPage() {
+  const { t, i18n } = useTranslation()
   const status = useRcloneStore((state) => state.status)
   const rcloneBusy = useRcloneStore((state) => state.busy)
   const startRclone = useRcloneStore((state) => state.start)
@@ -102,7 +104,7 @@ export function OverviewPage() {
   const startDownload = async () => {
     const version = downloadVersion.trim() || releases[0]?.version
     if (!version) {
-      toast.error("没有可用的版本")
+      toast.error(t("overview.noVersions"))
       return
     }
     setBusy(true)
@@ -125,9 +127,9 @@ export function OverviewPage() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>rclone 连接</CardTitle>
+          <CardTitle>{t("overview.connectionTitle")}</CardTitle>
           <CardDescription>
-            默认不会自动拉起。连接成功后，这里会显示版本、系统和地址。
+            {t("overview.connectionDescription")}
           </CardDescription>
           <CardAction>
             <div className="flex gap-2">
@@ -136,7 +138,7 @@ export function OverviewPage() {
                 disabled={rcloneBusy || status === null || status.running}
                 onClick={() => void startRclone()}
               >
-                <PlayIcon data-icon="inline-start" /> 启动 / 连接
+                <PlayIcon data-icon="inline-start" /> {t("overview.startOrConnect")}
               </Button>
               <Button
                 size="sm"
@@ -144,7 +146,7 @@ export function OverviewPage() {
                 disabled={rcloneBusy || status === null || !status.running}
                 onClick={() => void stopRclone()}
               >
-                <SquareIcon data-icon="inline-start" /> 停止
+                <SquareIcon data-icon="inline-start" /> {t("common.stop")}
               </Button>
             </div>
           </CardAction>
@@ -153,7 +155,9 @@ export function OverviewPage() {
           <div className="flex flex-wrap items-center gap-2">
             <StatusChip status={status?.running ? "running" : "stopped"} />
             {status?.mode ? (
-              <Badge variant="outline">{modeLabel(status.mode)}</Badge>
+              <Badge variant="outline">
+                {localLookup(i18n, `overview.mode.${status.mode}`, status.mode)}
+              </Badge>
             ) : null}
             {status?.version ? (
               <Badge variant="secondary">{status.version}</Badge>
@@ -161,7 +165,7 @@ export function OverviewPage() {
             {status?.beta ? <Badge variant="outline">beta</Badge> : null}
           </div>
           <dl className="grid gap-3 sm:grid-cols-2">
-            {connectionFacts(status).map((fact) => (
+            {connectionFacts(status, t, i18n).map((fact) => (
               <div key={fact.label} className="flex min-w-0 flex-col gap-0.5">
                 <dt className="text-xs text-muted-foreground">{fact.label}</dt>
                 <dd className="truncate font-mono text-xs" title={fact.value}>
@@ -175,14 +179,12 @@ export function OverviewPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>rclone 二进制</CardTitle>
-          <CardDescription>
-            选择本次使用哪个 rclone 可执行文件。
-          </CardDescription>
+          <CardTitle>{t("overview.binaryTitle")}</CardTitle>
+          <CardDescription>{t("overview.binaryDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {candidates.length === 0 ? (
-            <EmptyHint>没有扫描到可用的 rclone，安装或下载后重试。</EmptyHint>
+            <EmptyHint>{t("overview.noBinary")}</EmptyHint>
           ) : (
             candidates.map((candidate) => {
               const selected =
@@ -217,7 +219,7 @@ export function OverviewPage() {
                       })
                     }
                   >
-                    {selected ? "当前" : "选择"}
+                    {selected ? t("common.current") : t("common.choose")}
                   </Button>
                 </div>
               )
@@ -228,20 +230,20 @@ export function OverviewPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>托管版本</CardTitle>
-          <CardDescription>下载官方 rclone 版本并在本地激活。</CardDescription>
+          <CardTitle>{t("overview.managedTitle")}</CardTitle>
+          <CardDescription>{t("overview.managedDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <div className="flex flex-wrap items-end gap-2">
             <SelectField
-              label="下载版本"
+              label={t("overview.downloadVersion")}
               className="w-48"
               value={
                 releases.some((r) => r.version === downloadVersion)
                   ? downloadVersion
                   : ""
               }
-              placeholder={releases[0]?.version ?? "无可用版本"}
+              placeholder={releases[0]?.version ?? t("overview.noReleases")}
               options={releases.map((r) => ({
                 value: r.version,
                 label: r.version,
@@ -254,7 +256,7 @@ export function OverviewPage() {
               disabled={busy || releases.length === 0}
               onClick={() => void startDownload()}
             >
-              <DownloadIcon /> 下载
+              <DownloadIcon /> {t("overview.download")}
             </Button>
           </div>
           {downloads.map((download) => (
@@ -283,34 +285,40 @@ export function OverviewPage() {
   )
 }
 
-const MODE_LABEL: Record<string, string> = {
-  spawned: "本机托管",
-  attached: "外部 RC",
+/** 在语言包里查枚举文案；没有收录时回退到原值。 */
+function localLookup(
+  i18n: { exists: (key: string) => boolean; t: (key: string) => string },
+  key: string,
+  fallback: string
+): string {
+  return i18n.exists(key) ? i18n.t(key) : fallback
 }
 
-const LINK_LABEL: Record<string, string> = {
-  static: "静态链接",
-  dynamic: "动态链接",
-}
-
-function modeLabel(mode: string) {
-  return MODE_LABEL[mode] ?? mode
-}
-
-function connectionFacts(status: RcloneStatus | null) {
+function connectionFacts(
+  status: RcloneStatus | null,
+  t: (key: string) => string,
+  i18n: { exists: (key: string) => boolean; t: (key: string) => string }
+) {
   const system = [status?.os, status?.arch].filter(Boolean).join("/")
   const systemLine = [system, status?.os_version].filter(Boolean).join(" · ")
+  const linkFallback = status?.linking ?? ""
   return [
-    { label: "可执行文件", value: status?.binary || "—" },
-    { label: "RC 地址", value: status?.endpoint || "本机托管时自动分配" },
-    { label: "配置文件", value: status?.config || "rclone 默认" },
-    { label: "系统", value: systemLine || "连接后显示" },
-    { label: "Go", value: status?.go_version || "连接后显示" },
+    { label: t("overview.factBinary"), value: status?.binary || "—" },
     {
-      label: "链接方式",
+      label: t("overview.factRcAddress"),
+      value: status?.endpoint || t("overview.factRcAuto"),
+    },
+    {
+      label: t("overview.factConfig"),
+      value: status?.config || t("overview.factConfigDefault"),
+    },
+    { label: t("overview.factSystem"), value: systemLine || t("overview.afterConnect") },
+    { label: t("overview.factGo"), value: status?.go_version || t("overview.afterConnect") },
+    {
+      label: t("overview.factLinking"),
       value: status?.linking
-        ? (LINK_LABEL[status.linking] ?? status.linking)
-        : "连接后显示",
+        ? localLookup(i18n, `overview.link.${status.linking}`, linkFallback)
+        : t("overview.afterConnect"),
     },
   ]
 }

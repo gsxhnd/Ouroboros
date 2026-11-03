@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import {
   ChevronRightIcon,
   CopyIcon,
@@ -43,6 +44,7 @@ const join = (base: string, name: string | null) =>
   base ? `${base}/${name}` : (name ?? "")
 
 export function FilesPage() {
+  const { t } = useTranslation()
   const [remotes, setRemotes] = useState<RemoteInfo[]>([])
   const [fsKind, setFsKind] = useState<"remote" | "local">("remote")
   const [remoteName, setRemoteName] = useState("")
@@ -104,7 +106,9 @@ export function FilesPage() {
     const name = item.name ?? item.path ?? ""
     if (
       !window.confirm(
-        item.is_dir ? `删除目录 "${name}" 及其全部内容？` : `删除文件 "${name}"？`
+        item.is_dir
+          ? t("files.deleteDirConfirm", { name })
+          : t("files.deleteFileConfirm", { name })
       )
     ) {
       return
@@ -118,7 +122,7 @@ export function FilesPage() {
     }
     try {
       await call(`/api/files?${params}`, { method: "DELETE" })
-      toast.success(`已删除 ${name}`)
+      toast.success(t("files.deleted", { name }))
       await list()
     } catch {
       toast.error(errorMessage(null))
@@ -128,7 +132,7 @@ export function FilesPage() {
   const mkdir = async () => {
     const name = mkdirName.trim()
     if (!name || name.includes("/")) {
-      toast.error("目录名不能包含 /")
+      toast.error(t("files.nameInvalid"))
       return
     }
     await call("/api/files/mkdir", {
@@ -138,7 +142,7 @@ export function FilesPage() {
         remote: join(currentRemote(), name),
       },
     })
-    toast.success(`已创建 ${name}`)
+    toast.success(t("files.created", { name }))
     setMkdirOpen(false)
     setMkdirName("")
     await list()
@@ -151,7 +155,7 @@ export function FilesPage() {
     const name = transfer.item.name ?? transfer.item.path ?? ""
     const target = transfer.target.trim()
     if (!target) {
-      toast.error("请输入目标位置")
+      toast.error(t("files.targetRequired"))
       return
     }
     let dstFs: string
@@ -177,7 +181,11 @@ export function FilesPage() {
       },
     })
     toast.success(
-      `${transfer.kind === "copy" ? "复制" : "移动"}已提交：${name} → ${target}`
+      t("files.submitted", {
+        kind: transfer.kind === "copy" ? t("common.copy") : t("common.move"),
+        name,
+        target,
+      })
     )
     setTransfer(null)
     await list()
@@ -189,17 +197,17 @@ export function FilesPage() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>浏览位置</CardTitle>
-          <CardDescription>需要 rclone 运行中才能列出文件。</CardDescription>
+          <CardTitle>{t("files.locationTitle")}</CardTitle>
+          <CardDescription>{t("files.locationDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap items-end gap-3">
           <SelectField
-            label="来源"
+            label={t("files.source")}
             className="w-56"
             value={fsKind}
             options={[
-              { value: "remote", label: "远程 remote" },
-              { value: "local", label: "本地路径" },
+              { value: "remote", label: t("files.sourceRemote") },
+              { value: "local", label: t("files.sourceLocal") },
             ]}
             onChange={setFsKind}
           />
@@ -214,11 +222,11 @@ export function FilesPage() {
                 setRemotePath("")
               }}
               disabled={remotes.length === 0}
-              placeholder={remotes.length === 0 ? "没有 remote" : undefined}
+              placeholder={remotes.length === 0 ? t("files.noRemotes") : undefined}
             />
           ) : (
             <div className="flex flex-col gap-1.5">
-              <Label>本地目录</Label>
+              <Label>{t("files.localDir")}</Label>
               <Input
                 className="w-72 font-mono"
                 placeholder="/absolute/path"
@@ -228,16 +236,16 @@ export function FilesPage() {
             </div>
           )}
           <Button size="sm" variant="outline" onClick={() => void list()}>
-            <RefreshCcwIcon /> 刷新
+            <RefreshCcwIcon /> {t("common.refresh")}
           </Button>
           <Button size="sm" variant="outline" onClick={() => setMkdirOpen(true)}>
-            <FolderPlusIcon /> 新建目录
+            <FolderPlusIcon /> {t("files.newDir")}
           </Button>
         </CardContent>
       </Card>
 
       {items.length === 0 && !loading ? (
-        <EmptyHint>此目录为空，或 rclone 还没有运行。</EmptyHint>
+        <EmptyHint>{t("files.empty")}</EmptyHint>
       ) : (
         <Card size="sm">
           <CardContent className="p-0">
@@ -245,7 +253,7 @@ export function FilesPage() {
               <div className="flex flex-wrap items-center gap-1 px-3 py-2 text-sm text-muted-foreground">
                 <Button variant="ghost" size="xs" onClick={() => setRemotePath("")}>
                   <HardDriveIcon data-icon="inline-start" />
-                  根目录
+                  {t("files.root")}
                 </Button>
                 {crumbs.map((crumb, index) => (
                   <span key={`${crumb}-${index}`} className="flex items-center gap-1">
@@ -266,12 +274,12 @@ export function FilesPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-y text-left text-xs text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">名称</th>
-                  <th className="px-3 py-2 font-medium">大小</th>
+                  <th className="px-3 py-2 font-medium">{t("common.name")}</th>
+                  <th className="px-3 py-2 font-medium">{t("files.columnSize")}</th>
                   <th className="hidden px-3 py-2 font-medium sm:table-cell">
-                    修改时间
+                    {t("files.columnModified")}
                   </th>
-                  <th className="px-3 py-2 font-medium">操作</th>
+                  <th className="px-3 py-2 font-medium">{t("common.actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -309,7 +317,7 @@ export function FilesPage() {
                           <Button
                             variant="ghost"
                             size="icon-xs"
-                            aria-label="复制"
+                            aria-label={t("common.copy")}
                             onClick={() =>
                               setTransfer({
                                 kind: "copy",
@@ -323,7 +331,7 @@ export function FilesPage() {
                           <Button
                             variant="ghost"
                             size="icon-xs"
-                            aria-label="移动"
+                            aria-label={t("common.move")}
                             onClick={() =>
                               setTransfer({
                                 kind: "move",
@@ -337,7 +345,7 @@ export function FilesPage() {
                           <Button
                             variant="ghost"
                             size="icon-xs"
-                            aria-label="删除"
+                            aria-label={t("common.delete")}
                             onClick={() => void deleteItem(item)}
                           >
                             <TrashIcon />
@@ -355,15 +363,17 @@ export function FilesPage() {
 
       <Dialog open={mkdirOpen} onOpenChange={setMkdirOpen}>
         <DialogContent>
-          <DialogHeader>新建目录</DialogHeader>
+          <DialogHeader>{t("files.newDir")}</DialogHeader>
           <Input
             value={mkdirName}
-            placeholder="目录名"
+            placeholder={t("files.mkdirPlaceholder")}
             onChange={(e) => setMkdirName(e.target.value)}
           />
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" />}>取消</DialogClose>
-            <Button onClick={() => void mkdir()}>创建</Button>
+            <DialogClose render={<Button variant="outline" />}>
+              {t("common.cancel")}
+            </DialogClose>
+            <Button onClick={() => void mkdir()}>{t("common.create")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -378,13 +388,14 @@ export function FilesPage() {
       >
         <DialogContent>
           <DialogHeader>
-            {transfer?.kind === "copy" ? "复制" : "移动"} {transfer?.item.name}
+            {transfer?.kind === "copy" ? t("common.copy") : t("common.move")}{" "}
+            {transfer?.item.name}
           </DialogHeader>
           <div className="flex flex-col gap-2">
-            <Label>目标</Label>
+            <Label>{t("files.target")}</Label>
             <Input
               value={transfer?.target ?? ""}
-              placeholder="remote 名（或 remote/sub/dir）或本地绝对路径"
+              placeholder={t("files.targetPlaceholder")}
               onChange={(e) =>
                 setTransfer((current) =>
                   current ? { ...current, target: e.target.value } : current
@@ -393,14 +404,16 @@ export function FilesPage() {
               className="font-mono"
             />
             <p className="text-xs text-muted-foreground">
-              输入另一个 remote 名，或以 / 开头的本地绝对路径。
-              {transfer?.kind === "move" ? "移动会把源文件删除。" : ""}
+              {t("files.targetHelp")}
+              {transfer?.kind === "move" ? ` ${t("files.moveWarning")}` : ""}
             </p>
           </div>
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" />}>取消</DialogClose>
+            <DialogClose render={<Button variant="outline" />}>
+              {t("common.cancel")}
+            </DialogClose>
             <Button onClick={() => void submitTransfer()}>
-              {transfer?.kind === "copy" ? "复制" : "移动"}
+              {transfer?.kind === "copy" ? t("common.copy") : t("common.move")}
             </Button>
           </DialogFooter>
         </DialogContent>

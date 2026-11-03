@@ -29,7 +29,12 @@ func start(ctx context.Context, state *app.State, host string, port int, webDir 
 	if err != nil {
 		return nil, err
 	}
-	server := &http.Server{Handler: httpapi.Handler(state, webDir)}
+	// SSE streams never finish on their own. Tying every request context to ctx
+	// lets shutdown end them immediately instead of waiting out the timeout.
+	server := &http.Server{
+		Handler:     httpapi.Handler(state, webDir),
+		BaseContext: func(net.Listener) context.Context { return ctx },
+	}
 	go func() {
 		if err := server.Serve(listener); err != nil && err != http.ErrServerClosed {
 			slog.Error("http server stopped", "err", err)

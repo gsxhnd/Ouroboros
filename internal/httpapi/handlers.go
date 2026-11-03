@@ -775,6 +775,9 @@ func (a *api) settingsPatch(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
+	if len(body.Shortcuts) > 0 {
+		a.state.Events.Publish("settings", doc)
+	}
 	if !a.state.CLIBinOverride && doc.RcloneBin != nil {
 		bin := *doc.RcloneBin
 		a.state.Rclone.UpdateSettings(func(settings *rclone.Settings) { settings.Bin = bin })

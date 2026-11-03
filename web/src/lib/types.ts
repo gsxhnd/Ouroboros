@@ -24,6 +24,9 @@ export type SystemInfo = {
 
 export type RcloneSourceKind = "system" | "managed" | "custom"
 
+export type ShortcutAction =
+  "show_main" | "toggle_panel" | "toggle_rclone" | "quit"
+
 export type SettingsDocument = {
   schema_version: number
   rclone_source: RcloneSourceKind
@@ -32,6 +35,7 @@ export type SettingsDocument = {
   rclone_rc_url: string | null
   auto_start: boolean
   workspace_path: string | null
+  shortcuts: Partial<Record<ShortcutAction, string>>
   updated_at: string
 }
 
@@ -42,6 +46,7 @@ export type SettingsPatchBody = {
   rclone_rc_url?: string | null
   auto_start?: boolean
   workspace_path?: string | null
+  shortcuts?: Partial<Record<ShortcutAction, string>>
 }
 
 export type RemoteInfo = { name: string; type?: string }

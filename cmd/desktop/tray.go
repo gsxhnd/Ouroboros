@@ -3,19 +3,17 @@ package main
 import (
 	"context"
 	"embed"
-	"errors"
-	"fmt"
 	"log/slog"
-	"reflect"
 	"runtime"
 	"sync"
 	"time"
-	"unicode/utf8"
 
 	"github.com/gsxhnd/ourboros/internal/app"
-	"github.com/gsxhnd/ourboros/internal/mounts"
+	"github.com/gsxhnd/ourboros/internal/events"
+	"github.com/gsxhnd/ourboros/internal/settings"
 	"github.com/gsxhnd/ourboros/internal/tray"
 	"github.com/wailsapp/wails/v3/pkg/application"
+	wailsevents "github.com/wailsapp/wails/v3/pkg/events"
 )
 
 //go:embed assets/tray-template.png assets/tray-color.png
@@ -24,38 +22,69 @@ var trayAssets embed.FS
 const (
 	trayRefreshInterval = 2 * time.Second
 	trayActionTimeout   = 60 * time.Second
-	trayErrorMaxRunes   = 80
+	trayPanelWidth      = 340
+	trayPanelHeight     = 420
+	trayPanelOffset     = 6
+	// Events emitted by the tray panel webview (see web/src/components/tray-panel.tsx).
+	trayOpenMainEvent = "ourboros:tray:open-main"
+	trayQuitEvent     = "ourboros:tray:quit"
+	trayAutostartEvt  = "ourboros:tray:autostart"
 )
 
-// trayShell owns the system tray icon and its menu. The menu is a projection of
-// tray.Model, which is rebuilt only when that model changes. Actions run in
-// goroutines and report back through setResult, then request a refresh.
+// trayShell owns the system tray icon and its panel window. The panel is the
+// only tray UI; it reads state from the HTTP API. Shortcuts are registered here
+// and run the same actions as the panel buttons.
 type trayShell struct {
 	app   *application.App
 	win   *application.WebviewWindow
+	panel *application.WebviewWindow
 	svc   *app.State
 	tray  *application.SystemTray
-	menu  *application.Menu
 	ctx   context.Context
-	wake  chan struct{}
-	shown tray.Model
-	// rendered is only read and written by the render loop.
-	rendered bool
 
 	mu         sync.Mutex
 	rcloneBusy bool
 	lastError  string
+	bindings   []string
 }
 
-func newTrayShell(ctx context.Context, a *application.App, win *application.WebviewWindow, svc *app.State) *trayShell {
+func newTrayShell(ctx context.Context, a *application.App, win *application.WebviewWindow, svc *app.State, pageURL string) *trayShell {
 	t := &trayShell{
-		app:  a,
-		win:  win,
-		svc:  svc,
-		ctx:  ctx,
-		wake: make(chan struct{}, 1),
+		app: a,
+		win: win,
+		svc: svc,
+		ctx: ctx,
 	}
+	t.panel = a.Window.NewWithOptions(application.WebviewWindowOptions{
+		Name:             "tray",
+		Title:            "Ourboros",
+		Width:            trayPanelWidth,
+		Height:           trayPanelHeight,
+		URL:              pageURL + "&view=tray",
+		Frameless:        true,
+		Hidden:           true,
+		AlwaysOnTop:      true,
+		DisableResize:    true,
+		BackgroundColour: application.NewRGB(15, 17, 21),
+		Windows: application.WindowsWindow{
+			HiddenOnTaskbar: true,
+		},
+	})
+	t.panel.RegisterHook(wailsevents.Common.WindowLostFocus, func(*application.WindowEvent) {
+		t.panel.Hide()
+	})
+	a.Event.On(trayOpenMainEvent, func(*application.CustomEvent) { t.showWindow() })
+	a.Event.On(trayQuitEvent, func(*application.CustomEvent) { a.Quit() })
+	a.Event.On(trayAutostartEvt, func(ev *application.CustomEvent) {
+		enable, ok := ev.Data.(bool)
+		if !ok {
+			return
+		}
+		t.setAutostart(enable)
+	})
+
 	t.tray = a.SystemTray.New()
+	t.tray.AttachWindow(t.panel).WindowOffset(trayPanelOffset)
 	if runtime.GOOS == "darwin" {
 		// template icon 会随浅色/深色菜单栏自动反色
 		if icon, err := trayAssets.ReadFile("assets/tray-template.png"); err == nil {
@@ -65,51 +94,82 @@ func newTrayShell(ctx context.Context, a *application.App, win *application.Webv
 		t.tray.SetIcon(icon)
 	}
 	t.tray.SetTooltip("Ourboros — Web UI for rclone")
-	t.menu = a.Menu.New()
-	t.tray.SetMenu(t.menu)
-
-	// 左键点击唤回窗口；右键弹出菜单（默认行为，已设置菜单）。
-	t.tray.OnClick(t.showWindow)
+	// 左键切换面板；不设置原生菜单，托盘只保留这一个面板入口。
+	t.tray.OnClick(t.togglePanel)
 	return t
 }
 
-// run keeps the menu in sync with the services until ctx is cancelled. It must
-// start after the Wails event loop is running (ApplicationStarted).
+// run keeps the tooltip in sync with the services until ctx is cancelled. It
+// must start after the Wails event loop is running (ApplicationStarted).
 func (t *trayShell) run() {
 	ticker := time.NewTicker(trayRefreshInterval)
 	defer ticker.Stop()
-	t.render()
+	var shown string
 	for {
+		model := tray.Build(t.input())
+		if model.Tooltip != shown {
+			shown = model.Tooltip
+			t.tray.SetTooltip(model.Tooltip)
+		}
 		select {
 		case <-t.ctx.Done():
 			return
 		case <-ticker.C:
-		case <-t.wake:
 		}
-		t.render()
 	}
 }
 
-// requestRefresh schedules a render without blocking; concurrent requests
-// coalesce into a single pending wake-up.
-func (t *trayShell) requestRefresh() {
-	select {
-	case t.wake <- struct{}{}:
-	default:
+// watchSettings re-registers shortcuts whenever the settings change.
+func (t *trayShell) watchSettings(bus *events.Bus) {
+	ch, cancel := bus.Subscribe()
+	defer cancel()
+	t.registerShortcuts(t.svc.Settings.Get())
+	for {
+		select {
+		case <-t.ctx.Done():
+			return
+		case ev, ok := <-ch:
+			if !ok {
+				return
+			}
+			if ev.Name != "settings" {
+				continue
+			}
+			if doc, ok := ev.Payload.(settings.Document); ok {
+				t.registerShortcuts(doc)
+			}
+		}
 	}
 }
 
-func (t *trayShell) render() {
-	model := tray.Build(t.input())
-	if t.rendered && reflect.DeepEqual(model, t.shown) {
-		return
+// registerShortcuts replaces the previously registered accelerators with the
+// ones from doc. Each action runs on the Go side, the same as the panel buttons.
+func (t *trayShell) registerShortcuts(doc settings.Document) {
+	t.mu.Lock()
+	for _, accel := range t.bindings {
+		t.app.KeyBinding.Remove(accel)
 	}
-	t.shown = model
-	t.rendered = true
-	// Menu.Update and SetTooltip dispatch to the main thread themselves. Do not
-	// wrap them in InvokeSync: it is not re-entrant and would deadlock.
-	t.tray.SetTooltip(model.Tooltip)
-	t.buildMenu(model)
+	t.bindings = nil
+	t.mu.Unlock()
+
+	actions := map[string]func(){
+		"show_main":     t.showWindow,
+		"toggle_panel":  t.togglePanel,
+		"toggle_rclone": t.rcloneToggleAction,
+		"quit":          func() { t.app.Quit() },
+	}
+	resolved := doc.ResolvedShortcuts()
+	for _, action := range settings.ShortcutActions {
+		accel := resolved[action]
+		run := actions[action]
+		if accel == "" || run == nil {
+			continue
+		}
+		t.app.KeyBinding.Add(accel, func(application.Window) { run() })
+		t.mu.Lock()
+		t.bindings = append(t.bindings, accel)
+		t.mu.Unlock()
+	}
 }
 
 func (t *trayShell) input() tray.Input {
@@ -131,77 +191,25 @@ func (t *trayShell) input() tray.Input {
 	return in
 }
 
-func (t *trayShell) buildMenu(m tray.Model) {
-	t.menu.Clear()
-
-	header := t.menu.Add("Ourboros")
-	header.SetEnabled(false)
-	t.menu.Add(m.StatusLine).SetEnabled(false)
-	if m.LastError != "" {
-		t.menu.Add("操作失败：" + truncate(m.LastError, trayErrorMaxRunes)).SetEnabled(false)
-	}
-	t.menu.AddSeparator()
-
-	t.menu.Add("打开 Ourboros").OnClick(func(*application.Context) { t.showWindow() })
-	t.menu.AddSeparator()
-
-	running := m.RcloneRunning
-	t.menu.Add(m.ToggleLabel).
-		SetEnabled(!m.RcloneBusy).
-		OnClick(func(*application.Context) { t.toggleRclone(running) })
-
-	t.buildMountMenu(m)
-	t.buildJobMenu(m)
-	t.menu.AddSeparator()
-
-	if m.Autostart != nil {
-		enable := !*m.Autostart
-		t.menu.AddCheckbox("开机时启动", *m.Autostart).
-			OnClick(func(*application.Context) { t.setAutostart(enable) })
-	}
-	t.menu.AddSeparator()
-	t.menu.Add("退出 Ourboros").OnClick(func(*application.Context) { t.app.Quit() })
-
-	t.menu.Update()
-}
-
-func (t *trayShell) buildMountMenu(m tray.Model) {
-	sub := t.menu.AddSubmenu(fmt.Sprintf("挂载（已挂载 %d）", m.MountedCount))
-	if len(m.Mounts) == 0 {
-		sub.Add("没有挂载连接，请在主窗口的“挂载”页创建").SetEnabled(false)
-		return
-	}
-	for _, row := range m.Mounts {
-		label := row.Label
-		if row.Hint != "" {
-			label += "  ·  " + row.Hint
-		}
-		edgeID, mounted := row.EdgeID, row.Checked
-		sub.AddCheckbox(label, row.Checked).
-			SetEnabled(row.Enabled).
-			OnClick(func(*application.Context) { t.toggleMount(edgeID, mounted) })
-	}
-}
-
-func (t *trayShell) buildJobMenu(m tray.Model) {
-	sub := t.menu.AddSubmenu(fmt.Sprintf("同步任务（运行中 %d）", m.TotalJobs))
-	if m.TotalJobs == 0 {
-		sub.Add("没有运行中的任务").SetEnabled(false)
-		return
-	}
-	for _, job := range m.RunningJobs {
-		sub.Add(job.Label).SetEnabled(false)
-	}
-	if more := m.TotalJobs - len(m.RunningJobs); more > 0 {
-		sub.Add(fmt.Sprintf("……还有 %d 个", more)).SetEnabled(false)
-	}
-	sub.AddSeparator()
-	sub.Add("停止全部任务").OnClick(func(*application.Context) { t.stopAllJobs() })
-}
-
 func (t *trayShell) showWindow() {
+	t.panel.Hide()
 	t.win.Show()
 	t.win.Focus()
+}
+
+func (t *trayShell) togglePanel() {
+	t.tray.ToggleWindow()
+}
+
+// rcloneToggleAction starts rclone when it is stopped and stops it when running.
+func (t *trayShell) rcloneToggleAction() {
+	t.mu.Lock()
+	busy := t.rcloneBusy
+	t.mu.Unlock()
+	if busy {
+		return
+	}
+	t.toggleRclone(t.svc.Rclone.Status().Running)
 }
 
 func (t *trayShell) toggleRclone(running bool) {
@@ -224,51 +232,6 @@ func (t *trayShell) setRcloneBusy(busy bool) {
 	t.mu.Lock()
 	t.rcloneBusy = busy
 	t.mu.Unlock()
-	t.requestRefresh()
-}
-
-func (t *trayShell) toggleMount(edgeID string, mounted bool) {
-	go func() {
-		var err error
-		if mounted {
-			_, err = t.svc.Mounts.Stop(edgeID)
-		} else {
-			err = startMount(t.svc, edgeID)
-		}
-		t.setResult(err)
-	}()
-}
-
-// startMount reports a mount that exits right after spawning as an error. The
-// supervisor returns such a snapshot with a nil error, so the status is checked
-// here to surface the failure in the tray.
-func startMount(svc *app.State, edgeID string) error {
-	snapshot, err := svc.Mounts.Start(svc.Rclone, svc.Workspace, edgeID)
-	if err != nil {
-		return err
-	}
-	if snapshot.Status == mounts.StatusFailed {
-		if snapshot.Error != nil {
-			return errors.New(*snapshot.Error)
-		}
-		return errors.New("挂载失败")
-	}
-	return nil
-}
-
-func (t *trayShell) stopAllJobs() {
-	go func() {
-		var firstErr error
-		for _, job := range t.svc.Jobs.List() {
-			if job.Status.Terminal() {
-				continue
-			}
-			if _, err := t.svc.Jobs.Stop(t.svc.Rclone, job.ID); err != nil && firstErr == nil {
-				firstErr = err
-			}
-		}
-		t.setResult(firstErr)
-	}()
 }
 
 func (t *trayShell) setAutostart(enable bool) {
@@ -286,23 +249,13 @@ func (t *trayShell) setAutostart(enable bool) {
 	}()
 }
 
-// setResult records the outcome of a tray action (nil clears the previous
-// error) and schedules a refresh so the menu reflects the new state.
+// setResult records the outcome of a tray action (nil clears the previous error).
 func (t *trayShell) setResult(err error) {
 	t.mu.Lock()
+	defer t.mu.Unlock()
 	t.lastError = ""
 	if err != nil {
 		slog.Warn("tray action failed", "err", err)
 		t.lastError = err.Error()
 	}
-	t.mu.Unlock()
-	t.requestRefresh()
-}
-
-func truncate(s string, maxRunes int) string {
-	if utf8.RuneCountInString(s) <= maxRunes {
-		return s
-	}
-	runes := []rune(s)
-	return string(runes[:maxRunes]) + "…"
 }
