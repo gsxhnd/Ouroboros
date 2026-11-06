@@ -99,16 +99,37 @@ export type FilesResponse = {
   items: ListItem[]
 }
 
-export type NodeKind = "local" | "remote"
+export type NodeKind = "local" | "remote" | "action"
 
 export type RemoteRef = { name: string; path?: string }
+
+export type Position = { x: number; y: number }
+
+export type Viewport = Position & { zoom: number }
 
 export type StorageNode = {
   id: string
   kind: NodeKind
   label: string
+  position: Position
   local_path?: string
   remote?: RemoteRef
+  action?: ActionConfig
+}
+
+/** 动作节点的运行参数。上游存储节点是源，下游存储节点是目标。 */
+export type ActionConfig = {
+  operation: SyncOperation
+  schedule: {
+    mode: string
+    preset?: string
+    cron?: string
+    timezone: string
+    enabled: boolean
+  }
+  enabled: boolean
+  next_run?: string
+  last_result?: LastResult
 }
 
 export type SyncOperation = "copy" | "move" | "sync"
@@ -136,7 +157,7 @@ export type SyncConfig = {
 
 export type MountConfig = { enabled: boolean }
 
-export type EdgeKind = "sync" | "mount"
+export type EdgeKind = "sync" | "mount" | "flow"
 
 export type ConnectionEdge = {
   id: string
@@ -152,6 +173,7 @@ export type WorkspaceDocument = {
   revision: number
   nodes: StorageNode[]
   edges: ConnectionEdge[]
+  viewport: Viewport
   updated_at: string
 }
 

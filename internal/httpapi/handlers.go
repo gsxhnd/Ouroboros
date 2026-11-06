@@ -58,6 +58,7 @@ func Handler(state *app.State, webDir string) http.Handler {
 	mux.HandleFunc("POST /api/files/copy", api.filesCopy)
 	mux.HandleFunc("POST /api/files/move", api.filesMove)
 	mux.HandleFunc("POST /api/sync/{edge_id}/run", api.syncRun)
+	mux.HandleFunc("POST /api/actions/{node_id}/run", api.actionRun)
 	mux.HandleFunc("GET /api/sync/jobs", api.syncJobs)
 	mux.HandleFunc("GET /api/sync/jobs/events", api.syncEvents)
 	mux.HandleFunc("POST /api/sync/jobs/{job_id}/stop", api.syncStop)
@@ -357,7 +358,8 @@ func (a *api) workspaceDeleteNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	doc := a.state.Workspace.Get()
-	if err := a.ensureIdle(workspace.RelatedEdgeIDs(doc, r.PathValue("id"))); err != nil {
+	busy := append(workspace.RelatedEdgeIDs(doc, r.PathValue("id")), r.PathValue("id"))
+	if err := a.ensureIdle(busy); err != nil {
 		writeError(w, err)
 		return
 	}
@@ -698,6 +700,41 @@ func (a *api) syncRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	snapshot, err := a.state.Jobs.Start(a.state.Rclone, a.state.Workspace, edgeID, edge.Sync.Operation, source, target)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, snapshot)
+}
+
+func (a *api) actionRun(w http.ResponseWriter, r *http.Request) {
+	nodeID := r.PathValue("node_id")
+	doc := a.state.Workspace.Get()
+	node := doc.Node(nodeID)
+	if node == nil || node.Kind != workspace.NodeAction || node.Action == nil {
+		writeError(w, core.NotFound("action node "+nodeID))
+		return
+	}
+	if !node.Action.Enabled {
+		writeAPIError(w, http.StatusConflict, "conflict", "action node is disabled", map[string]any{})
+		return
+	}
+	sourceNode, targetNode, err := workspace.ActionEndpoints(doc, nodeID)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	source, err := sourceNode.Locator(a.state.HomeDir)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	target, err := targetNode.Locator(a.state.HomeDir)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	snapshot, err := a.state.Jobs.Start(a.state.Rclone, a.state.Workspace, nodeID, node.Action.Operation, source, target)
 	if err != nil {
 		writeError(w, err)
 		return

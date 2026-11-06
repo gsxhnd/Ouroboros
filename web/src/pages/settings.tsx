@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { RefreshCcwIcon, SaveIcon } from "lucide-react"
+import {
+  CableIcon,
+  CommandIcon,
+  RefreshCcwIcon,
+  SaveIcon,
+  ServerIcon,
+} from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -49,6 +55,9 @@ const toForm = (document: SettingsDocument): FormState => ({
 
 export function SettingsPage() {
   const { t } = useTranslation()
+  const [section, setSection] = useState<
+    "connection" | "shortcuts" | "runtime"
+  >("connection")
   const [document, setDocument] = useState<SettingsDocument | null>(null)
   const [form, setForm] = useState<FormState | null>(null)
   const [saving, setSaving] = useState(false)
@@ -125,7 +134,10 @@ export function SettingsPage() {
       current
         ? {
             ...current,
-            shortcuts: { ...current.shortcuts, [action]: DEFAULT_SHORTCUTS[action] },
+            shortcuts: {
+              ...current.shortcuts,
+              [action]: DEFAULT_SHORTCUTS[action],
+            },
           }
         : current
     )
@@ -143,160 +155,264 @@ export function SettingsPage() {
     toast.success(t("settings.binSaved"))
   }
 
+  const sections = [
+    {
+      id: "connection" as const,
+      label: t("settings.sections.connection"),
+      icon: CableIcon,
+    },
+    {
+      id: "shortcuts" as const,
+      label: t("settings.sections.shortcuts"),
+      icon: CommandIcon,
+    },
+    {
+      id: "runtime" as const,
+      label: t("settings.sections.runtime"),
+      icon: ServerIcon,
+    },
+  ]
+
   return (
-    <>
-      <Card>
-        <CardHeader>
-          <div className="flex items-start gap-2">
-            <div className="min-w-0 flex-1">
-              <CardTitle>{t("settings.endpointTitle")}</CardTitle>
-              <CardDescription>
-                {t("settings.endpointDescription")}
-              </CardDescription>
-            </div>
-            <Button size="sm" variant="outline" onClick={() => void load()}>
-              <RefreshCcwIcon />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label>{t("settings.rcUrl")}</Label>
-            <Input
-              className="max-w-md font-mono"
-              value={form.rclone_rc_url}
-              placeholder={t("settings.rcUrlPlaceholder")}
-              onChange={(e) =>
-                setForm((current) =>
-                  current
-                    ? { ...current, rclone_rc_url: e.target.value }
-                    : current
-                )
-              }
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <SwitchField
-              label={t("settings.autoStart")}
-              checked={form.auto_start}
-              onCheckedChange={(auto_start) =>
-                setForm((current) =>
-                  current ? { ...current, auto_start } : current
-                )
-              }
-            />
-            <p className="text-xs text-muted-foreground">
-              {t("settings.autoStartHint")}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button size="sm" disabled={saving} onClick={() => void submit()}>
-              <SaveIcon data-icon="inline-start" /> {t("settings.saveSettings")}
-            </Button>
-            <span className="text-xs text-muted-foreground">
-              {t("settings.updatedAt", { time: formatTime(document.updated_at) })}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("settings.shortcutsTitle")}</CardTitle>
-          <CardDescription>{t("settings.shortcutsDescription")}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          {SHORTCUT_ACTIONS.map((action) => (
-            <div key={action} className="flex flex-wrap items-end gap-2">
-              <div className="flex min-w-64 flex-1 flex-col gap-1.5">
-                <Label>{t(`settings.shortcutActions.${action}`)}</Label>
-                <Input
-                  className="font-mono"
-                  value={form.shortcuts[action]}
-                  placeholder={DEFAULT_SHORTCUTS[action]}
-                  onChange={(e) =>
-                    setForm((current) =>
-                      current
-                        ? {
-                            ...current,
-                            shortcuts: { ...current.shortcuts, [action]: e.target.value },
-                          }
-                        : current
-                    )
-                  }
-                />
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={form.shortcuts[action] === DEFAULT_SHORTCUTS[action]}
-                onClick={() => resetShortcut(action)}
-              >
-                {t("settings.shortcutReset")}
-              </Button>
-            </div>
+    <div className="flex h-full min-h-0 flex-col sm:flex-row">
+      <aside className="shrink-0 border-b bg-muted/20 p-2 sm:w-52 sm:border-r sm:border-b-0 sm:p-3">
+        <p className="hidden px-2 pt-1 pb-2 text-xs font-medium tracking-wide text-muted-foreground sm:block">
+          {t("settings.categories")}
+        </p>
+        <nav
+          className="flex gap-1 overflow-x-auto sm:flex-col"
+          aria-label={t("settings.categories")}
+        >
+          {sections.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              type="button"
+              aria-current={section === id ? "page" : undefined}
+              onClick={() => setSection(id)}
+              className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${section === id ? "bg-accent font-medium text-accent-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"}`}
+            >
+              <Icon className="size-4" />
+              {label}
+            </button>
           ))}
-          <div className="flex items-center gap-2">
-            <Button size="sm" onClick={() => void saveShortcuts()}>
-              <SaveIcon data-icon="inline-start" /> {t("settings.saveShortcuts")}
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">{t("settings.shortcutsHint")}</p>
-        </CardContent>
-      </Card>
+        </nav>
+      </aside>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("settings.binaryTitle")}</CardTitle>
-          <CardDescription>
-            {t("settings.binaryDescription", { source: document.rclone_source })}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-end gap-2">
-          <div className="flex min-w-64 flex-1 flex-col gap-1.5">
-            <Label>{t("settings.binaryPath")}</Label>
-            <Input
-              className="font-mono"
-              value={form.rclone_bin}
-              placeholder="rclone"
-              onChange={(e) =>
-                setForm((current) =>
-                  current ? { ...current, rclone_bin: e.target.value } : current
-                )
-              }
-            />
-          </div>
-          <Button size="sm" variant="outline" onClick={() => void saveBin()}>
-            {t("common.save")}
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="min-h-0 flex-1 overflow-y-auto p-4">
+        <div className="mx-auto flex max-w-3xl flex-col gap-4">
+          {section === "connection" ? (
+            <Card>
+              <CardHeader>
+                <div className="flex items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <CardTitle>{t("settings.endpointTitle")}</CardTitle>
+                    <CardDescription>
+                      {t("settings.endpointDescription")}
+                    </CardDescription>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void load()}
+                  >
+                    <RefreshCcwIcon />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <Label>{t("settings.rcUrl")}</Label>
+                  <Input
+                    className="max-w-md font-mono"
+                    value={form.rclone_rc_url}
+                    placeholder={t("settings.rcUrlPlaceholder")}
+                    onChange={(e) =>
+                      setForm((current) =>
+                        current
+                          ? { ...current, rclone_rc_url: e.target.value }
+                          : current
+                      )
+                    }
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <SwitchField
+                    label={t("settings.autoStart")}
+                    checked={form.auto_start}
+                    onCheckedChange={(auto_start) =>
+                      setForm((current) =>
+                        current ? { ...current, auto_start } : current
+                      )
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {t("settings.autoStartHint")}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    disabled={saving}
+                    onClick={() => void submit()}
+                  >
+                    <SaveIcon data-icon="inline-start" />{" "}
+                    {t("settings.saveSettings")}
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    {t("settings.updatedAt", {
+                      time: formatTime(document.updated_at),
+                    })}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("settings.cliTitle")}</CardTitle>
-          <CardDescription>{t("settings.cliDescription")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <dl className="grid gap-3 sm:grid-cols-2">
-            {(
-              [
-                ["rclone_bin", document.rclone_bin ?? t("settings.unset")],
-                ["rclone_config", document.rclone_config ?? t("settings.unset")],
-                ["rclone_rc_url", document.rclone_rc_url ?? t("settings.unset")],
-                ["workspace_path", document.workspace_path ?? t("settings.default")],
-              ] as const
-            ).map(([label, value]) => (
-              <div key={label} className="flex min-w-0 flex-col gap-0.5">
-                <dt className="text-xs text-muted-foreground">{label}</dt>
-                <dd className="truncate font-mono text-xs" title={value}>
-                  {value}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </CardContent>
-      </Card>
-    </>
+          {section === "shortcuts" ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("settings.shortcutsTitle")}</CardTitle>
+                <CardDescription>
+                  {t("settings.shortcutsDescription")}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3">
+                {SHORTCUT_ACTIONS.map((action) => (
+                  <div key={action} className="flex flex-wrap items-end gap-2">
+                    <div className="flex min-w-64 flex-1 flex-col gap-1.5">
+                      <Label>{t(`settings.shortcutActions.${action}`)}</Label>
+                      <Input
+                        className="font-mono"
+                        value={form.shortcuts[action]}
+                        placeholder={DEFAULT_SHORTCUTS[action]}
+                        onChange={(e) =>
+                          setForm((current) =>
+                            current
+                              ? {
+                                  ...current,
+                                  shortcuts: {
+                                    ...current.shortcuts,
+                                    [action]: e.target.value,
+                                  },
+                                }
+                              : current
+                          )
+                        }
+                      />
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={
+                        form.shortcuts[action] === DEFAULT_SHORTCUTS[action]
+                      }
+                      onClick={() => resetShortcut(action)}
+                    >
+                      {t("settings.shortcutReset")}
+                    </Button>
+                  </div>
+                ))}
+                <div className="flex items-center gap-2">
+                  <Button size="sm" onClick={() => void saveShortcuts()}>
+                    <SaveIcon data-icon="inline-start" />{" "}
+                    {t("settings.saveShortcuts")}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t("settings.shortcutsHint")}
+                </p>
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {section === "runtime" ? (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t("settings.binaryTitle")}</CardTitle>
+                  <CardDescription>
+                    {t("settings.binaryDescription", {
+                      source: document.rclone_source,
+                    })}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-wrap items-end gap-2">
+                  <div className="flex min-w-64 flex-1 flex-col gap-1.5">
+                    <Label>{t("settings.binaryPath")}</Label>
+                    <Input
+                      className="font-mono"
+                      value={form.rclone_bin}
+                      placeholder="rclone"
+                      onChange={(e) =>
+                        setForm((current) =>
+                          current
+                            ? { ...current, rclone_bin: e.target.value }
+                            : current
+                        )
+                      }
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void saveBin()}
+                  >
+                    {t("common.save")}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t("settings.cliTitle")}</CardTitle>
+                  <CardDescription>
+                    {t("settings.cliDescription")}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <dl className="grid gap-3 sm:grid-cols-2">
+                    {(
+                      [
+                        [
+                          "rclone_bin",
+                          document.rclone_bin ?? t("settings.unset"),
+                        ],
+                        [
+                          "rclone_config",
+                          document.rclone_config ?? t("settings.unset"),
+                        ],
+                        [
+                          "rclone_rc_url",
+                          document.rclone_rc_url ?? t("settings.unset"),
+                        ],
+                        [
+                          "workspace_path",
+                          document.workspace_path ?? t("settings.default"),
+                        ],
+                      ] as const
+                    ).map(([label, value]) => (
+                      <div
+                        key={label}
+                        className="flex min-w-0 flex-col gap-0.5"
+                      >
+                        <dt className="text-xs text-muted-foreground">
+                          {label}
+                        </dt>
+                        <dd
+                          className="truncate font-mono text-xs"
+                          title={value}
+                        >
+                          {value}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </CardContent>
+              </Card>
+            </>
+          ) : null}
+        </div>
+      </div>
+    </div>
   )
 }

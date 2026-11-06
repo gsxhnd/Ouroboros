@@ -24,6 +24,8 @@
     "mainNav": "主导航",
     "workspace": "工作区",
     "system": "系统",
+    "canvas": "画布",
+    "canvasHint": "存储节点与同步连线",
     "overview": "概览",
     "overviewHint": "rclone 状态与控制",
     "files": "文件",
@@ -72,6 +74,24 @@
     "running": "rclone 运行中",
     "stopped": "rclone 已停止",
     "switchLanguage": "切换语言 / Switch language"
+  },
+  "command": {
+    "open": "打开快速命令面板",
+    "search": "快速命令",
+    "title": "快速命令",
+    "description": "搜索并执行 Ourboros 命令",
+    "placeholder": "搜索页面或操作…",
+    "empty": "没有匹配的命令。",
+    "navigation": "导航",
+    "actions": "操作",
+    "overview": "打开概览",
+    "settings": "打开设置",
+    "api": "打开接口演示",
+    "startRclone": "启动 rclone",
+    "stopRclone": "停止 rclone",
+    "lightTheme": "切换到浅色主题",
+    "darkTheme": "切换到深色主题",
+    "switchLanguage": "切换语言"
   },
   "status": {
     "running": "运行中",
@@ -217,7 +237,7 @@
     "localPathPlaceholder": "/absolute/path(以 /、~ 开头)",
     "remotePath": "remote 内路径（可选）",
     "noRemotes": "先在 rclone 中创建 remote",
-    "namePlaceholder": "备份盘",
+    "namePlaceholder": "名称",
     "needName": "请填写名称",
     "localNeedsPath": "本地节点需要路径",
     "remoteNeedsName": "远程节点需要 remote 名称",
@@ -252,6 +272,94 @@
       "sync": "同步"
     }
   },
+  "canvas": {
+    "loading": "正在加载画布…",
+    "ariaLabel": "存储画布",
+    "empty": "还没有节点，添加一个节点开始。",
+    "kind": {
+      "local": "本地",
+      "remote": "远程",
+      "storage": "存储节点",
+      "sync": "同步节点",
+      "action": "同步节点"
+    },
+    "remotePathPlaceholder": "留空表示远程根目录",
+    "addNode": "添加节点",
+    "fitView": "重置视图",
+    "saveView": "保存视图",
+    "inspector": "属性",
+    "noSelection": "未选中任何对象",
+    "hint": "从节点右侧端口拖到目标节点即可连线。滚轮缩放，拖动空白处平移。",
+    "nodeLabel": "名称",
+    "localPath": "本地绝对路径",
+    "untitled": "未命名",
+    "edge": {
+      "sync": "同步",
+      "mount": "挂载"
+    },
+    "edgeKind": "连线类型",
+    "confirmDeleteNode": "删除节点 {{name}}？相关的 {{count}} 条连线也会被删除。",
+    "confirmDeleteEdge": "删除这条连线？",
+    "jobStarted": "同步任务已开始",
+    "runningTitle": "运行中的任务（{{count}}）",
+    "toolbar": {
+      "local": "添加本地存储",
+      "remote": "添加远程存储",
+      "storageLocal": "添加本地存储",
+      "storageRemote": "添加远程存储",
+      "connect": "连线",
+      "action": "添加同步节点",
+      "browse": "浏览文件",
+      "remoteForm": "新建 rclone 远程"
+    },
+    "menu": {
+      "newStorage": "新建存储节点",
+      "newLocalStorage": "新建本地存储节点",
+      "newRemoteStorage": "新建远程存储节点",
+      "newLocal": "新建本地目录",
+      "newRemote": "新建远程节点",
+      "createRemote": "新建 rclone 远程…",
+      "rename": "重命名",
+      "editStorage": "编辑存储节点",
+      "editRemote": "编辑远程配置",
+      "connectSync": "同步到…",
+      "connectMount": "挂载到本地…",
+      "editEdge": "编辑连线",
+      "newAction": "新建动作节点",
+      "editAction": "编辑动作",
+      "browse": "浏览文件",
+      "connect": "创建连线"
+    },
+    "schedule": {
+      "manual": "手动",
+      "hourly": "每小时",
+      "daily": "每天",
+      "weekly": "每周"
+    },
+    "panel": {
+      "title": "节点",
+      "expand": "展开",
+      "collapse": "收起"
+    },
+    "rules": {
+      "same": "不能把节点连到自己。",
+      "storageToStorage": "存储节点之间不能直接连接，请通过动作节点连接。",
+      "mountDirection": "挂载只能从远程指向本地目录。",
+      "actionToAction": "动作节点之间不能串联，中间需要放一个存储节点。",
+      "mountHint": "挂载：把远程挂载到本地目录。",
+      "flowHint": "数据流：动作节点从源读取，并写入目标。"
+    },
+    "picker": {
+      "title": "选择本地目录",
+      "description": "浏览文件系统并选择一个文件夹。",
+      "browse": "浏览…",
+      "home": "主目录",
+      "up": "上一级",
+      "empty": "这里没有子文件夹。",
+      "select": "选择此文件夹",
+      "loading": "加载中…"
+    }
+  },
   "mounts": {
     "title": "挂载连接",
     "description": "把 remote 挂载到本地目录，方向必须是 remote → 本地目录。",
@@ -275,6 +383,12 @@
   },
   "settings": {
     "loading": "设置加载中…",
+    "categories": "设置分类",
+    "sections": {
+      "connection": "连接",
+      "shortcuts": "快捷键",
+      "runtime": "运行环境"
+    },
     "saved": "设置已保存",
     "endpointTitle": "rclone endpoint",
     "endpointDescription": "填写已有的 rclone RC 地址（如 http://127.0.0.1:5572）时，Ourboros 会连接它而不是自己拉起 rclone rcd。留空则启动托管 rclone rcd。默认不会自动拉起 rclone。",

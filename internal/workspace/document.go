@@ -67,10 +67,22 @@ type Node struct {
 	Position  Position `json:"position"`
 	LocalPath *string  `json:"local_path,omitempty"`
 	Remote    *Remote  `json:"remote,omitempty"`
+	Action    *Action  `json:"action,omitempty"`
+}
+
+// Action 是画布上的中间处理节点：它接收上游存储节点的数据，按自身的操作写入下游存储节点。
+type Action struct {
+	Operation  Operation   `json:"operation"`
+	Schedule   Schedule    `json:"schedule"`
+	Enabled    bool        `json:"enabled"`
+	NextRun    *time.Time  `json:"next_run,omitempty"`
+	LastResult *LastResult `json:"last_result,omitempty"`
 }
 
 func (n Node) Locator(home string) (paths.Locator, error) {
 	switch n.Kind {
+	case NodeAction:
+		return paths.Locator{}, core.InvalidRequest("action node " + n.ID + " has no storage location")
 	case NodeLocal:
 		if n.LocalPath == nil {
 			return paths.Locator{}, core.InvalidPath("local node " + n.ID + " is missing local_path")
@@ -91,6 +103,7 @@ type NodeKind string
 const (
 	NodeLocal  NodeKind = "local"
 	NodeRemote NodeKind = "remote"
+	NodeAction NodeKind = "action"
 )
 
 type Remote struct {
@@ -123,6 +136,7 @@ type EdgeKind string
 const (
 	EdgeSync  EdgeKind = "sync"
 	EdgeMount EdgeKind = "mount"
+	EdgeFlow  EdgeKind = "flow"
 )
 
 type SyncConfig struct {
@@ -253,21 +267,30 @@ type MountConfig struct {
 }
 
 type CreateNode struct {
-	Revision  uint64   `json:"revision"`
-	ID        *string  `json:"id"`
-	Kind      NodeKind `json:"kind"`
-	Label     string   `json:"label"`
-	Position  Position `json:"position"`
-	LocalPath *string  `json:"local_path"`
-	Remote    *Remote  `json:"remote"`
+	Revision  uint64       `json:"revision"`
+	ID        *string      `json:"id"`
+	Kind      NodeKind     `json:"kind"`
+	Label     string       `json:"label"`
+	Position  Position     `json:"position"`
+	LocalPath *string      `json:"local_path"`
+	Remote    *Remote      `json:"remote"`
+	Action    *ActionPatch `json:"action"`
 }
 
 type PatchNode struct {
-	Revision  uint64    `json:"revision"`
-	Label     *string   `json:"label"`
-	Position  *Position `json:"position"`
-	LocalPath *string   `json:"local_path"`
-	Remote    *Remote   `json:"remote"`
+	Revision  uint64       `json:"revision"`
+	Label     *string      `json:"label"`
+	Position  *Position    `json:"position"`
+	LocalPath *string      `json:"local_path"`
+	Remote    *Remote      `json:"remote"`
+	Action    *ActionPatch `json:"action"`
+}
+
+// ActionPatch 只携带动作节点可编辑的字段，未填写的字段保持原值。
+type ActionPatch struct {
+	Operation *Operation `json:"operation"`
+	Schedule  *Schedule  `json:"schedule"`
+	Enabled   *bool      `json:"enabled"`
 }
 
 type CreateEdge struct {
@@ -358,6 +381,11 @@ func (s *Store) CreateNode(req CreateNode, remotes []string, remotesKnown bool) 
 			LocalPath: req.LocalPath,
 			Remote:    req.Remote,
 		}
+		if req.Kind == NodeAction {
+			action := DefaultAction()
+			applyActionPatch(&action, req.Action)
+			node.Action = &action
+		}
 		if doc.Node(node.ID) != nil {
 			return core.Conflict("node " + node.ID + " already exists")
 		}
@@ -384,8 +412,42 @@ func (s *Store) PatchNode(id string, req PatchNode, remotes []string, remotesKno
 		if req.Remote != nil {
 			node.Remote = req.Remote
 		}
+		if req.Action != nil {
+			if node.Kind != NodeAction {
+				return core.InvalidRequest("node " + id + " is not an action node")
+			}
+			if node.Action == nil {
+				action := DefaultAction()
+				node.Action = &action
+			}
+			applyActionPatch(node.Action, req.Action)
+		}
 		return nil
 	})
+}
+
+// DefaultAction 是新建动作节点的初始配置：复制、手动触发、启用。
+func DefaultAction() Action {
+	return Action{
+		Operation: OpCopy,
+		Schedule:  DisabledSchedule(),
+		Enabled:   true,
+	}
+}
+
+func applyActionPatch(action *Action, patch *ActionPatch) {
+	if patch == nil {
+		return
+	}
+	if patch.Operation != nil {
+		action.Operation = *patch.Operation
+	}
+	if patch.Schedule != nil {
+		action.Schedule = *patch.Schedule
+	}
+	if patch.Enabled != nil {
+		action.Enabled = *patch.Enabled
+	}
 }
 
 func (s *Store) DeleteNode(id string, revision uint64, remotes []string, remotesKnown bool) (Document, error) {
@@ -438,6 +500,8 @@ func (s *Store) CreateEdge(req CreateEdge, remotes []string, remotesKnown bool) 
 				enabled = *req.Enabled
 			}
 			edge.Mount = &MountConfig{Enabled: enabled}
+		case EdgeFlow:
+			// 数据流边只表示关系，运行参数由动作节点持有。
 		}
 		if doc.Edge(edge.ID) != nil {
 			return core.Conflict("edge " + edge.ID + " already exists")
@@ -496,16 +560,21 @@ func (s *Store) DeleteEdge(id string, revision uint64, remotes []string, remotes
 	})
 }
 
-func (s *Store) RecordJobResult(edgeID string, result LastResult, nextRun *time.Time) (Document, error) {
+func (s *Store) RecordJobResult(runID string, result LastResult, nextRun *time.Time) (Document, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	edge := s.doc.Edge(edgeID)
-	if edge == nil || edge.Sync == nil {
+	if node := s.doc.Node(runID); node != nil && node.Kind == NodeAction && node.Action != nil {
+		node.Action.LastResult = &result
+		if nextRun != nil {
+			node.Action.NextRun = nextRun
+		}
+	} else if edge := s.doc.Edge(runID); edge != nil && edge.Sync != nil {
+		edge.Sync.LastResult = &result
+		if nextRun != nil {
+			edge.Sync.NextRun = nextRun
+		}
+	} else {
 		return cloneDoc(s.doc), nil
-	}
-	edge.Sync.LastResult = &result
-	if nextRun != nil {
-		edge.Sync.NextRun = nextRun
 	}
 	s.doc.Revision++
 	s.doc.UpdatedAt = time.Now().UTC()
@@ -515,14 +584,16 @@ func (s *Store) RecordJobResult(edgeID string, result LastResult, nextRun *time.
 	return cloneDoc(s.doc), nil
 }
 
-func (s *Store) SetNextRun(edgeID string, nextRun *time.Time) error {
+func (s *Store) SetNextRun(runID string, nextRun *time.Time) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	edge := s.doc.Edge(edgeID)
-	if edge == nil || edge.Sync == nil {
+	if node := s.doc.Node(runID); node != nil && node.Kind == NodeAction && node.Action != nil {
+		node.Action.NextRun = nextRun
+	} else if edge := s.doc.Edge(runID); edge != nil && edge.Sync != nil {
+		edge.Sync.NextRun = nextRun
+	} else {
 		return nil
 	}
-	edge.Sync.NextRun = nextRun
 	s.doc.UpdatedAt = time.Now().UTC()
 	return persist.AtomicWriteJSON(s.path, s.doc)
 }

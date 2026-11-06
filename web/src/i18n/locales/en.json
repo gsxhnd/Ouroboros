@@ -24,6 +24,8 @@
     "mainNav": "Main navigation",
     "workspace": "Workspace",
     "system": "System",
+    "canvas": "Canvas",
+    "canvasHint": "Storage nodes and sync links",
     "overview": "Overview",
     "overviewHint": "rclone status and control",
     "files": "Files",
@@ -72,6 +74,24 @@
     "running": "rclone running",
     "stopped": "rclone stopped",
     "switchLanguage": "Switch language / 切换语言"
+  },
+  "command": {
+    "open": "Open quick command palette",
+    "search": "Quick commands",
+    "title": "Quick commands",
+    "description": "Search and run an Ourboros command",
+    "placeholder": "Search pages or actions…",
+    "empty": "No matching commands.",
+    "navigation": "Navigation",
+    "actions": "Actions",
+    "overview": "Open overview",
+    "settings": "Open settings",
+    "api": "Open API playground",
+    "startRclone": "Start rclone",
+    "stopRclone": "Stop rclone",
+    "lightTheme": "Switch to light theme",
+    "darkTheme": "Switch to dark theme",
+    "switchLanguage": "Switch language"
   },
   "status": {
     "running": "Running",
@@ -217,7 +237,7 @@
     "localPathPlaceholder": "/absolute/path (starts with / or ~)",
     "remotePath": "Path inside remote (optional)",
     "noRemotes": "Create a remote in rclone first",
-    "namePlaceholder": "Backup drive",
+    "namePlaceholder": "Name",
     "needName": "Enter a name",
     "localNeedsPath": "Local nodes need a path",
     "remoteNeedsName": "Remote nodes need a remote name",
@@ -252,6 +272,94 @@
       "sync": "Sync"
     }
   },
+  "canvas": {
+    "loading": "Loading canvas…",
+    "ariaLabel": "Storage canvas",
+    "empty": "No nodes yet. Add a node to get started.",
+    "kind": {
+      "local": "Local",
+      "remote": "Remote",
+      "storage": "Storage node",
+      "sync": "Sync node",
+      "action": "Sync node"
+    },
+    "remotePathPlaceholder": "Leave empty for remote root",
+    "addNode": "Add node",
+    "fitView": "Reset view",
+    "saveView": "Save view",
+    "inspector": "Inspector",
+    "noSelection": "Nothing selected",
+    "hint": "Drag the right handle of a node to a target node to connect them. Scroll to zoom, drag the background to pan.",
+    "nodeLabel": "Label",
+    "localPath": "Absolute local path",
+    "untitled": "Untitled",
+    "edge": {
+      "sync": "Sync",
+      "mount": "Mount"
+    },
+    "edgeKind": "Connection type",
+    "confirmDeleteNode": "Delete node {{name}}? {{count}} connection(s) will be removed too.",
+    "confirmDeleteEdge": "Delete this connection?",
+    "jobStarted": "Sync job started",
+    "runningTitle": "Running jobs ({{count}})",
+    "toolbar": {
+      "local": "Add local storage",
+      "remote": "Add remote storage",
+      "storageLocal": "Add local storage",
+      "storageRemote": "Add remote storage",
+      "connect": "Connect",
+      "action": "Add sync node",
+      "browse": "Browse files",
+      "remoteForm": "New rclone remote"
+    },
+    "menu": {
+      "newStorage": "New storage node",
+      "newLocalStorage": "New local storage node",
+      "newRemoteStorage": "New remote storage node",
+      "newLocal": "New local directory",
+      "newRemote": "New remote node",
+      "createRemote": "Create a new rclone remote…",
+      "rename": "Rename",
+      "editStorage": "Edit storage node",
+      "editRemote": "Edit remote config",
+      "connectSync": "Sync to…",
+      "connectMount": "Mount to local…",
+      "editEdge": "Edit connection",
+      "newAction": "New action node",
+      "editAction": "Edit action",
+      "browse": "Browse files",
+      "connect": "Create connection"
+    },
+    "schedule": {
+      "manual": "Manual",
+      "hourly": "Hourly",
+      "daily": "Daily",
+      "weekly": "Weekly"
+    },
+    "panel": {
+      "title": "Nodes",
+      "expand": "Expand",
+      "collapse": "Collapse"
+    },
+    "rules": {
+      "same": "Cannot connect a node to itself.",
+      "storageToStorage": "Storage nodes cannot be linked directly. Connect them through an action node.",
+      "mountDirection": "Mounts go from a remote to a local directory.",
+      "actionToAction": "Action nodes cannot be chained. Put a storage node between them.",
+      "mountHint": "Mount: attach the remote to the local directory.",
+      "flowHint": "Data flow: the action reads from its source and writes to its destination."
+    },
+    "picker": {
+      "title": "Choose a local directory",
+      "description": "Browse the file system and pick a folder.",
+      "browse": "Browse…",
+      "home": "Home directory",
+      "up": "Parent directory",
+      "empty": "No sub-folders here.",
+      "select": "Select this folder",
+      "loading": "Loading…"
+    }
+  },
   "mounts": {
     "title": "Mount connections",
     "description": "Mount a remote into a local directory. Direction must be remote → local directory.",
@@ -275,6 +383,12 @@
   },
   "settings": {
     "loading": "Loading settings…",
+    "categories": "Settings categories",
+    "sections": {
+      "connection": "Connection",
+      "shortcuts": "Shortcuts",
+      "runtime": "Runtime"
+    },
     "saved": "Settings saved",
     "endpointTitle": "rclone endpoint",
     "endpointDescription": "When an existing rclone RC address is provided (e.g. http://127.0.0.1:5572), Ourboros connects to it instead of starting its own rclone rcd. Leave empty to start a managed rclone rcd. rclone is not started automatically by default.",

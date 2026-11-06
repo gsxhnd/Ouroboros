@@ -7,6 +7,7 @@ import (
 
 	"github.com/gsxhnd/ourboros/internal/core"
 	"github.com/gsxhnd/ourboros/internal/jobs"
+	"github.com/gsxhnd/ourboros/internal/paths"
 	"github.com/gsxhnd/ourboros/internal/rclone"
 	"github.com/gsxhnd/ourboros/internal/workspace"
 )
@@ -28,54 +29,106 @@ func Run(ctx context.Context, ws *workspace.Store, jobStore *jobs.Store, rc *rcl
 
 func tick(ws *workspace.Store, jobStore *jobs.Store, rc *rclone.Supervisor) error {
 	doc := ws.Get()
-	now := time.Now().UTC()
 	for _, edge := range doc.Edges {
 		if edge.Kind != workspace.EdgeSync || edge.Sync == nil {
 			continue
 		}
-		sync := edge.Sync
-		if !sync.Enabled || !sync.Schedule.Enabled {
-			continue
-		}
-		if jobStore.IsRunning(edge.ID) {
-			continue
-		}
-		if sync.NextRun == nil {
-			computed, err := NextRunAt(sync.Schedule, now)
-			if err != nil {
-				return err
-			}
-			if computed != nil {
-				if err := ws.SetNextRun(edge.ID, computed); err != nil {
-					return err
+		unit := runUnit{
+			id:        edge.ID,
+			enabled:   edge.Sync.Enabled,
+			schedule:  edge.Sync.Schedule,
+			nextRun:   edge.Sync.NextRun,
+			operation: edge.Sync.Operation,
+			endpoints: func() (paths.Locator, paths.Locator, error) {
+				source, err := doc.NodeLocator(edge.Source, ws.Home())
+				if err != nil {
+					return paths.Locator{}, paths.Locator{}, err
 				}
-			}
-			continue
+				target, err := doc.NodeLocator(edge.Target, ws.Home())
+				return source, target, err
+			},
 		}
-		if sync.NextRun.After(now) {
-			continue
-		}
-		source, err := doc.NodeLocator(edge.Source, ws.Home())
-		if err != nil {
+		if err := runDue(ws, jobStore, rc, unit); err != nil {
 			return err
 		}
-		target, err := doc.NodeLocator(edge.Target, ws.Home())
-		if err != nil {
-			return err
-		}
-		if _, err := jobStore.Start(rc, ws, edge.ID, sync.Operation, source, target); err != nil {
-			slog.Warn("scheduled sync failed to start", "edge_id", edge.ID, "err", err)
+	}
+	for _, node := range doc.Nodes {
+		if node.Kind != workspace.NodeAction || node.Action == nil {
 			continue
 		}
-		computed, err := NextRunAt(sync.Schedule, time.Now().UTC())
+		nodeID := node.ID
+		action := node.Action
+		unit := runUnit{
+			id:        nodeID,
+			enabled:   action.Enabled,
+			schedule:  action.Schedule,
+			nextRun:   action.NextRun,
+			operation: action.Operation,
+			endpoints: func() (paths.Locator, paths.Locator, error) {
+				source, target, err := workspace.ActionEndpoints(doc, nodeID)
+				if err != nil {
+					return paths.Locator{}, paths.Locator{}, err
+				}
+				from, err := source.Locator(ws.Home())
+				if err != nil {
+					return paths.Locator{}, paths.Locator{}, err
+				}
+				to, err := target.Locator(ws.Home())
+				return from, to, err
+			},
+		}
+		if err := runDue(ws, jobStore, rc, unit); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// runUnit 是一个可按计划运行的单元：同步边或动作节点。
+type runUnit struct {
+	id        string
+	enabled   bool
+	schedule  workspace.Schedule
+	nextRun   *time.Time
+	operation workspace.Operation
+	endpoints func() (paths.Locator, paths.Locator, error)
+}
+
+func runDue(ws *workspace.Store, jobStore *jobs.Store, rc *rclone.Supervisor, unit runUnit) error {
+	now := time.Now().UTC()
+	if !unit.enabled || !unit.schedule.Enabled {
+		return nil
+	}
+	if jobStore.IsRunning(unit.id) {
+		return nil
+	}
+	if unit.nextRun == nil {
+		computed, err := NextRunAt(unit.schedule, now)
 		if err != nil {
 			return err
 		}
 		if computed != nil {
-			if err := ws.SetNextRun(edge.ID, computed); err != nil {
-				return err
-			}
+			return ws.SetNextRun(unit.id, computed)
 		}
+		return nil
+	}
+	if unit.nextRun.After(now) {
+		return nil
+	}
+	source, target, err := unit.endpoints()
+	if err != nil {
+		return err
+	}
+	if _, err := jobStore.Start(rc, ws, unit.id, unit.operation, source, target); err != nil {
+		slog.Warn("scheduled run failed to start", "id", unit.id, "err", err)
+		return nil
+	}
+	computed, err := NextRunAt(unit.schedule, time.Now().UTC())
+	if err != nil {
+		return err
+	}
+	if computed != nil {
+		return ws.SetNextRun(unit.id, computed)
 	}
 	return nil
 }
