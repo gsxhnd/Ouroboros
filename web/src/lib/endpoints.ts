@@ -248,6 +248,14 @@ export const ENDPOINTS: Endpoint[] = [
     descriptionKey: "api.endpoints.files-list",
   },
   {
+    id: "files-download",
+    group: "Files",
+    name: "Download file",
+    method: "GET",
+    path: "/api/files/download?fs=/tmp&remote=ourboros-demo-file",
+    descriptionKey: "api.endpoints.files-download",
+  },
+  {
     id: "files-mkdir",
     group: "Files",
     name: "Create directory",

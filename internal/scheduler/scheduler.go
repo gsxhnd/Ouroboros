@@ -2,6 +2,8 @@ package scheduler
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -29,6 +31,7 @@ func Run(ctx context.Context, ws *workspace.Store, jobStore *jobs.Store, rc *rcl
 
 func tick(ws *workspace.Store, jobStore *jobs.Store, rc *rclone.Supervisor) error {
 	doc := ws.Get()
+	var errs []error
 	for _, edge := range doc.Edges {
 		if edge.Kind != workspace.EdgeSync || edge.Sync == nil {
 			continue
@@ -49,7 +52,8 @@ func tick(ws *workspace.Store, jobStore *jobs.Store, rc *rclone.Supervisor) erro
 			},
 		}
 		if err := runDue(ws, jobStore, rc, unit); err != nil {
-			return err
+			// 一个坏掉的单元（例如无效的 cron 表达式）不应阻塞同一轮里其他单元的求值。
+			errs = append(errs, fmt.Errorf("edge %s: %w", edge.ID, err))
 		}
 	}
 	for _, node := range doc.Nodes {
@@ -78,10 +82,10 @@ func tick(ws *workspace.Store, jobStore *jobs.Store, rc *rclone.Supervisor) erro
 			},
 		}
 		if err := runDue(ws, jobStore, rc, unit); err != nil {
-			return err
+			errs = append(errs, fmt.Errorf("node %s: %w", nodeID, err))
 		}
 	}
-	return nil
+	return errors.Join(errs...)
 }
 
 // runUnit 是一个可按计划运行的单元：同步边或动作节点。
@@ -124,13 +128,12 @@ func runDue(ws *workspace.Store, jobStore *jobs.Store, rc *rclone.Supervisor, un
 		return nil
 	}
 	computed, err := NextRunAt(unit.schedule, time.Now().UTC())
-	if err != nil {
-		return err
+	if err != nil || computed == nil {
+		slog.Warn("scheduled run finished but next occurrence could not be computed; backing off one hour", "id", unit.id, "err", err)
+		fallback := time.Now().UTC().Add(time.Hour)
+		computed = &fallback
 	}
-	if computed != nil {
-		return ws.SetNextRun(unit.id, computed)
-	}
-	return nil
+	return ws.SetNextRun(unit.id, computed)
 }
 
 func CronExpression(schedule workspace.Schedule) (string, error) {

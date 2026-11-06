@@ -225,5 +225,5 @@ export type MountSnapshot = {
 }
 
 export type ApiErrorBody = {
-  error?: { code?: string; message?: string }
+  error?: { code?: string; message?: string; details?: { kind?: string } }
 }

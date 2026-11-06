@@ -2,16 +2,24 @@ package rclone
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"net/http"
 	"sync"
 	"time"
 
 	"github.com/gsxhnd/ourboros/internal/core"
+	"github.com/gsxhnd/ourboros/internal/version"
 )
 
 // gracefulStopTimeout bounds how long a managed rclone rcd gets to exit after
 // core/quit or SIGINT before it is force-killed.
 const gracefulStopTimeout = 3 * time.Second
+
+// serveClient streams file bodies between the browser and the RC file server.
+// It has no overall timeout so large downloads can finish; cancellation comes
+// from the caller's request context instead.
+var serveClient = &http.Client{}
 
 type session struct {
 	mode   Mode
@@ -182,6 +190,35 @@ func (s *Supervisor) CallInternal(ctx context.Context, command string, body any)
 		return Response{}, err
 	}
 	return s.client.Call(ctx, rcURL, auth, command, body)
+}
+
+// OpenServe performs an authenticated GET against the RC file server (enabled
+// by --rc-serve on spawned daemons) and returns the raw response so the caller
+// can stream the body to the browser. Credentials are only ever sent to the
+// loopback RC process and never appear in returned URLs, logs or error text.
+func (s *Supervisor) OpenServe(ctx context.Context, urlPath string) (*http.Response, error) {
+	s.reap()
+	rcURL, auth, err := s.endpoint()
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, JoinRCURL(rcURL, urlPath), nil)
+	if err != nil {
+		return nil, core.Transport(redactAuth(err.Error(), auth))
+	}
+	req.Header.Set("User-Agent", "ourboros/"+version.Version)
+	if auth != nil {
+		req.SetBasicAuth(auth.User, auth.Pass)
+	}
+	res, err := serveClient.Do(req)
+	if err != nil {
+		return nil, core.Transport(redactAuth(err.Error(), auth))
+	}
+	if res.StatusCode != http.StatusOK {
+		res.Body.Close()
+		return nil, core.Transport(fmt.Sprintf("rclone file server returned status %d", res.StatusCode))
+	}
+	return res, nil
 }
 
 func (s *Supervisor) ListRemotes(ctx context.Context) ([]string, error) {

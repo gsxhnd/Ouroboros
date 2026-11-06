@@ -67,6 +67,9 @@ type record struct {
 	rcloneJobID *int64
 }
 
+// maxFinishedJobs 限制已完成任务的保留数量，避免长期运行的实例无限累积快照。
+const maxFinishedJobs = 100
+
 type Store struct {
 	mu           sync.Mutex
 	jobs         map[string]*record
@@ -165,6 +168,10 @@ func (s *Store) Start(rc *rclone.Supervisor, ws *workspace.Store, edgeID string,
 	return s.Get(id)
 }
 
+// cancelWait 是 job/stop 之后等待 rclone 真正收尾（poller 观察到 job/status
+// finished）的最长时间。超时后按取消兜底收尾并释放边锁。
+const cancelWait = 5 * time.Second
+
 func (s *Store) Stop(rc *rclone.Supervisor, jobID string) (Snapshot, error) {
 	s.mu.Lock()
 	record, ok := s.jobs[jobID]
@@ -180,12 +187,79 @@ func (s *Store) Stop(rc *rclone.Supervisor, jobID string) (Snapshot, error) {
 	record.snapshot.Status = StatusCancelling
 	rcloneJobID := record.rcloneJobID
 	edgeID := record.snapshot.EdgeID
+	cancelling := record.snapshot
 	s.mu.Unlock()
+	s.emit(cancelling)
+
+	// rcloneJobID 可能还没落账（Start 的应答仍在路上）；给一个短暂的窗口。
+	if rcloneJobID == nil {
+		rcloneJobID = s.awaitJobID(jobID, time.Second)
+	}
 	if rcloneJobID != nil {
 		_, _ = rc.CallInternal(s.ctx, "job/stop", map[string]any{"jobid": *rcloneJobID})
+		// 等 poller 观察 rclone 真正结束后再收尾，而不是立刻宣布 cancelled：
+		// 这期间传输可能仍在跑，边锁也必须保持。
+		if snapshot, done := s.waitForTerminal(jobID, cancelWait); done {
+			return snapshot, nil
+		}
 	}
 	message := "job cancelled"
 	return s.finish(jobID, edgeID, StatusCancelled, &message, nil)
+}
+
+// awaitJobID 以小步长轮询记录里的 rclone 任务 ID，最多等待 max；用于缓解
+// Start 应答与 Stop 并发时的竞态。
+func (s *Store) awaitJobID(jobID string, max time.Duration) *int64 {
+	deadline := time.Now().Add(max)
+	for {
+		s.mu.Lock()
+		record, ok := s.jobs[jobID]
+		if ok && record.rcloneJobID != nil {
+			id := record.rcloneJobID
+			s.mu.Unlock()
+			return id
+		}
+		s.mu.Unlock()
+		if !time.Now().Before(deadline) {
+			return nil
+		}
+		select {
+		case <-s.ctx.Done():
+			return nil
+		case <-time.After(20 * time.Millisecond):
+		}
+	}
+}
+
+func (s *Store) waitForTerminal(jobID string, timeout time.Duration) (Snapshot, bool) {
+	deadline := time.Now().Add(timeout)
+	for {
+		s.mu.Lock()
+		record, ok := s.jobs[jobID]
+		if ok && record.snapshot.Status.Terminal() {
+			snapshot := record.snapshot
+			s.mu.Unlock()
+			return snapshot, true
+		}
+		s.mu.Unlock()
+		if !time.Now().Before(deadline) {
+			return Snapshot{}, false
+		}
+		select {
+		case <-s.ctx.Done():
+			return Snapshot{}, false
+		case <-time.After(50 * time.Millisecond):
+		}
+	}
+}
+
+// reconcileCancel 把 poller 决定的终态与“正在取消”的当前状态合并：
+// 用户主动取消的优先，最终状态应为 cancelled 而不是 failed。
+func reconcileCancel(current, decided Status) Status {
+	if current == StatusCancelling {
+		return StatusCancelled
+	}
+	return decided
 }
 
 func (s *Store) pollUntilDone(rc *rclone.Supervisor, ws *workspace.Store, jobID, edgeID string) {
@@ -255,6 +329,10 @@ func (s *Store) pollUntilDone(rc *rclone.Supervisor, ws *workspace.Store, jobID,
 			} else if progress.Errors > 0 {
 				status = StatusPartialFailed
 			}
+			if final := reconcileCancel(s.currentStatus(jobID), status); final != status {
+				status = final
+				jobErr = nil
+			}
 			snapshot, err := s.finish(jobID, edgeID, status, jobErr, &progress)
 			if err == nil {
 				_, _ = ws.RecordJobResult(edgeID, workspace.LastResult{
@@ -305,14 +383,48 @@ func (s *Store) finish(id, edgeID string, status Status, message *string, progre
 	}
 	snapshot := record.snapshot
 	s.mu.Unlock()
+	s.pruneFinished()
 	s.emit(snapshot)
 	return snapshot, nil
+}
+
+// pruneFinished keeps at most maxFinishedJobs terminal jobs, dropping the
+// oldest ones. Running jobs are never dropped.
+func (s *Store) pruneFinished() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var finished []string
+	for id, record := range s.jobs {
+		if record.snapshot.Status.Terminal() {
+			finished = append(finished, id)
+		}
+	}
+	if len(finished) <= maxFinishedJobs {
+		return
+	}
+	sort.Slice(finished, func(i, j int) bool {
+		return s.jobs[finished[i]].snapshot.StartedAt.Before(s.jobs[finished[j]].snapshot.StartedAt)
+	})
+	for _, id := range finished[:len(finished)-maxFinishedJobs] {
+		delete(s.jobs, id)
+	}
 }
 
 func (s *Store) emit(snapshot Snapshot) {
 	if s.events != nil {
 		s.events.Publish("job", snapshot)
 	}
+}
+
+// currentStatus 在锁内读取一次快照状态；记录不存在时返回 queued（非取消态）。
+func (s *Store) currentStatus(jobID string) Status {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	record, ok := s.jobs[jobID]
+	if !ok {
+		return StatusQueued
+	}
+	return record.snapshot.Status
 }
 
 func parseStats(body map[string]any) Progress {

@@ -68,6 +68,17 @@ func (s *SpawnedMount) Exited() bool {
 	return s == nil || s.Child == nil || s.Child.exited()
 }
 
+// Done exposes a receive-only channel that closes when the mount process is
+// gone, so supervisors can watch for an unexpected exit without polling.
+func (s *SpawnedMount) Done() <-chan struct{} {
+	if s == nil || s.Child == nil {
+		closed := make(chan struct{})
+		close(closed)
+		return closed
+	}
+	return s.Child.done
+}
+
 // mountStopTimeout is how long rclone mount has to unmount after SIGINT.
 const mountStopTimeout = 5 * time.Second
 

@@ -126,6 +126,8 @@ export function CanvasPage() {
   const unmountEdge = useCanvasStore((state) => state.unmountEdge)
 
   const [selection, setSelection] = useState<CanvasSelection>(null)
+  /** 框选得到的节点集合；单选会清空它，两者互不覆盖。 */
+  const [groupIds, setGroupIds] = useState<string[]>([])
   const [dialog, setDialog] = useState<Dialog>(null)
   const [remotes, setRemotes] = useState<RemoteInfo[]>([])
   const [busyEdge, setBusyEdge] = useState<string | null>(null)
@@ -163,6 +165,16 @@ export function CanvasPage() {
     (id: string) => edges.find((edge) => edge.id === id),
     [edges]
   )
+  // 框选集合里被删除/失效的 id 在派生时静默剔除，避免残留高亮或无效删除。
+  const activeGroupIds = useMemo(() => {
+    if (!groupIds.length) {
+      return groupIds
+    }
+    const alive = new Set(nodes.map((node) => node.id))
+    return groupIds.filter((id) => alive.has(id))
+  }, [groupIds, nodes])
+  const groupSet = useMemo(() => new Set(activeGroupIds), [activeGroupIds])
+
 
   const runningJobs = useMemo(
     () => jobs.filter((job) => !TERMINAL_JOB_STATUSES.has(job.status)),
@@ -289,6 +301,49 @@ export function CanvasPage() {
     }
     setSelection(null)
   }, [selection, nodeById, edges, deleteNode, deleteEdge, t])
+
+  /** 批量删除框选节点：一次确认，逐个串行删除（revision 顺序提交）。 */
+  const handleDeleteGroup = useCallback(async () => {
+    if (!activeGroupIds.length) {
+      return
+    }
+    const names = activeGroupIds
+      .map((id) => nodeById(id)?.label ?? id)
+      .join("、")
+    if (
+      !window.confirm(
+        t("canvas.confirmDeleteGroup", { names, count: activeGroupIds.length })
+      )
+    ) {
+      return
+    }
+    for (const id of activeGroupIds) {
+      await deleteNode(id)
+    }
+    setGroupIds([])
+  }, [activeGroupIds, nodeById, deleteNode, t])
+
+  /** 单击画布某节点：框选集合清空，回到单选语义。 */
+  const handleSelect = useCallback((next: CanvasSelection) => {
+    setGroupIds([])
+    setSelection(next)
+  }, [])
+
+  /** 双击节点：动作节点开动作编辑，存储节点开存储编辑。 */
+  const handleNodeDoubleClick = useCallback(
+    (id: string) => {
+      const node = nodeById(id)
+      if (!node) {
+        return
+      }
+      if (node.kind === "action") {
+        setDialog({ type: "action", mode: "edit", nodeId: id, world: null })
+      } else {
+        setDialog({ type: "editStorage", id })
+      }
+    },
+    [nodeById]
+  )
 
   const handleRunAction = async (id: string) => {
     try {
@@ -509,7 +564,6 @@ export function CanvasPage() {
           nodes={nodes}
           edges={edges}
           viewport={viewport}
-          selection={selection}
           labels={{
             ariaLabel: t("canvas.ariaLabel"),
             empty: t("canvas.empty"),
@@ -519,11 +573,16 @@ export function CanvasPage() {
           nodeStatus={nodeStatus}
           edgeStatus={edgeStatus}
           nodeDetail={nodeDetail}
-          onSelect={setSelection}
+          selection={selection}
+          selectedIds={groupSet}
+          onSelect={handleSelect}
+          onSelectMany={setGroupIds}
           onNodeMove={(id, position) => void moveNode(id, position)}
+          onNodeDoubleClick={handleNodeDoubleClick}
+          onDeleteSelection={() => void handleDelete()}
+          onDeleteMany={() => void handleDeleteGroup()}
           onViewportChange={setViewport}
           onConnect={tryConnect}
-          onDeleteSelection={() => void handleDelete()}
           buildMenu={buildMenu}
         />
 

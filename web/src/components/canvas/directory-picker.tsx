@@ -13,29 +13,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { callQuiet } from "@/lib/client"
+import { joinPath, splitPath } from "@/lib/paths"
 import type { FilesResponse, ListItem, SystemInfo } from "@/lib/types"
 import { cn } from "cn"
-
-/** 把绝对路径拆成可点击的面包屑段。 */
-function splitPath(path: string): { name: string; path: string }[] {
-  const windows = /^[A-Za-z]:/.test(path)
-  const separator = windows ? "\\" : "/"
-  const parts = path.split(/[\\/]+/).filter(Boolean)
-  const crumbs: { name: string; path: string }[] = []
-  if (!windows) {
-    crumbs.push({ name: "/", path: "/" })
-  }
-  let current = ""
-  for (const [index, part] of parts.entries()) {
-    if (index === 0 && windows) {
-      current = `${part}${separator}`
-    } else {
-      current = `${current.replace(/[\\/]$/, "")}${separator}${part}`
-    }
-    crumbs.push({ name: part, path: current })
-  }
-  return crumbs
-}
 
 /**
  * 选择本地目录：点击路径中的任意一级即可跳转，下方列出当前目录的子文件夹。
@@ -167,9 +147,4 @@ export function DirectoryPicker({
       </DialogContent>
     </Dialog>
   )
-}
-
-function joinPath(base: string, name: string) {
-  const separator = base.includes("\\") && !base.includes("/") ? "\\" : "/"
-  return `${base.replace(/[\\/]+$/, "")}${separator}${name}`
 }

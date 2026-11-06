@@ -137,8 +137,7 @@ func (s *Supervisor) Start(rc *rclone.Supervisor, ws *workspace.Store, edgeID st
 		s.emit(failed)
 		return Snapshot{}, err
 	}
-	time.Sleep(400 * time.Millisecond)
-	if spawned.Exited() {
+	if !waitRunning(spawned, mountStartGrace, mountStartStep) {
 		message := rclone.DrainStderr(spawned.Stderr)
 		if message == "" {
 			message = "rclone mount exited immediately"
@@ -157,6 +156,32 @@ func (s *Supervisor) Start(rc *rclone.Supervisor, ws *workspace.Store, edgeID st
 	s.emit(mounted)
 	go s.watch(edgeID)
 	return mounted, nil
+}
+
+const (
+	// mountStartGrace is the settle window a mount process gets before we
+	// declare it mounted. One that exits inside the window is reported as
+	// failed with its buffered stderr; one that survives is treated healthy
+	// and handed to watch.
+	mountStartGrace = 400 * time.Millisecond
+	mountStartStep  = 25 * time.Millisecond
+)
+
+// waitRunning reports whether the mount process is still alive after the
+// settle window. It returns as soon as the process exits, so a mount that
+// fails fast (bad remote, bad mount point) surfaces in tens of milliseconds
+// instead of always paying the whole grace period.
+func waitRunning(spawned *rclone.SpawnedMount, grace, step time.Duration) bool {
+	deadline := time.Now().Add(grace)
+	for {
+		if spawned.Exited() {
+			return false
+		}
+		if !time.Now().Before(deadline) {
+			return true
+		}
+		time.Sleep(step)
+	}
 }
 
 func (s *Supervisor) Stop(edgeID string) (Snapshot, error) {
@@ -201,28 +226,45 @@ func (s *Supervisor) StopAll() {
 	}
 }
 
+// watchInterval is the fallback pace of the mount watcher. The primary signal
+// is the process exit channel; the interval only re-checks liveness in case
+// the channel is missed (for example when Stop ran concurrently).
+const watchInterval = 750 * time.Millisecond
+
 func (s *Supervisor) watch(edgeID string) {
 	for {
-		time.Sleep(750 * time.Millisecond)
 		s.mu.Lock()
 		item, ok := s.items[edgeID]
 		if !ok || item.snapshot.Status != StatusMounted || item.spawn == nil {
 			s.mu.Unlock()
 			return
 		}
-		if !item.spawn.Exited() {
-			s.mu.Unlock()
-			continue
-		}
-		item.snapshot.Status = StatusFailed
-		item.snapshot.ExitCode = item.spawn.ExitCode()
-		message := "rclone mount exited unexpectedly"
-		item.snapshot.Error = &message
-		item.spawn = nil
-		snapshot := item.snapshot
+		spawn := item.spawn
+		exited := spawn.Done()
 		s.mu.Unlock()
-		s.emit(snapshot)
-		return
+
+		select {
+		case <-exited:
+			// 进程已退出，确认仍是当前 mount 的进程且未被 Stop 抢先处理。
+			s.mu.Lock()
+			item, ok := s.items[edgeID]
+			stillMounted := ok && item.spawn == spawn && item.snapshot.Status == StatusMounted
+			if stillMounted {
+				item.snapshot.Status = StatusFailed
+				item.snapshot.ExitCode = spawn.ExitCode()
+				message := "rclone mount exited unexpectedly"
+				item.snapshot.Error = &message
+				item.spawn = nil
+				snapshot := item.snapshot
+				s.mu.Unlock()
+				s.emit(snapshot)
+				return
+			}
+			s.mu.Unlock()
+			return
+		case <-time.After(watchInterval):
+			// fallback 轮询：Alive 则回到循环重新取最新的状态与进程句柄。
+		}
 	}
 }
 

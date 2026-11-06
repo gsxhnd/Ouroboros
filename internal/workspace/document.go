@@ -602,7 +602,14 @@ func (s *Store) mutate(expected uint64, remotes []string, remotesKnown bool, mut
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.doc.Revision != expected {
-		return Document{}, core.Conflict("workspace revision is stale: expected " + strconv.FormatUint(expected, 10) + ", found " + strconv.FormatUint(s.doc.Revision, 10))
+		return Document{}, core.ConflictDetail(
+			"workspace revision is stale: expected "+strconv.FormatUint(expected, 10)+", found "+strconv.FormatUint(s.doc.Revision, 10),
+			map[string]any{
+				"kind":     "workspace_revision",
+				"expected": expected,
+				"found":    s.doc.Revision,
+			},
+		)
 	}
 	next := cloneDoc(s.doc)
 	if err := mutate(&next); err != nil {

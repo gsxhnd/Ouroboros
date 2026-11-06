@@ -93,12 +93,16 @@ function applyDocument(doc: WorkspaceDocument) {
   }
 }
 
+/** 用户本地时区；后端 schedule 支持任意 IANA 时区，不必硬编码 UTC。 */
+const LOCAL_TIMEZONE =
+  Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
+
 /** 把面板上的计划预设转成后端 schedule 结构。 */
 export function scheduleFor(preset: SchedulePreset) {
   return {
     mode: "preset",
     preset: preset === "manual" ? "daily" : preset,
-    timezone: "UTC",
+    timezone: LOCAL_TIMEZONE,
     enabled: preset !== "manual",
   }
 }

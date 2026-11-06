@@ -166,7 +166,14 @@
     "targetHelp": "Enter another remote name, or an absolute local path starting with /.",
     "moveWarning": "Moving deletes the source file.",
     "targetRequired": "Enter a target location",
-    "submitted": "{{kind}} submitted: {{name}} → {{target}}"
+    "submitted": "{{kind}} submitted: {{name}} → {{target}}",
+    "filterPlaceholder": "Filter name…",
+    "up": "Go up one level",
+    "rename": "Rename",
+    "renameTarget": "New name",
+    "renameInvalid": "Name cannot be empty or contain /",
+    "renameDone": "Renamed {{name}} → {{target}}",
+    "downloadFile": "Download"
   },
   "remotes": {
     "title": "Remote storage",
@@ -289,7 +296,7 @@
     "saveView": "Save view",
     "inspector": "Inspector",
     "noSelection": "Nothing selected",
-    "hint": "Drag the right handle of a node to a target node to connect them. Scroll to zoom, drag the background to pan.",
+    "hint": "Drag from a node's port to connect. Double-click a node to edit it, double-click blank canvas to add a node, drag on blank canvas to box-select nodes, middle-drag or scroll to pan.",
     "nodeLabel": "Label",
     "localPath": "Absolute local path",
     "untitled": "Untitled",
@@ -300,6 +307,7 @@
     "edgeKind": "Connection type",
     "confirmDeleteNode": "Delete node {{name}}? {{count}} connection(s) will be removed too.",
     "confirmDeleteEdge": "Delete this connection?",
+    "confirmDeleteGroup": "Delete {{count}} selected node(s) ({{names}}) and all of their connections?",
     "jobStarted": "Sync job started",
     "runningTitle": "Running jobs ({{count}})",
     "toolbar": {
@@ -470,6 +478,7 @@
       "remotes-create": "Create a remote. The alias example does not write real cloud credentials.",
       "remotes-update": "Update remote parameters.",
       "files-list": "List files under fs/remote. Requires rclone to be running.",
+      "files-download": "Download a single file (fs + remote) as a stream.",
       "files-mkdir": "Create a directory.",
       "files-copy": "Copy files or directories.",
       "files-move": "Move files or directories.",

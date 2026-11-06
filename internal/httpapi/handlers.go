@@ -7,7 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -53,6 +55,7 @@ func Handler(state *app.State, webDir string) http.Handler {
 	mux.HandleFunc("GET /api/remotes/{name}", api.remotesGet)
 	mux.HandleFunc("PATCH /api/remotes/{name}", api.remotesUpdate)
 	mux.HandleFunc("GET /api/files", api.filesList)
+	mux.HandleFunc("GET /api/files/download", api.filesDownload)
 	mux.HandleFunc("DELETE /api/files", api.filesDelete)
 	mux.HandleFunc("POST /api/files/mkdir", api.filesMkdir)
 	mux.HandleFunc("POST /api/files/copy", api.filesCopy)
@@ -174,10 +177,13 @@ func (a *api) rcloneSelect(w http.ResponseWriter, r *http.Request) {
 	a.state.Rclone.UpdateSettings(func(settings *rclone.Settings) {
 		settings.Bin = selected
 	})
-	_, _ = a.state.Settings.Patch(settings.Patch{
+	if _, err := a.state.Settings.Patch(settings.Patch{
 		RcloneSource: &body.Source,
 		RcloneBin:    settings.Nullable[string]{Set: true, Value: &selected},
-	})
+	}); err != nil {
+		writeError(w, err)
+		return
+	}
 	writeJSON(w, http.StatusOK, a.state.Rclone.Status())
 }
 
@@ -253,10 +259,13 @@ func (a *api) rcloneActivate(w http.ResponseWriter, r *http.Request) {
 		settings.Bin = selected
 	})
 	source := rclone.SourceManaged
-	_, _ = a.state.Settings.Patch(settings.Patch{
+	if _, err := a.state.Settings.Patch(settings.Patch{
 		RcloneSource: &source,
 		RcloneBin:    settings.Nullable[string]{Set: true, Value: &selected},
-	})
+	}); err != nil {
+		writeError(w, err)
+		return
+	}
 	writeJSON(w, http.StatusOK, a.state.Rclone.Status())
 }
 
@@ -282,10 +291,13 @@ func (a *api) rcloneDeleteVersion(w http.ResponseWriter, r *http.Request) {
 			settings.Bin = "rclone"
 		})
 		source := rclone.SourceSystem
-		_, _ = a.state.Settings.Patch(settings.Patch{
+		if _, err := a.state.Settings.Patch(settings.Patch{
 			RcloneSource: &source,
 			RcloneBin:    settings.Nullable[string]{Set: true, Value: nil},
-		})
+		}); err != nil {
+			writeError(w, err)
+			return
+		}
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -502,6 +514,24 @@ func (a *api) providerList(ctx context.Context) ([]rclone.Provider, error) {
 	return rclone.ParseProviders(response.Body)
 }
 
+// validRemoteName rejects names that rclone would misinterpret or that our UI
+// would mishandle: e.g. "local:", "a:b", names with whitespace or control
+// characters, or names that outgrow a filesystem-friendly length.
+func validRemoteName(name string) bool {
+	if name == "" || len(name) > 255 {
+		return false
+	}
+	if strings.TrimSpace(name) != name {
+		return false
+	}
+	if strings.Contains(name, ":") {
+		return false
+	}
+	return !strings.ContainsFunc(name, func(r rune) bool {
+		return r < 0x20 || r == 0x7f || r == ' ' || r == '"' || r == '\\' || r == '/'
+	})
+}
+
 func (a *api) remotesCreate(w http.ResponseWriter, r *http.Request) {
 	var body remoteBody
 	if err := decodeJSON(r, &body); err != nil {
@@ -510,6 +540,10 @@ func (a *api) remotesCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.Name == nil || *body.Name == "" {
 		badRequest(w, "remote name is required")
+		return
+	}
+	if !validRemoteName(*body.Name) {
+		badRequest(w, "remote name may not contain ':', whitespace, or path-like characters: "+*body.Name)
 		return
 	}
 	if body.Type == nil || *body.Type == "" {
@@ -545,8 +579,13 @@ func (a *api) remotesUpdate(w http.ResponseWriter, r *http.Request) {
 	if body.Parameters == nil {
 		body.Parameters = map[string]any{}
 	}
+	name := r.PathValue("name")
+	if !validRemoteName(name) {
+		badRequest(w, "remote name may not contain ':', whitespace, or path-like characters: "+name)
+		return
+	}
 	response, err := a.state.Rclone.CallInternal(r.Context(), "config/update", map[string]any{
-		"name":       r.PathValue("name"),
+		"name":       name,
 		"parameters": body.Parameters,
 		"opt":        map[string]any{"nonInteractive": true, "obscure": true},
 	})
@@ -558,7 +597,7 @@ func (a *api) remotesUpdate(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]string{"name": r.PathValue("name")})
+	writeJSON(w, http.StatusOK, map[string]string{"name": name})
 }
 
 func (a *api) filesList(w http.ResponseWriter, r *http.Request) {
@@ -631,6 +670,91 @@ func (a *api) filesCopy(w http.ResponseWriter, r *http.Request) {
 
 func (a *api) filesMove(w http.ResponseWriter, r *http.Request) {
 	a.transfer(w, r, true)
+}
+
+// filesDownload streams a single file to the browser through the loopback RC
+// file server. It validates the locator, confirms the target is a file (not a
+// directory) via operations/stat, and then streams the upstream body without
+// buffering it in memory.
+func (a *api) filesDownload(w http.ResponseWriter, r *http.Request) {
+	locator, err := fileQuery(r, a.state.HomeDir)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	if locator.Remote == "" || strings.Contains(locator.Remote, "/") {
+		badRequest(w, "download requires the name of a file inside the current directory")
+		return
+	}
+	name := filepath.Base(locator.Remote)
+	res, err := a.state.Rclone.CallInternal(r.Context(), "operations/stat", map[string]any{
+		"fs":     locator.RcloneFS(),
+		"remote": locator.RcloneRemote(),
+	})
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	if err := mapUpstream(res); err != nil {
+		writeError(w, err)
+		return
+	}
+	item, _ := res.Body["item"].(map[string]any)
+	if item == nil {
+		writeError(w, core.NotFound("file "+locator.Display()))
+		return
+	}
+	if isDir, _ := item["IsDir"].(bool); isDir {
+		badRequest(w, "directories cannot be downloaded: "+name)
+		return
+	}
+	stream, err := a.state.Rclone.OpenServe(r.Context(), serveFilePath(locator))
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	defer stream.Body.Close()
+	disposition := mime.FormatMediaType("attachment", map[string]string{"filename": name})
+	if disposition != "" {
+		w.Header().Set("Content-Disposition", disposition)
+	}
+	if contentType := stream.Header.Get("Content-Type"); contentType != "" {
+		w.Header().Set("Content-Type", contentType)
+	}
+	if length := stream.Header.Get("Content-Length"); length != "" {
+		w.Header().Set("Content-Length", length)
+	}
+	w.WriteHeader(http.StatusOK)
+	_, _ = io.Copy(w, stream.Body)
+}
+
+// serveFilePath builds the URL path the RC file server serves for locator:
+// the fs is wrapped in [] (the serve URL syntax for a remote root) and every
+// path segment is escaped individually, keeping "/..." separators intact. The
+// result only ever leaves the server process; the browser uses /api/files/.
+func serveFilePath(locator paths.Locator) string {
+	inner := locator.FS
+	if locator.Kind == paths.KindRemote {
+		inner += ":"
+	}
+	var builder strings.Builder
+	builder.WriteString("/%5B")
+	segments := strings.Split(inner, "/")
+	for index, segment := range segments {
+		if index > 0 {
+			builder.WriteString("/")
+		}
+		builder.WriteString(url.PathEscape(segment))
+	}
+	builder.WriteString("%5D")
+	for _, segment := range strings.Split(locator.Remote, "/") {
+		if segment == "" {
+			continue
+		}
+		builder.WriteString("/")
+		builder.WriteString(url.PathEscape(segment))
+	}
+	return builder.String()
 }
 
 func (a *api) filesDelete(w http.ResponseWriter, r *http.Request) {
@@ -800,11 +924,11 @@ func (a *api) settingsPatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if a.state.CLIConfigOverride && body.RcloneConfig.Set {
-		writeAPIError(w, http.StatusConflict, "conflict", "rclone config is overridden by CLI for this process", map[string]any{})
+		writeAPIError(w, http.StatusConflict, "conflict", "rclone config is overridden by CLI for this process", map[string]any{"kind": "cli_override"})
 		return
 	}
 	if a.state.CLIURLOverride && body.RcloneRCURL.Set {
-		writeAPIError(w, http.StatusConflict, "conflict", "rclone RC endpoint is overridden by CLI for this process", map[string]any{})
+		writeAPIError(w, http.StatusConflict, "conflict", "rclone RC endpoint is overridden by CLI for this process", map[string]any{"kind": "cli_override"})
 		return
 	}
 	doc, err := a.state.Settings.Patch(body)
@@ -839,8 +963,17 @@ func (a *api) settingsPatch(w http.ResponseWriter, r *http.Request) {
 func (a *api) proxyRC(w http.ResponseWriter, r *http.Request) {
 	command := r.PathValue("command")
 	payload := map[string]any{}
-	raw, err := io.ReadAll(r.Body)
+	if err := checkBodySize(r); err != nil {
+		writeError(w, err)
+		return
+	}
+	raw, err := io.ReadAll(http.MaxBytesReader(nil, r.Body, maxJSONBytes))
 	if err != nil {
+		var maxErr *http.MaxBytesError
+		if errors.As(err, &maxErr) {
+			writeError(w, core.InvalidRequest("request body too large"))
+			return
+		}
 		writeError(w, core.IO(err))
 		return
 	}

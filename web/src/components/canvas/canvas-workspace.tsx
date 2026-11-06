@@ -39,7 +39,6 @@ const VIEWPORT_COMMIT_DELAY = 250
 
 export type CanvasSelection =
   { type: "node"; id: string } | { type: "edge"; id: string } | null
-
 export type CanvasLabels = {
   ariaLabel: string
   empty: string
@@ -57,12 +56,19 @@ type CanvasWorkspaceProps = {
   edges: ConnectionEdge[]
   viewport: Viewport
   selection: CanvasSelection
+  /** 框选得到的节点集合（与单选状态独立保存）。 */
+  selectedIds: ReadonlySet<string>
   labels: CanvasLabels
   nodeStatus: (id: string) => NodeStatus
   edgeStatus: (id: string) => EdgeStatus
   nodeDetail: (node: StorageNode) => string
   onSelect: (selection: CanvasSelection) => void
+  onSelectMany: (ids: string[]) => void
   onNodeMove: (id: string, position: Position) => void
+  /** 双击节点时打开编辑。 */
+  onNodeDoubleClick: (id: string) => void
+  /** Delete/Backspace 删除框选集合里的全部节点。 */
+  onDeleteMany: () => void
   onViewportChange: (viewport: Viewport) => void
   onConnect: (source: string, target: string) => void
   onDeleteSelection: () => void
@@ -76,17 +82,34 @@ type Drag = {
   hover: string | null
 } | null
 
+/**
+ * 左键在空白画布上的交互：按下确定锚点，拖动画出框选矩形，松手收束。
+ * 平移（空白的拖拽移动）改为中键拖动；这与 Figma/Miro 等画布的习惯一致。
+ */
+type Interaction =
+  | { kind: "box"; anchor: Position; ids: string[] }
+  | {
+      kind: "pan"
+      pointer: { x: number; y: number }
+      stage: { x: number; y: number }
+    }
+  | null
+
 export function CanvasWorkspace({
   nodes,
   edges,
   viewport,
   selection,
+  selectedIds,
   labels,
   nodeStatus,
   edgeStatus,
   nodeDetail,
   onSelect,
+  onSelectMany,
   onNodeMove,
+  onNodeDoubleClick,
+  onDeleteMany,
   onViewportChange,
   onConnect,
   onDeleteSelection,
@@ -96,7 +119,9 @@ export function CanvasWorkspace({
   const stageRef = useRef<Konva.Stage>(null)
   const layerRef = useRef<Konva.Layer>(null)
   const tempRef = useRef<Konva.Arrow>(null)
+  const boxRef = useRef<Konva.Rect>(null)
   const dragRef = useRef<Drag>(null)
+  const modeRef = useRef<Interaction>(null)
   const wheelTimer = useRef<number | null>(null)
   const { theme } = useTheme()
   const palette = resolvePalette(theme)
@@ -148,8 +173,12 @@ export function CanvasWorkspace({
     onViewportChange,
     onConnect,
     onSelect,
+    onSelectMany,
+    onNodeDoubleClick,
     onDeleteSelection,
+    onDeleteMany,
     selection,
+    groupActive: selectedIds.size > 0,
     buildMenu,
   })
 
@@ -175,8 +204,10 @@ export function CanvasWorkspace({
       if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) {
         return
       }
-      if (latest.current.selection) {
-        event.preventDefault()
+      event.preventDefault()
+      if (latest.current.groupActive) {
+        latest.current.onDeleteMany()
+      } else if (latest.current.selection) {
         latest.current.onDeleteSelection()
       }
     }
@@ -209,6 +240,7 @@ export function CanvasWorkspace({
     }
   }, [viewport])
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- latest 是稳定 ref，编译器识别不了 current 子级依赖
   const scheduleViewportCommit = useCallback(() => {
     if (wheelTimer.current) {
       window.clearTimeout(wheelTimer.current)
@@ -269,6 +301,7 @@ export function CanvasWorkspace({
   )
 
   const handleNodeDragEnd = useCallback(
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization -- latest 是稳定 ref，编译器识别不了 current 子级依赖
     (id: string, position: Position) => {
       latest.current.onNodeMove(id, position)
     },
@@ -276,18 +309,202 @@ export function CanvasWorkspace({
   )
 
   const handleSelectNode = useCallback(
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization -- latest 是稳定 ref，编译器识别不了 current 子级依赖
     (id: string) => {
       latest.current.onSelect({ type: "node", id })
     },
     [latest]
   )
 
+  /**
+   * 双击节点：先选中再触发编辑，让浮层与编辑状态保持一致。
+   * latest 是稳定 ref，编译器识别不了 current 子级依赖。
+   */
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
+  const handleNodeEdit = useCallback((id: string) => {
+    latest.current.onSelect({ type: "node", id })
+    latest.current.onNodeDoubleClick(id)
+  }, [latest])
+
   const handleSelectEdge = useCallback(
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization -- latest 是稳定 ref，编译器识别不了 current 子级依赖
     (id: string) => {
       latest.current.onSelect({ type: "edge", id })
     },
     [latest]
   )
+
+  /** 框选矩形的当前世界坐标，用于判断“是否只是在空白处点了一下”。 */
+  const boxRect = (mode: { anchor: Position }, world: Position) => {
+    return {
+      x: Math.min(mode.anchor.x, world.x),
+      y: Math.min(mode.anchor.y, world.y),
+      width: Math.abs(world.x - mode.anchor.x),
+      height: Math.abs(world.y - mode.anchor.y),
+    }
+  }
+
+  const hideBox = () => {
+    const box = boxRef.current
+    if (box) {
+      box.visible(false)
+      layerRef.current?.batchDraw()
+    }
+  }
+
+  /** 结束任何空白画布上的左键/中键交互（框选或平移）。 */
+  const endInteraction = () => {
+    const mode = modeRef.current
+    if (!mode) {
+      return
+    }
+    modeRef.current = null
+    if (mode.kind === "box") {
+      hideBox()
+    }
+    if (mode.kind === "pan") {
+      scheduleViewportCommit()
+    }
+  }
+
+  const handleStageMouseDown = (event: Konva.KonvaEventObject<MouseEvent>) => {
+    setMenu(null)
+    const stage = stageRef.current
+    if (event.target !== event.target.getStage() || !stage) {
+      return
+    }
+    if (event.evt.button === 1) {
+      // 中键按在空白画布上：手动平移（Stage 不再整体 draggable）。
+      const pointer = stage.getPointerPosition()
+      if (!pointer) {
+        return
+      }
+      event.evt.preventDefault()
+      modeRef.current = {
+        kind: "pan",
+        pointer: { x: pointer.x, y: pointer.y },
+        stage: { x: stage.x(), y: stage.y() },
+      }
+      return
+    }
+    if (event.evt.button !== 0) {
+      return
+    }
+    // 左键：空白处按下即开始框选。
+    const world = worldPointer() ?? { x: 0, y: 0 }
+    modeRef.current = { kind: "box", anchor: world, ids: [] }
+    latest.current.onSelect(null)
+    const box = boxRef.current
+    if (box) {
+      box.position({ x: world.x, y: world.y })
+      box.size({ width: 0, height: 0 })
+      box.visible(true)
+      layerRef.current?.batchDraw()
+    }
+  }
+
+  /** 与框选矩形相交（哪怕只碰到一个像素）的节点即被选中。 */
+  const idsInBox = (rect: ReturnType<typeof boxRect>) => {
+    const result: string[] = []
+    for (const bound of latest.current.nodeBounds) {
+      const { rect: node } = bound
+      if (
+        rect.x < node.x + node.width &&
+        rect.x + rect.width > node.x &&
+        rect.y < node.y + node.height &&
+        rect.y + rect.height > node.y
+      ) {
+        result.push(bound.node.id)
+      }
+    }
+    return result
+  }
+
+  const handleStageMouseMove = (
+    event: Konva.KonvaEventObject<MouseEvent>
+  ): void => {
+    const mode = modeRef.current
+    const stage = stageRef.current
+    if (mode?.kind === "pan" && stage) {
+      const pointer = stage.getPointerPosition()
+      if (!pointer) {
+        return
+      }
+      stage.position({
+        x: mode.stage.x + (pointer.x - mode.pointer.x),
+        y: mode.stage.y + (pointer.y - mode.pointer.y),
+      })
+      stage.batchDraw()
+      return
+    }
+    if (mode?.kind === "box" && stage) {
+      const world = worldPointer()
+      if (!world) {
+        return
+      }
+      const rect = boxRect(mode, world)
+      const box = boxRef.current
+      if (box) {
+        box.position({ x: rect.x, y: rect.y })
+        box.size({ width: rect.width, height: rect.height })
+        layerRef.current?.batchDraw()
+      }
+      const ids = idsInBox(rect)
+      // 只在集合变化时上报，避免拖动过程中高频触发。
+      if (ids.join() !== mode.ids.join()) {
+        mode.ids = ids
+        latest.current.onSelectMany(ids)
+      }
+      void event
+      return
+    }
+    handleConnectMouseMove()
+  }
+
+  const handleStageMouseUp = () => {
+    const drag = dragRef.current
+    if (drag?.kind === "connect") {
+      // 连线拖拽：松手在目标节点上就完成，否则收束。
+      if (drag.hover) {
+        completeConnect(drag, drag.hover)
+      } else {
+        endConnect()
+      }
+      return
+    }
+    const mode = modeRef.current
+    if (mode?.kind === "box") {
+      const world = worldPointer()
+      // 几乎没有拖动 → 只是空白处单击，收束（保持 onSelect(null) 已生效）。
+      if (world && Math.abs(world.x - mode.anchor.x) < 4 && Math.abs(world.y - mode.anchor.y) < 4) {
+        latest.current.onSelectMany([])
+      }
+    }
+    endInteraction()
+  }
+
+  const handleStageMouseLeave = () => {
+    endInteraction()
+    endConnect()
+  }
+
+  /** 双击空白画布：在该处弹出建菜单（新建本地/远程/动作节点）。 */
+  const handleStageDblClick = (event: Konva.KonvaEventObject<MouseEvent>) => {
+    if (event.target !== event.target.getStage()) {
+      return
+    }
+    event.evt.preventDefault()
+    const world = worldPointer() ?? { x: 0, y: 0 }
+    latest.current.onSelect(null)
+    openMenu({ kind: "canvas", world })
+  }
+
+  const handleStageDragEnd = (event: Konva.KonvaEventObject<DragEvent>) => {
+    if (event.target !== stageRef.current) {
+      return
+    }
+    scheduleViewportCommit()
+  }
 
   const handlePortDown = useCallback(
     (id: string, side: "in" | "out", shape: Konva.Node) => {
@@ -342,7 +559,7 @@ export function CanvasWorkspace({
     [latest]
   )
 
-  const handleMouseMove = () => {
+  const handleConnectMouseMove = () => {
     const drag = dragRef.current
     if (drag?.kind !== "connect") {
       return
@@ -379,18 +596,6 @@ export function CanvasWorkspace({
     }
   }
 
-  const handleMouseUp = () => {
-    const drag = dragRef.current
-    if (drag?.kind !== "connect") {
-      return
-    }
-    if (drag.hover) {
-      completeConnect(drag, drag.hover)
-    } else {
-      endConnect()
-    }
-  }
-
   const handleWheel = (event: Konva.KonvaEventObject<WheelEvent>) => {
     event.evt.preventDefault()
     const stage = stageRef.current
@@ -418,27 +623,18 @@ export function CanvasWorkspace({
     scheduleViewportCommit()
   }
 
-  const handleStageMouseDown = (event: Konva.KonvaEventObject<MouseEvent>) => {
-    setMenu(null)
-    if (event.target === event.target.getStage()) {
-      latest.current.onSelect(null)
-    }
-  }
-
-  const handleStageDragEnd = (event: Konva.KonvaEventObject<DragEvent>) => {
-    if (event.target !== stageRef.current) {
+  /** 共享的菜单打开逻辑（右键与双击空白画布共用）。 */
+  const openMenu = (context: MenuContext, screen?: { x: number; y: number }) => {
+    const stage = stageRef.current
+    const pointer = screen ?? stage?.getPointerPosition()
+    if (!pointer) {
       return
     }
-    scheduleViewportCommit()
+    setMenu({ x: pointer.x, y: pointer.y, context })
   }
 
   const handleContextMenu = (event: Konva.KonvaEventObject<PointerEvent>) => {
     event.evt.preventDefault()
-    const stage = stageRef.current
-    const pointer = stage?.getPointerPosition()
-    if (!stage || !pointer) {
-      return
-    }
     const world = worldPointer() ?? { x: 0, y: 0 }
     let context: MenuContext = { kind: "canvas", world }
     const owner =
@@ -454,7 +650,7 @@ export function CanvasWorkspace({
       context = { kind: "edge", id: edgeId, world }
       latest.current.onSelect({ type: "edge", id: edgeId })
     }
-    setMenu({ x: pointer.x, y: pointer.y, context })
+    openMenu(context)
   }
 
   return (
@@ -473,14 +669,14 @@ export function CanvasWorkspace({
           y={viewport.y}
           scaleX={viewport.zoom}
           scaleY={viewport.zoom}
-          draggable
           onWheel={handleWheel}
           onMouseDown={handleStageMouseDown}
           onContextMenu={handleContextMenu}
+          onDblClick={handleStageDblClick}
           onDragEnd={handleStageDragEnd}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={endConnect}
+          onMouseMove={handleStageMouseMove}
+          onMouseUp={handleStageMouseUp}
+          onMouseLeave={handleStageMouseLeave}
         >
           <Layer listening={false}>
             <GridBackground
@@ -525,12 +721,25 @@ export function CanvasWorkspace({
               listening={false}
             />
 
+            <Rect
+              ref={boxRef}
+              visible={false}
+              listening={false}
+              stroke={palette.nodeSelected}
+              strokeWidth={1.5}
+              dash={[6, 4]}
+              fill={palette.nodeSelected}
+              fillOpacity={0.08}
+              cornerRadius={2}
+            />
+
             {nodes.map((node) => (
               <CanvasNodeView
                 key={node.id}
                 node={node}
                 selected={
-                  selection?.type === "node" && selection.id === node.id
+                  selectedIds.has(node.id) ||
+                  (selection?.type === "node" && selection.id === node.id)
                 }
                 highlighted={hoverTarget === node.id}
                 status={nodeStatus(node.id)}
@@ -542,6 +751,7 @@ export function CanvasWorkspace({
                 onDragEnd={handleNodeDragEnd}
                 onPortDown={handlePortDown}
                 onPortUp={handlePortUp}
+                onEdit={handleNodeEdit}
               />
             ))}
           </Layer>

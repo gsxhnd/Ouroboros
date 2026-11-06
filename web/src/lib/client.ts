@@ -54,16 +54,19 @@ export function errorMessage(json: unknown): string {
   if (!error) {
     return i18n.t("errors.requestFailed")
   }
+  // 结构化的 details.kind 优先（与后端错误文本解耦）；
+  // 兼容旧后端时才退回匹配英文原文。
+  const kind = error.details?.kind
   if (error.code === "rclone_unavailable") {
-    return error.message === "rclone is not running"
-      ? i18n.t("errors.rcloneNotRunning")
-      : i18n.t("errors.rcloneUnavailable", { message: error.message ?? "" })
+    if (kind === "rclone_not_running" || error.message === "rclone is not running") {
+      return i18n.t("errors.rcloneNotRunning")
+    }
+    return i18n.t("errors.rcloneUnavailable", { message: error.message ?? "" })
   }
-  if (
-    error.code === "conflict" &&
-    error.message?.includes("overridden by CLI")
-  ) {
-    return i18n.t("errors.cliOverride")
+  if (error.code === "conflict") {
+    if (kind === "cli_override" || error.message?.includes("overridden by CLI")) {
+      return i18n.t("errors.cliOverride")
+    }
   }
   if (error.code) {
     const translated = codeMessage(error.code)

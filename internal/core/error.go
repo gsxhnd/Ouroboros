@@ -27,6 +27,17 @@ type Error struct {
 	Document string
 	Version  uint32
 	Err      error
+	// Details carries structured, transport-mappable information (for example a
+	// conflict kind plus expected/found revisions) so API layer does not have to
+	// parse the message text.
+	Details map[string]any
+}
+
+func (e *Error) Detail(key string) any {
+	if e == nil || e.Details == nil {
+		return nil
+	}
+	return e.Details[key]
 }
 
 func (e *Error) Error() string {
@@ -70,7 +81,11 @@ func (e *Error) Code() string {
 }
 
 func NotRunning() *Error {
-	return &Error{Kind: KindNotRunning, Message: "rclone is not running"}
+	return &Error{
+		Kind:    KindNotRunning,
+		Message: "rclone is not running",
+		Details: map[string]any{"kind": "rclone_not_running"},
+	}
 }
 
 func AlreadyRunning() *Error {
@@ -111,6 +126,12 @@ func NotFound(message string) *Error {
 
 func Conflict(message string) *Error {
 	return &Error{Kind: KindConflict, Message: message}
+}
+
+// ConflictDetail builds a conflict error with structured details that the API
+// layer maps into the response body instead of parsing the message.
+func ConflictDetail(message string, details map[string]any) *Error {
+	return &Error{Kind: KindConflict, Message: message, Details: details}
 }
 
 func IO(err error) *Error {

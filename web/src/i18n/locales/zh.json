@@ -166,7 +166,14 @@
     "targetHelp": "输入另一个 remote 名，或以 / 开头的本地绝对路径。",
     "moveWarning": "移动会把源文件删除。",
     "targetRequired": "请输入目标位置",
-    "submitted": "{{kind}}已提交：{{name}} → {{target}}"
+    "submitted": "{{kind}}已提交：{{name}} → {{target}}",
+    "filterPlaceholder": "按名称过滤…",
+    "up": "返回上一级",
+    "rename": "重命名",
+    "renameTarget": "新名称",
+    "renameInvalid": "名称不能为空，且不能包含 /",
+    "renameDone": "已重命名 {{name}} → {{target}}",
+    "downloadFile": "下载"
   },
   "remotes": {
     "title": "远程存储",
@@ -289,7 +296,7 @@
     "saveView": "保存视图",
     "inspector": "属性",
     "noSelection": "未选中任何对象",
-    "hint": "从节点右侧端口拖到目标节点即可连线。滚轮缩放，拖动空白处平移。",
+    "hint": "从节点端口拖到目标节点即可连线。双击节点编辑，双击空白处新建节点，空白处按住左键拖动框选节点，中键拖拽平移画布。",
     "nodeLabel": "名称",
     "localPath": "本地绝对路径",
     "untitled": "未命名",
@@ -300,6 +307,7 @@
     "edgeKind": "连线类型",
     "confirmDeleteNode": "删除节点 {{name}}？相关的 {{count}} 条连线也会被删除。",
     "confirmDeleteEdge": "删除这条连线？",
+    "confirmDeleteGroup": "删除选中的 {{count}} 个节点（{{names}}）及其全部连线？",
     "jobStarted": "同步任务已开始",
     "runningTitle": "运行中的任务（{{count}}）",
     "toolbar": {
@@ -470,6 +478,7 @@
       "remotes-create": "创建 remote。alias 示例不会写入真实云凭据。",
       "remotes-update": "更新 remote 参数。",
       "files-list": "列出 fs/remote 下的文件。需要 rclone 已运行。",
+      "files-download": "以流的方式下载单个文件（fs + remote）。",
       "files-mkdir": "创建目录。",
       "files-copy": "复制文件或目录。",
       "files-move": "移动文件或目录。",

@@ -30,6 +30,8 @@ export type NodeViewProps = {
   onDragEnd: (id: string, position: { x: number; y: number }) => void
   onPortDown: (id: string, side: "in" | "out", node: Konva.Node) => void
   onPortUp: (id: string, side: "in" | "out") => void
+  /** 双击节点：打开对应的编辑对话框。 */
+  onEdit: (id: string) => void
 }
 
 /**
@@ -49,6 +51,7 @@ export const CanvasNodeView = memo(function CanvasNodeView({
   onDragEnd,
   onPortDown,
   onPortUp,
+  onEdit,
 }: NodeViewProps) {
   const isAction = node.kind === "action"
   const width = isAction ? ACTION_WIDTH : STORAGE_WIDTH
@@ -70,6 +73,10 @@ export const CanvasNodeView = memo(function CanvasNodeView({
       onMouseDown={(event) => {
         event.cancelBubble = true
         onSelect(node.id)
+      }}
+      onDblClick={(event) => {
+        event.cancelBubble = true
+        onEdit(node.id)
       }}
       onDragMove={(event) => {
         event.cancelBubble = true

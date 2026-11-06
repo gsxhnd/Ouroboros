@@ -146,7 +146,11 @@ func spawnDaemon(ctx context.Context, settings Settings, client *Client) (*spawn
 	if err != nil {
 		return nil, core.IO(err)
 	}
-	cmd := exec.Command(settings.Bin, "rcd", "--rc-addr", rcAddr, "--rc-job-expire-duration", "24h")
+	// --rc-serve allows GET requests to stream remote objects through the RC
+	// HTTP interface; ourboros uses it for /api/files/download. The RC always
+	// has auth set (RCLONE_RC_USER/RCLONE_RC_PASS below) and stays on
+	// 127.0.0.1, so the file server is never exposed unauthenticated.
+	cmd := exec.Command(settings.Bin, "rcd", "--rc-addr", rcAddr, "--rc-job-expire-duration", "24h", "--rc-serve")
 	cmd.Env = append(os.Environ(), "RCLONE_RC_USER="+auth.User, "RCLONE_RC_PASS="+auth.Pass)
 	if settings.Config != "" {
 		cmd.Args = append(cmd.Args, "--config", settings.Config)
