@@ -1,22 +1,24 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
-  ArrowUpIcon,
   ChevronRightIcon,
-  CopyIcon,
   CornerLeftUpIcon,
-  DownloadIcon,
-  FileIcon,
-  FolderIcon,
   FolderPlusIcon,
   HardDriveIcon,
-  MoveIcon,
-  PenLineIcon,
   RefreshCcwIcon,
   SearchIcon,
-  TrashIcon,
 } from "lucide-react"
+import { toast } from "sonner"
 
+import {
+  MkdirDialog,
+  RenameDialog,
+  TransferDialog,
+  type RenameState,
+  type TransferState,
+} from "@/components/files/dialogs"
+import { FileTable, type SortKey } from "@/components/files/file-table"
+import { PageContainer, PageHeader } from "@/components/page-header"
 import { EmptyHint, SelectField } from "@/components/shared"
 import { Button } from "@/components/ui/button"
 import {
@@ -26,35 +28,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { call, errorMessage, formatBytes } from "@/lib/client"
+import { call, errorMessage } from "@/lib/client"
 import { joinPath, parentPath, splitPath } from "@/lib/paths"
 import type { FilesResponse, ListItem, RemoteInfo } from "@/lib/types"
 import { cn } from "cn"
-import { toast } from "sonner"
-
-type TransferKind = "copy" | "move"
-
-type TransferState = {
-  kind: TransferKind
-  item: ListItem
-  target: string
-}
-
-type RenameState = {
-  item: ListItem
-  name: string
-}
-
-type SortKey = "name" | "size" | "mod_time"
 
 /** 远程路径的上一级；根目录时返回空串。 */
 function remoteParent(path: string): string {
@@ -64,21 +43,6 @@ function remoteParent(path: string): string {
 
 const join = (base: string, name: string | null) =>
   base ? `${base}/${name}` : (name ?? "")
-
-/** 列表头部可点击的排序键定义。 */
-const sortColumns: {
-  labelKey: string
-  sortKey: SortKey
-  className?: string
-}[] = [
-  { labelKey: "common.name", sortKey: "name" },
-  { labelKey: "files.columnSize", sortKey: "size" },
-  {
-    labelKey: "files.columnModified",
-    sortKey: "mod_time",
-    className: "hidden sm:table-cell",
-  },
-]
 
 export function FilesPage() {
   const { t } = useTranslation()
@@ -90,7 +54,6 @@ export function FilesPage() {
   const [items, setItems] = useState<ListItem[]>([])
   const [loading, setLoading] = useState(false)
   const [mkdirOpen, setMkdirOpen] = useState(false)
-  const [mkdirName, setMkdirName] = useState("")
   const [transfer, setTransfer] = useState<TransferState | null>(null)
   const [rename, setRename] = useState<RenameState | null>(null)
   const [sortKey, setSortKey] = useState<SortKey>("name")
@@ -195,7 +158,9 @@ export function FilesPage() {
   }
 
   const canGoUp =
-    fsKind === "remote" ? remotePath !== "" : parentPath(localPath) !== localPath
+    fsKind === "remote"
+      ? remotePath !== ""
+      : parentPath(localPath) !== localPath
 
   const goUp = () => {
     if (fsKind === "remote") {
@@ -232,12 +197,7 @@ export function FilesPage() {
     }
   }
 
-  const mkdir = async () => {
-    const name = mkdirName.trim()
-    if (!name || name.includes("/")) {
-      toast.error(t("files.nameInvalid"))
-      return
-    }
+  const mkdir = async (name: string) => {
     await call("/api/files/mkdir", {
       method: "POST",
       body: {
@@ -246,8 +206,6 @@ export function FilesPage() {
       },
     })
     toast.success(t("files.created", { name }))
-    setMkdirOpen(false)
-    setMkdirName("")
     await list()
   }
 
@@ -352,10 +310,16 @@ export function FilesPage() {
   }
 
   const crumbs = remotePath ? remotePath.split("/") : []
-  const localCrumbs = fsKind === "local" && localPath.trim() ? splitPath(localPath) : []
+  const localCrumbs =
+    fsKind === "local" && localPath.trim() ? splitPath(localPath) : []
 
   return (
-    <>
+    <PageContainer>
+      <PageHeader
+        title={t("nav.files")}
+        description={t("nav.filesHint")}
+      />
+
       <Card>
         <CardHeader>
           <CardTitle>{t("files.locationTitle")}</CardTitle>
@@ -408,20 +372,33 @@ export function FilesPage() {
       {items.length === 0 && !loading ? (
         <EmptyHint>{t("files.empty")}</EmptyHint>
       ) : (
-        <Card size="sm">
+        <Card size="sm" className="py-0">
           <CardContent className="p-0">
             <div className="flex flex-wrap items-center gap-1 px-3 py-2 text-sm text-muted-foreground">
-              <Button variant="ghost" size="icon-xs" aria-label={t("files.up")} disabled={!canGoUp} onClick={goUp}>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                aria-label={t("files.up")}
+                disabled={!canGoUp}
+                onClick={goUp}
+              >
                 <CornerLeftUpIcon />
               </Button>
               {fsKind === "remote" ? (
                 <>
-                  <Button variant="ghost" size="xs" onClick={() => setRemotePath("")}>
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    onClick={() => setRemotePath("")}
+                  >
                     <HardDriveIcon data-icon="inline-start" />
                     {t("files.root")}
                   </Button>
                   {crumbs.map((crumb, index) => (
-                    <span key={`${crumb}-${index}`} className="flex items-center gap-1">
+                    <span
+                      key={`${crumb}-${index}`}
+                      className="flex items-center gap-1"
+                    >
                       <ChevronRightIcon className="size-3.5" />
                       <Button
                         variant="ghost"
@@ -442,7 +419,10 @@ export function FilesPage() {
                     <Button
                       variant="ghost"
                       size="xs"
-                      className={index === localCrumbs.length - 1 ? "font-medium text-foreground" : undefined}
+                      className={cn(
+                        index === localCrumbs.length - 1 &&
+                          "font-medium text-foreground"
+                      )}
                       onClick={() => setLocalPath(crumb.path)}
                     >
                       {crumb.name}
@@ -450,8 +430,8 @@ export function FilesPage() {
                   </span>
                 ))
               )}
-              <div className="relative ml-auto">
-                <SearchIcon className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <div className="relative ms-auto">
+                <SearchIcon className="pointer-events-none absolute top-1/2 left-2 size-3.5 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   className="h-8 w-44 pl-7 text-xs sm:w-56"
                   placeholder={t("files.filterPlaceholder")}
@@ -461,245 +441,61 @@ export function FilesPage() {
                 />
               </div>
             </div>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-y text-left text-xs text-muted-foreground">
-                  {sortColumns.map((column) => {
-                    const active = column.sortKey === sortKey
-                    return (
-                      <th
-                        key={column.sortKey}
-                        className={cn("px-3 py-2 font-medium", column.className)}
-                        aria-sort={
-                          active ? (sortDir === "asc" ? "ascending" : "descending") : undefined
-                        }
-                      >
-                        <button
-                          type="button"
-                          className={cn(
-                            "flex items-center gap-1 hover:text-foreground",
-                            active && "text-foreground"
-                          )}
-                          onClick={() => toggleSort(column.sortKey)}
-                        >
-                          {t(column.labelKey)}
-                          {column.sortKey === "name" || active ? (
-                            <ArrowUpIcon
-                              className={cn(
-                                "size-3",
-                                !active && "opacity-0",
-                                active && sortDir === "desc" && "rotate-180"
-                              )}
-                            />
-                          ) : null}
-                        </button>
-                      </th>
-                    )
-                  })}
-                  <th className="px-3 py-2 font-medium">{t("common.actions")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleItems.map((item) => {
-                  const name = item.name ?? item.path ?? ""
-                  return (
-                    <tr
-                      key={name}
-                      className="border-b last:border-b-0 hover:bg-muted/50"
-                    >
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-2">
-                          {item.is_dir ? (
-                            <FolderIcon className="size-4 shrink-0 text-muted-foreground" />
-                          ) : (
-                            <FileIcon className="size-4 shrink-0 text-muted-foreground" />
-                          )}
-                          {item.is_dir ? (
-                            <Button
-                              variant="link"
-                              size="xs"
-                              className="px-0"
-                              onClick={() => enterDir(name)}
-                            >
-                              {name}
-                            </Button>
-                          ) : (
-                            <span className="font-mono text-xs">{name}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-3 py-2 text-xs text-muted-foreground">
-                        {item.is_dir ? "—" : formatBytes(item.size)}
-                      </td>
-                      <td className="hidden px-3 py-2 text-xs text-muted-foreground sm:table-cell">
-                        {item.mod_time
-                          ? new Date(item.mod_time).toLocaleString()
-                          : "—"}
-                      </td>
-                      <td className="px-3 py-2">
-                        <div className="flex gap-1">
-                          {!item.is_dir ? (
-                            <Button
-                              variant="ghost"
-                              size="icon-xs"
-                              aria-label={t("files.downloadFile")}
-                              onClick={() => void downloadItem(item)}
-                            >
-                              <DownloadIcon />
-                            </Button>
-                          ) : null}
-                          <Button
-                            variant="ghost"
-                            size="icon-xs"
-                            aria-label={t("files.rename")}
-                            onClick={() =>
-                              setRename({ item, name })
-                            }
-                          >
-                            <PenLineIcon />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon-xs"
-                            aria-label={t("common.copy")}
-                            onClick={() =>
-                              setTransfer({
-                                kind: "copy",
-                                item,
-                                target: fsKind === "remote" ? remoteName : "",
-                              })
-                            }
-                          >
-                            <CopyIcon />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon-xs"
-                            aria-label={t("common.move")}
-                            onClick={() =>
-                              setTransfer({
-                                kind: "move",
-                                item,
-                                target: fsKind === "remote" ? "" : remotePath,
-                              })
-                            }
-                          >
-                            <MoveIcon />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon-xs"
-                            aria-label={t("common.delete")}
-                            onClick={() => void deleteItem(item)}
-                          >
-                            <TrashIcon />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+            <FileTable
+              items={visibleItems}
+              sortKey={sortKey}
+              sortDir={sortDir}
+              onToggleSort={toggleSort}
+              onEnterDir={enterDir}
+              onDownload={(item) => void downloadItem(item)}
+              onRename={(item) =>
+                setRename({ item, name: item.name ?? item.path ?? "" })
+              }
+              onCopy={(item) =>
+                setTransfer({
+                  kind: "copy",
+                  item,
+                  target: fsKind === "remote" ? remoteName : "",
+                })
+              }
+              onMove={(item) =>
+                setTransfer({
+                  kind: "move",
+                  item,
+                  target: fsKind === "remote" ? "" : remotePath,
+                })
+              }
+              onDelete={(item) => void deleteItem(item)}
+            />
           </CardContent>
         </Card>
       )}
 
-      <Dialog open={mkdirOpen} onOpenChange={setMkdirOpen}>
-        <DialogContent>
-          <DialogHeader>{t("files.newDir")}</DialogHeader>
-          <Input
-            value={mkdirName}
-            placeholder={t("files.mkdirPlaceholder")}
-            onChange={(e) => setMkdirName(e.target.value)}
-          />
-          <DialogFooter>
-            <DialogClose render={<Button variant="outline" />}>
-              {t("common.cancel")}
-            </DialogClose>
-            <Button onClick={() => void mkdir()}>{t("common.create")}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <MkdirDialog
+        open={mkdirOpen}
+        onOpenChange={setMkdirOpen}
+        onCreate={mkdir}
+      />
 
-      <Dialog
-        open={transfer !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setTransfer(null)
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            {transfer?.kind === "copy" ? t("common.copy") : t("common.move")}{" "}
-            {transfer?.item.name}
-          </DialogHeader>
-          <div className="flex flex-col gap-2">
-            <Label>{t("files.target")}</Label>
-            <Input
-              value={transfer?.target ?? ""}
-              placeholder={t("files.targetPlaceholder")}
-              onChange={(e) =>
-                setTransfer((current) =>
-                  current ? { ...current, target: e.target.value } : current
-                )
-              }
-              className="font-mono"
-            />
-            <p className="text-xs text-muted-foreground">
-              {t("files.targetHelp")}
-              {transfer?.kind === "move" ? ` ${t("files.moveWarning")}` : ""}
-            </p>
-          </div>
-          <DialogFooter>
-            <DialogClose render={<Button variant="outline" />}>
-              {t("common.cancel")}
-            </DialogClose>
-            <Button onClick={() => void submitTransfer()}>
-              {transfer?.kind === "copy" ? t("common.copy") : t("common.move")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <TransferDialog
+        state={transfer}
+        onTargetChange={(target) =>
+          setTransfer((current) =>
+            current ? { ...current, target } : current
+          )
+        }
+        onClose={() => setTransfer(null)}
+        onSubmit={() => void submitTransfer()}
+      />
 
-      <Dialog
-        open={rename !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setRename(null)
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            {t("files.rename")} {rename?.item.name}
-          </DialogHeader>
-          <div className="flex flex-col gap-2">
-            <Label>{t("files.renameTarget")}</Label>
-            <Input
-              value={rename?.name ?? ""}
-              onChange={(e) =>
-                setRename((current) =>
-                  current ? { ...current, name: e.target.value } : current
-                )
-              }
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  void submitRename()
-                }
-              }}
-              autoFocus
-            />
-          </div>
-          <DialogFooter>
-            <DialogClose render={<Button variant="outline" />}>
-              {t("common.cancel")}
-            </DialogClose>
-            <Button onClick={() => void submitRename()}>{t("files.rename")}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+      <RenameDialog
+        state={rename}
+        onNameChange={(name) =>
+          setRename((current) => (current ? { ...current, name } : current))
+        }
+        onClose={() => setRename(null)}
+        onSubmit={() => void submitRename()}
+      />
+    </PageContainer>
   )
 }

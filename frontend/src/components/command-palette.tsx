@@ -1,15 +1,11 @@
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { useNavigate } from "react-router"
 import {
-  CodeXmlIcon,
-  FolderOpenIcon,
-  GaugeIcon,
-  HardDriveIcon,
   LanguagesIcon,
   MoonIcon,
   PlayIcon,
   SearchIcon,
-  SettingsIcon,
   SunIcon,
 } from "lucide-react"
 
@@ -21,40 +17,28 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  CommandShortcut,
 } from "@/components/ui/command"
 import { Button } from "@/components/ui/button"
 import { Kbd } from "@/components/ui/kbd"
-type CommandPaletteProps = {
-  isDark: boolean
-  isRunning: boolean
-  isMac: boolean
-  onToggleTheme: () => void
-  onToggleLanguage: () => void
-  onToggleRclone: () => void
-  onOpenOverview: () => void
-  onOpenFiles: () => void
-  onOpenStorages: () => void
-  onOpenSettings: () => void
-  onOpenApi: () => void
-}
+import { changeLanguage, type Locale } from "@/i18n"
+import { NAV_ITEMS } from "@/lib/nav"
+import { isMacDesktop } from "@/lib/platform"
+import { useTheme } from "@/components/theme-provider"
+import { useRcloneStore } from "@/stores/rclone-store"
 
-export function CommandPalette({
-  isDark,
-  isRunning,
-  isMac,
-  onToggleTheme,
-  onToggleLanguage,
-  onToggleRclone,
-  onOpenOverview,
-  onOpenFiles,
-  onOpenStorages,
-  onOpenSettings,
-  onOpenApi,
-}: CommandPaletteProps) {
-  const { t } = useTranslation()
+/**
+ * 快捷命令面板（⌘K / Ctrl+K）：导航项直接来自 lib/nav 注册表，
+ * 与侧边栏保持同一份路径与文案；主题 / 语言 / rclone 启停就地读取全局状态。
+ */
+export function CommandPalette() {
+  const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
+  const { theme, setTheme } = useTheme()
+  const running = useRcloneStore((state) => state.status?.running ?? false)
+  const start = useRcloneStore((state) => state.start)
+  const stop = useRcloneStore((state) => state.stop)
   const [open, setOpen] = useState(false)
-  const shortcut = isMac ? "⌘ K" : "Ctrl K"
+  const shortcut = isMacDesktop ? "⌘ K" : "Ctrl K"
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -71,6 +55,8 @@ export function CommandPalette({
     setOpen(false)
     action()
   }
+
+  const nextLocale: Locale = i18n.language.startsWith("zh") ? "en" : "zh"
 
   return (
     <>
@@ -109,38 +95,42 @@ export function CommandPalette({
           <CommandList>
             <CommandEmpty>{t("command.empty")}</CommandEmpty>
             <CommandGroup heading={t("command.navigation")}>
-              <CommandItem onSelect={() => run(onOpenOverview)}>
-                <GaugeIcon />
-                {t("command.overview")}
-                <CommandShortcut>↵</CommandShortcut>
-              </CommandItem>
-              <CommandItem onSelect={() => run(onOpenFiles)}>
-                <FolderOpenIcon />
-                {t("command.files")}
-              </CommandItem>
-              <CommandItem onSelect={() => run(onOpenStorages)}>
-                <HardDriveIcon />
-                {t("command.storages")}
-              </CommandItem>
-              <CommandItem onSelect={() => run(onOpenSettings)}>
-                <SettingsIcon />
-                {t("command.settings")}
-              </CommandItem>
-              <CommandItem onSelect={() => run(onOpenApi)}>
-                <CodeXmlIcon />
-                {t("command.api")}
-              </CommandItem>
+              {NAV_ITEMS.map((item) => (
+                <CommandItem
+                  key={item.path}
+                  onSelect={() => run(() => navigate(item.path))}
+                >
+                  <item.icon />
+                  {t(item.labelKey)}
+                </CommandItem>
+              ))}
             </CommandGroup>
             <CommandGroup heading={t("command.actions")}>
-              <CommandItem onSelect={() => run(onToggleRclone)}>
+              <CommandItem
+                onSelect={() =>
+                  run(() => void (running ? stop() : start()))
+                }
+              >
                 <PlayIcon />
-                {isRunning ? t("command.stopRclone") : t("command.startRclone")}
+                {running
+                  ? t("command.stopRclone")
+                  : t("command.startRclone")}
               </CommandItem>
-              <CommandItem onSelect={() => run(onToggleTheme)}>
-                {isDark ? <SunIcon /> : <MoonIcon />}
-                {isDark ? t("command.lightTheme") : t("command.darkTheme")}
+              <CommandItem
+                onSelect={() =>
+                  run(() =>
+                    setTheme(theme === "dark" ? "light" : "dark")
+                  )
+                }
+              >
+                {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+                {theme === "dark"
+                  ? t("command.lightTheme")
+                  : t("command.darkTheme")}
               </CommandItem>
-              <CommandItem onSelect={() => run(onToggleLanguage)}>
+              <CommandItem
+                onSelect={() => run(() => changeLanguage(nextLocale))}
+              >
                 <LanguagesIcon />
                 {t("command.switchLanguage")}
               </CommandItem>

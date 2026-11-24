@@ -1,0 +1,158 @@
+import { useTranslation } from "react-i18next"
+import {
+  ArrowRightIcon,
+  ClockIcon,
+  PencilIcon,
+  PlayIcon,
+  RefreshCcwIcon,
+  SquareIcon,
+  TrashIcon,
+} from "lucide-react"
+
+import { StatusChip, SwitchField } from "@/components/shared"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { JobProgress } from "@/components/sync/job-rows"
+import {
+  endpointLabel,
+  operationLabel,
+  scheduleLabel,
+} from "@/components/sync/labels"
+import type { JobSnapshot, SyncTask } from "@/lib/types"
+import { formatTime } from "@/lib/client"
+import { TERMINAL_JOB_STATUSES } from "@/stores/sync-store"
+
+/** 单个同步任务卡片：徽标、端点、计划、最近结果与操作。 */
+export function TaskCard({
+  task,
+  jobs,
+  onRun,
+  onEdit,
+  onDelete,
+  onToggleEnabled,
+  onResync,
+  onStop,
+}: {
+  task: SyncTask
+  jobs: JobSnapshot[]
+  onRun: () => void
+  onEdit: () => void
+  onDelete: () => void
+  onToggleEnabled: (enabled: boolean) => void
+  onResync: () => void
+  onStop: () => void
+}) {
+  const { t } = useTranslation()
+  const job = jobs.find(
+    (item) =>
+      item.edge_id === task.id && !TERMINAL_JOB_STATUSES.has(item.status)
+  )
+  const running = job !== undefined
+  const lastResult = task.last_result
+
+  return (
+    <Card className="py-3">
+      <CardContent className="flex flex-col gap-2.5 px-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-medium">{task.name}</span>
+          <Badge variant="outline" className="font-normal">
+            {operationLabel(task, t)}
+          </Badge>
+          {task.bw_limit ? (
+            <Badge variant="secondary" className="font-normal">
+              {t("sync.bwLimit")} {task.bw_limit}
+            </Badge>
+          ) : null}
+          {task.max_transfer ? (
+            <Badge variant="secondary" className="font-normal">
+              {t("sync.maxTransfer")} {task.max_transfer}
+            </Badge>
+          ) : null}
+          <span className="ms-auto flex items-center gap-3">
+            <SwitchField
+              label={t("sync.enabled")}
+              checked={task.enabled}
+              disabled={running}
+              onCheckedChange={onToggleEnabled}
+            />
+          </span>
+        </div>
+
+        <div
+          className="flex min-w-0 flex-wrap items-center gap-1 text-sm text-muted-foreground"
+          title={task.impact}
+        >
+          <span className="truncate font-mono text-xs">
+            {endpointLabel(task.source)}
+          </span>
+          <ArrowRightIcon className="size-3.5 shrink-0" aria-hidden />
+          <span className="truncate font-mono text-xs">
+            {endpointLabel(task.target)}
+          </span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <ClockIcon className="size-3.5" aria-hidden />
+            {scheduleLabel(task, t)}
+          </span>
+          <span>
+            {t("sync.nextRun")}
+            {formatTime(task.next_run)}
+          </span>
+          <span className="flex items-center gap-1">
+            {t("sync.lastResult")}
+            <StatusChip status={lastResult?.status ?? null} />
+            {lastResult?.status === "failed" || lastResult?.error ? (
+              <span className="max-w-56 truncate" title={lastResult.error}>
+                {lastResult.error}
+              </span>
+            ) : null}
+          </span>
+        </div>
+
+        {running && job ? <JobProgress job={job} /> : null}
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="xs" disabled={running || !task.enabled} onClick={onRun}>
+            <PlayIcon />
+            {t("sync.runNow")}
+          </Button>
+          {running ? (
+            <Button size="xs" variant="outline" onClick={onStop}>
+              <SquareIcon />
+              {t("sync.stop")}
+            </Button>
+          ) : null}
+          {task.operation === "bisync" && !running ? (
+            <Button size="xs" variant="outline" onClick={onResync}>
+              <RefreshCcwIcon />
+              {t("sync.resyncAction")}
+            </Button>
+          ) : null}
+          <span className="ms-auto flex items-center gap-1">
+            <Button
+              size="icon-xs"
+              variant="ghost"
+              aria-label={t("common.edit")}
+              title={t("common.edit")}
+              onClick={onEdit}
+            >
+              <PencilIcon />
+            </Button>
+            <Button
+              size="icon-xs"
+              variant="ghost"
+              aria-label={t("common.delete")}
+              title={t("common.delete")}
+              onClick={onDelete}
+            >
+              <TrashIcon />
+            </Button>
+          </span>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}

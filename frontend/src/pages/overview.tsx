@@ -4,6 +4,7 @@ import { DownloadIcon, PlayIcon, SquareIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { EmptyHint, SelectField, StatusChip } from "@/components/shared"
+import { PageContainer, PageHeader } from "@/components/page-header"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -124,7 +125,12 @@ export function OverviewPage() {
   }
 
   return (
-    <>
+    <PageContainer>
+      <PageHeader
+        title={t("nav.overview")}
+        description={t("nav.overviewHint")}
+      />
+
       <Card>
         <CardHeader>
           <CardTitle>{t("overview.connectionTitle")}</CardTitle>
@@ -138,7 +144,8 @@ export function OverviewPage() {
                 disabled={rcloneBusy || status === null || status.running}
                 onClick={() => void startRclone()}
               >
-                <PlayIcon data-icon="inline-start" /> {t("overview.startOrConnect")}
+                <PlayIcon data-icon="inline-start" />{" "}
+                {t("overview.startOrConnect")}
               </Button>
               <Button
                 size="sm"
@@ -166,7 +173,10 @@ export function OverviewPage() {
           </div>
           <dl className="grid gap-3 sm:grid-cols-2">
             {connectionFacts(status, t, i18n).map((fact) => (
-              <div key={fact.label} className="flex min-w-0 flex-col gap-0.5">
+              <div
+                key={fact.label}
+                className="flex min-w-0 flex-col gap-1 rounded-lg bg-muted/50 px-3 py-2"
+              >
                 <dt className="text-xs text-muted-foreground">{fact.label}</dt>
                 <dd className="truncate font-mono text-xs" title={fact.value}>
                   {fact.value}
@@ -281,7 +291,7 @@ export function OverviewPage() {
           ))}
         </CardContent>
       </Card>
-    </>
+    </PageContainer>
   )
 }
 
@@ -312,8 +322,14 @@ function connectionFacts(
       label: t("overview.factConfig"),
       value: status?.config || t("overview.factConfigDefault"),
     },
-    { label: t("overview.factSystem"), value: systemLine || t("overview.afterConnect") },
-    { label: t("overview.factGo"), value: status?.go_version || t("overview.afterConnect") },
+    {
+      label: t("overview.factSystem"),
+      value: systemLine || t("overview.afterConnect"),
+    },
+    {
+      label: t("overview.factGo"),
+      value: status?.go_version || t("overview.afterConnect"),
+    },
     {
       label: t("overview.factLinking"),
       value: status?.linking

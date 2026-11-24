@@ -18,10 +18,12 @@
     "name": "Name",
     "type": "Type",
     "actions": "Actions",
-    "send": "Send"
+    "send": "Send",
+    "confirmName": "Type the name to confirm"
   },
   "nav": {
     "mainNav": "Main navigation",
+    "workspace": "Workspace",
     "system": "System",
     "tasks": "Tasks",
     "overview": "Overview",
@@ -31,7 +33,6 @@
     "settings": "Settings",
     "settingsHint": "endpoint and rclone config",
     "api": "API playground",
-    "apiHint": "All HTTP endpoints",
     "storages": "Storage"
   },
   "auth": {
@@ -84,16 +85,11 @@
     "empty": "No matching commands.",
     "navigation": "Navigation",
     "actions": "Actions",
-    "overview": "Open overview",
-    "files": "Open files",
-    "settings": "Open settings",
-    "api": "Open API playground",
     "startRclone": "Start rclone",
     "stopRclone": "Stop rclone",
     "lightTheme": "Switch to light theme",
     "darkTheme": "Switch to dark theme",
-    "switchLanguage": "Switch language",
-    "storages": "Open storage"
+    "switchLanguage": "Switch language"
   },
   "status": {
     "running": "Running",
@@ -239,7 +235,6 @@
     "resyncAction": "Resync",
     "deleteTitle": "Delete sync task",
     "deleteWarning": "This removes the sync task \"{{name}}\". Scheduled runs stop and the task cannot be recovered. Type the task name to confirm.",
-    "deleteTypeHint": "Type task name to confirm",
     "deleteDone": "Deleted {{name}}"
   },
   "remotes": {
@@ -302,7 +297,6 @@
     "deleteTitle": "Delete storage",
     "deleteLocalWarning": "This removes the local storage \"{{name}}\" ({{path}}) from Ourboros. Files on disk are not touched.",
     "deleteRemoteWarning": "This deletes remote \"{{name}}\" from the rclone configuration, including its credentials. Sync tasks using it are not affected unless you delete them first.",
-    "deleteTypeHint": "Type remote name to confirm",
     "localDeleted": "Deleted {{name}}",
     "remoteDeleted": "Deleted {{name}}",
     "rcloneOfflineRemotes": "rclone is not running. Remotes can be read or created once it is started."
