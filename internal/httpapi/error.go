@@ -70,6 +70,8 @@ func mapCore(err *core.Error) (int, string, any) {
 		return http.StatusBadRequest, code, details
 	case core.KindNotFound:
 		return http.StatusNotFound, code, details
+	case core.KindUnauthorized:
+		return http.StatusUnauthorized, code, details
 	case core.KindAlreadyRunning, core.KindConflict:
 		return http.StatusConflict, code, details
 	case core.KindNotRunning, core.KindReadyTimeout, core.KindBinaryNotFound:

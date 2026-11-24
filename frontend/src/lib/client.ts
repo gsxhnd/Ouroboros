@@ -1,8 +1,18 @@
 import { toast } from "sonner"
 
 import { sendApiRequest, type HttpMethod } from "@/lib/api"
+import { useAuthStore } from "@/lib/auth"
 import i18n from "@/i18n"
 import type { ApiErrorBody } from "@/lib/types"
+
+/** 收到 401 时通知 TokenGate 并返回 true，调用方不再弹常规错误提示。 */
+function handleUnauthorized(status: number): boolean {
+  if (status !== 401) {
+    return false
+  }
+  useAuthStore.getState().markUnauthorized()
+  return true
+}
 
 /** 执行一次 API 调用，成功时返回解析后的 JSON，失败时弹 toast 并抛出错误。 */
 export async function call<T = unknown>(
@@ -17,6 +27,9 @@ export async function call<T = unknown>(
     throw new Error(i18n.t("errors.network"))
   }
   if (!response.ok) {
+    if (handleUnauthorized(response.status)) {
+      throw new Error("unauthorized")
+    }
     const message = errorMessage(response.json)
     toast.error(message)
     throw new Error(message)
@@ -33,6 +46,9 @@ export async function callQuiet<T = unknown>(
   const body = options.body === undefined ? "" : JSON.stringify(options.body)
   const response = await sendApiRequest({ method, path, body })
   if (!response.ok || response.status === 0) {
+    if (response.status !== 0) {
+      handleUnauthorized(response.status)
+    }
     throw new Error(
       response.status === 0 ? response.statusText : errorMessage(response.json)
     )

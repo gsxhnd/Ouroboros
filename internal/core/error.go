@@ -16,6 +16,7 @@ const (
 	KindInvalidRequest
 	KindNotFound
 	KindConflict
+	KindUnauthorized
 	KindIO
 	KindUnsupportedSchema
 	KindCorruptStore
@@ -69,6 +70,8 @@ func (e *Error) Code() string {
 		return "not_found"
 	case KindConflict:
 		return "conflict"
+	case KindUnauthorized:
+		return "unauthorized"
 	case KindIO:
 		return "io_error"
 	case KindUnsupportedSchema:
@@ -126,6 +129,12 @@ func NotFound(message string) *Error {
 
 func Conflict(message string) *Error {
 	return &Error{Kind: KindConflict, Message: message}
+}
+
+// Unauthorized reports a missing or wrong access token. It is only produced
+// when the server is bound to a non-loopback address with --auth-token set.
+func Unauthorized() *Error {
+	return &Error{Kind: KindUnauthorized, Message: "missing or invalid access token"}
 }
 
 // ConflictDetail builds a conflict error with structured details that the API

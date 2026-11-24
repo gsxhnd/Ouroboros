@@ -10,7 +10,7 @@ import (
 )
 
 func Run(ctx context.Context, args cli.ServerArgs) (*Running, error) {
-	if err := cli.AssertBindHost(args.Host); err != nil {
+	if err := cli.AssertBindHost(args.Host, args.AuthToken); err != nil {
 		return nil, err
 	}
 	webDir, err := resolveWeb(args)
@@ -20,6 +20,9 @@ func Run(ctx context.Context, args cli.ServerArgs) (*Running, error) {
 	state, err := app.New(ctx, args.Runtime())
 	if err != nil {
 		return nil, err
+	}
+	if args.AuthToken != "" {
+		slog.Info("http auth enabled: /api requires a bearer token")
 	}
 	if args.NoAutoRclone || !state.Settings.Get().AutoStart {
 		slog.Info("rclone auto-start disabled")

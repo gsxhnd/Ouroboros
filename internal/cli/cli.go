@@ -21,6 +21,7 @@ type ServerArgs struct {
 	WebDir         string
 	WebDirExplicit bool
 	DataDir        string
+	AuthToken      string
 	RcloneBin      string
 	RcloneURL      string
 	RcloneUser     string
@@ -34,6 +35,7 @@ func (a ServerArgs) Runtime() app.Config {
 		DataDir:      a.DataDir,
 		BindHost:     a.Host,
 		BindPort:     a.Port,
+		AuthToken:    a.AuthToken,
 		RcloneBin:    a.RcloneBin,
 		RcloneURL:    a.RcloneURL,
 		RcloneConfig: a.RcloneConfig,
@@ -82,6 +84,7 @@ func ParseServerArgs(args []string) (ServerArgs, error) {
 		Port:         8080,
 		WebDir:       os.Getenv("OURBOROS_WEB_DIR"),
 		DataDir:      os.Getenv("OURBOROS_DATA_DIR"),
+		AuthToken:    os.Getenv("OURBOROS_TOKEN"),
 		RcloneBin:    os.Getenv("RCLONE_BIN"),
 		RcloneURL:    os.Getenv("RCLONE_RC_URL"),
 		RcloneUser:   os.Getenv("RCLONE_RC_USER"),
@@ -138,6 +141,14 @@ func ParseServerArgs(args []string) (ServerArgs, error) {
 			parsed.DataDir = value
 		case strings.HasPrefix(arg, "--data-dir="):
 			parsed.DataDir = strings.TrimPrefix(arg, "--data-dir=")
+		case arg == "--auth-token":
+			value, err := takeValue(args, &i, arg)
+			if err != nil {
+				return ServerArgs{}, err
+			}
+			parsed.AuthToken = value
+		case strings.HasPrefix(arg, "--auth-token="):
+			parsed.AuthToken = strings.SplitN(arg, "=", 2)[1]
 		case arg == "--rclone-bin":
 			value, err := takeValue(args, &i, arg)
 			if err != nil {
@@ -195,11 +206,18 @@ func takeValue(args []string, i *int, flag string) (string, error) {
 	return args[*i], nil
 }
 
-func AssertBindHost(host string) error {
+// AssertBindHost enforces the security posture: loopback binds need no
+// authentication; anything wider (Docker, NAS, LAN) requires an access token
+// so every /api request must present it. TLS and full-origin hardening remain
+// prerequisites for multi-user exposure.
+func AssertBindHost(host, authToken string) error {
 	if rclone.IsLoopbackHost(host) {
 		return nil
 	}
-	return fmt.Errorf("refusing to bind %s: HTTP authentication is not implemented; use 127.0.0.1", host)
+	if authToken == "" {
+		return fmt.Errorf("refusing to bind %s without an access token: pass --auth-token (env OURBOROS_TOKEN) or use 127.0.0.1", host)
+	}
+	return nil
 }
 
 func Help() string {
@@ -210,10 +228,11 @@ Usage:
   ourboros version
 
 Flags:
-  --host ADDR          Bind address (default 127.0.0.1)
+  --host ADDR          Bind address (default 127.0.0.1; non-loopback requires --auth-token)
   --port, -p PORT      Bind port (default 8080)
   --webui, --web-dir   Directory containing index.html (env OURBOROS_WEB_DIR)
   --data-dir DIR       Workspace and settings directory (env OURBOROS_DATA_DIR)
+  --auth-token TOKEN   Require a bearer token on /api (env OURBOROS_TOKEN); needed when binding non-loopback (Docker)
   --rclone-bin PATH    rclone executable (env RCLONE_BIN)
   --rclone-url URL     Attach to an existing RC URL (env RCLONE_RC_URL)
   --rclone-user USER   RC username when attaching (env RCLONE_RC_USER)

@@ -1,4 +1,5 @@
 import i18n from "@/i18n"
+import { getAuthToken } from "@/lib/auth"
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
 
@@ -22,6 +23,12 @@ export async function sendApiRequest(options: {
 }): Promise<ApiResult> {
   const started = performance.now()
   const headers = new Headers()
+  // server 模式绑定非回环地址时后端要求 Bearer token；回环模式没有 token，
+  // 这个头不会被设置。
+  const token = getAuthToken()
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`)
+  }
   const init: RequestInit = {
     method: options.method,
     signal: options.signal,
@@ -64,6 +71,19 @@ export async function sendApiRequest(options: {
 const SSE_EVENT_NAMES = ["job", "mount", "download"] as const
 
 /**
+ * EventSource 无法设置 Authorization 头，SSE 通过 access_token 查询参数携带
+ * token；未配置 token（回环模式）时原样返回。
+ */
+function withAccessToken(path: string): string {
+  const token = getAuthToken()
+  if (!token) {
+    return path
+  }
+  const separator = path.includes("?") ? "&" : "?"
+  return `${path}${separator}access_token=${encodeURIComponent(token)}`
+}
+
+/**
  * Subscribes to a server-sent event stream.
  *
  * EventSource reconnects on its own after transient failures, so a dropped
@@ -76,7 +96,7 @@ export function openEventSource(
   onError: (message: string) => void = () => undefined,
   onOpen?: () => void
 ): () => void {
-  const source = new EventSource(path)
+  const source = new EventSource(withAccessToken(path))
 
   for (const name of SSE_EVENT_NAMES) {
     source.addEventListener(name, (event) => {

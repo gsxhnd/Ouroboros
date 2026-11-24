@@ -21,6 +21,7 @@ type Config struct {
 	DataDir      string
 	BindHost     string
 	BindPort     int
+	AuthToken    string
 	RcloneBin    string
 	RcloneURL    string
 	RcloneConfig string
@@ -40,10 +41,13 @@ func (c Config) withDefaults() Config {
 }
 
 type State struct {
-	Version           string
-	HomeDir           string
-	DataDir           string
-	Origins           []string
+	Version string
+	HomeDir string
+	DataDir string
+	Origins []string
+	// AuthToken enables the bearer-token gate on /api when non-empty; empty
+	// means loopback-only mode without authentication (desktop / local dev).
+	AuthToken         string
 	Rclone            *rclone.Supervisor
 	Workspace         *workspace.Store
 	Settings          *settings.Store
@@ -113,6 +117,7 @@ func New(ctx context.Context, cfg Config) (*State, error) {
 		HomeDir:           home,
 		DataDir:           dataDir,
 		Origins:           CORSOrigins(cfg.BindHost, cfg.BindPort),
+		AuthToken:         cfg.AuthToken,
 		Rclone:            supervisor,
 		Workspace:         workspaceStore,
 		Settings:          settingsStore,

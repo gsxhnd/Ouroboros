@@ -31,17 +31,44 @@ func TestHelpMentionsWebUI(t *testing.T) {
 }
 
 func TestBindHost(t *testing.T) {
-	if err := AssertBindHost("127.0.0.1"); err != nil {
+	if err := AssertBindHost("127.0.0.1", ""); err != nil {
 		t.Fatal(err)
 	}
-	if err := AssertBindHost("localhost"); err != nil {
+	if err := AssertBindHost("localhost", ""); err != nil {
 		t.Fatal(err)
 	}
-	if err := AssertBindHost("0.0.0.0"); err == nil {
-		t.Fatal("expected non-loopback to fail")
+	if err := AssertBindHost("0.0.0.0", ""); err == nil {
+		t.Fatal("expected non-loopback without token to fail")
 	}
-	if err := AssertBindHost("192.168.1.10"); err == nil {
-		t.Fatal("expected lan address to fail")
+	if err := AssertBindHost("192.168.1.10", ""); err == nil {
+		t.Fatal("expected lan address without token to fail")
+	}
+	// 配置了 token 后才允许非回环绑定（Docker / NAS 场景）。
+	if err := AssertBindHost("0.0.0.0", "secret"); err != nil {
+		t.Fatal(err)
+	}
+	if err := AssertBindHost("192.168.1.10", "secret"); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestAuthTokenFlag(t *testing.T) {
+	command, err := Parse([]string{"server", "--auth-token", "abc123"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if command.Server.AuthToken != "abc123" {
+		t.Fatalf("token = %q", command.Server.AuthToken)
+	}
+	command, err = Parse([]string{"server", "--auth-token=xyz"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if command.Server.AuthToken != "xyz" {
+		t.Fatalf("token = %q", command.Server.AuthToken)
+	}
+	if help := Help(); !contains(help, "--auth-token") || !contains(help, "OURBOROS_TOKEN") {
+		t.Fatal("help should document --auth-token / OURBOROS_TOKEN")
 	}
 }
 

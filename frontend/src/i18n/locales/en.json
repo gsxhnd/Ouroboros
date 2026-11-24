@@ -34,6 +34,13 @@
     "apiHint": "All HTTP endpoints",
     "storages": "Storage"
   },
+  "auth": {
+    "title": "Access token required",
+    "description": "This server is exposed beyond localhost and requires an access token. It is configured with --auth-token or the OURBOROS_TOKEN environment variable.",
+    "tokenLabel": "Token",
+    "placeholder": "Paste the access token",
+    "submit": "Connect"
+  },
   "tray": {
     "running": "rclone running",
     "stopped": "rclone stopped",
