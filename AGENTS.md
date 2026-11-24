@@ -10,6 +10,9 @@ Go is 1.26 and Node is 24 per `mise.toml`. CI uses Node 22, so use the local too
 - Single Go test: `go test ./internal/rclone -run TestName`
 - Web checks, in this order: `cd frontend && npm run typecheck && npm run lint && npm run build`
 - Web build runs `tsc -b` then `vite build`, so it also type-checks. `frontend/` has no test runner.
+- Desktop dev (GUI mode): `task dev` (wails3 dev, Vite HMR + Go rebuild).
+- Browser dev: `task dev:server` (Go API on 8080 + Vite on 1420 in parallel).
+- Server mode in Docker (dev): `docker compose -f docker-compose.dev.yml up` — binds 0.0.0.0 with `OURBOROS_TOKEN` (default `ourboros-dev-token`).
 - Run the API: `go run ./cmd/ourboros server` (127.0.0.1:8080). Add `--no-auto-rclone` to skip starting rclone.
 - Run the UI in dev: `cd frontend && npm run dev` (127.0.0.1:1420). Vite proxies `/api` and `/health` to 8080, so start the API first.
 - Serve the built UI from Go: `cd frontend && npm run build`, then `go run ./cmd/ourboros server --webui ./frontend/dist`.
@@ -22,13 +25,13 @@ Go is 1.26 and Node is 24 per `mise.toml`. CI uses Node 22, so use the local too
 - `cmd/ourboros`: service entrypoint. `cmd/desktop`: Wails entrypoint plus tray code.
 - `internal/serve`: startup wiring. `Run` validates the bind host, resolves the web dir, starts app state and rclone, then starts the HTTP server.
 - `internal/httpapi`: handlers and error mapping. `internal/rclone`: process supervision, RC client, download/discovery. `internal/workspace`: versioned JSON documents (sync tasks live on sync edges), sync-task CRUD in `tasks.go`, and validation. `internal/mounts`, `internal/scheduler`, `internal/jobs`, `internal/settings`, `internal/persist`: supporting state.
-- `frontend/src`: React app. The home page is `pages/sync.tsx` (sync tasks) backed by `stores/sync-store.ts` and `components/sync/`; `pages/storages.tsx` manages local directories and remotes (storage), and `pages/files.tsx` opens as an overlay from the shell. The i18n locale files are `frontend/src/i18n/locales/{en,zh}.json`.
+- `frontend/src`: React app. The shell (`components/app-shell.tsx`) switches sidebar views in the main area — the home view is `pages/sync.tsx` (sync tasks, backed by `stores/sync-store.ts` and `components/sync/`), alongside `pages/storages.tsx` (local directories + remotes), `pages/files.tsx`, `pages/overview.tsx`, `pages/settings.tsx`, and `pages/api-playground.tsx` via `components/api-playground.tsx`. Dialogs are reserved for forms (task dialog, remote form) and dangerous-operation confirmations; server-mode token entry lives in `components/token-gate.tsx`. The i18n locale files are `frontend/src/i18n/locales/{en,zh}.json`.
 - `Taskfile.yml` + `build/`: wails3 orchestration. `build/config.yml` drives `wails3 dev` (fixed task names `build`, `run`, `common:dev:frontend` in the root Taskfile); Ourboros uses no Wails bindings, so the template's `generate:bindings` / `go mod tidy` steps are intentionally dropped.
 - `docs/dev/` holds the design docs, written in Chinese. `10-设计决策与注意事项.md` lists the rules below in full, and `11-打包和发布指南.md` covers release.
 
 ## Constraints that are easy to break
 
-- The server refuses to bind non-loopback addresses (`cli.AssertBindHost`). Do not relax this without adding HTTP auth, CSRF/Origin checks, and TLS first.
+- The server binds loopback without authentication. Non-loopback binds (Docker, NAS) require `--auth-token` / `OURBOROS_TOKEN`; with a token set, every `/api` request must present it (`Authorization: Bearer`, or `?access_token=` for SSE), and foreign `Origin` headers are rejected. This is minimal auth for development exposure — do not treat it as production security; TLS is still missing (`cli.AssertBindHost`).
 - RC binds only to 127.0.0.1. Never return RC URLs, RC credentials, remote tokens, or `config/dump` to the browser or the logs.
 - Typed API input must validate remote names, relative paths, absolute local paths, operation kind, and sync/mount endpoints.
 - Dangerous operations (`sync`, `move`, `bisync`, delete, purge, mount) must show source, target, and impact in the UI before running. Two-way sync (bisync) needs an explicit resync confirmation on its first run.
