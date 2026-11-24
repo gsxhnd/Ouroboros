@@ -1,7 +1,8 @@
 import { useTranslation } from "react-i18next"
 import {
-  Loader2Icon,
   MoonIcon,
+  PanelLeftCloseIcon,
+  PanelLeftOpenIcon,
   PlayIcon,
   RefreshCcwIcon,
   SquareIcon,
@@ -9,24 +10,43 @@ import {
 } from "lucide-react"
 
 import { CommandPalette } from "@/components/command-palette"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "@/components/theme-provider"
-import { changeLanguage, type Locale } from "@/i18n"
-import { isDesktop, isMacDesktop } from "@/lib/platform"
-import type { RcloneStatus } from "@/lib/types"
+import { Separator } from "@/components/ui/separator"
+import { Spinner } from "@/components/ui/spinner"
+import { isDesktop, os, type Os } from "@/lib/platform"
 import { useRcloneStore } from "@/stores/rclone-store"
 import { cn } from "cn"
 
 /**
- * 顶栏高度按平台区分：macOS 隐藏了标题栏，红绿灯与顶栏共用一行，需要更高；
- * Windows / Linux 使用系统原生的桌面 header 高度，保持与常见应用一致。
+ * 各桌面操作系统的顶栏高度（浏览器走响应式高度，不在此列）。
+ * 侧边栏贯穿全高、红绿灯由侧边栏顶部的空条承载后，顶栏只是主区列的
+ * 工具行，按各平台习惯的密度取值即可。
  */
-const headerHeight = isMacDesktop ? "h-12" : isDesktop ? "h-10" : "h-14 md:h-12"
+const DESKTOP_HEADER_HEIGHTS: Partial<Record<Os, string>> = {
+  macos: "h-8",
+  windows: "h-10",
+  linux: "h-10",
+}
 
-/** 顶栏：品牌、rclone 全局状态、快捷命令与主题 / 语言切换。 */
-export function AppHeader() {
-  const { t, i18n } = useTranslation()
+const headerHeight = isDesktop
+  ? (DESKTOP_HEADER_HEIGHTS[os] ?? "h-10")
+  : "h-14 md:h-12"
+
+/**
+ * 顶栏：左侧是侧边栏展开 / 收起开关，右侧一簇快捷控制（命令面板、
+ * rclone 启停、主题切换）。品牌不占顶栏（窗口身份交给系统标题栏），
+ * 服务状态常驻侧边栏底部，语言切换收进命令面板。顶栏与主区同底色
+ * （bg-muted/40）且不画分隔线，中间留白即窗口拖拽区。
+ */
+export function AppHeader({
+  sidebarCollapsed,
+  onToggleSidebar,
+}: {
+  sidebarCollapsed: boolean
+  onToggleSidebar: () => void
+}) {
+  const { t } = useTranslation()
   const { theme, setTheme } = useTheme()
   const status = useRcloneStore((state) => state.status)
   const busy = useRcloneStore((state) => state.busy)
@@ -35,39 +55,33 @@ export function AppHeader() {
 
   const running = status?.running ?? false
   const offline = status === null
-  const nextLocale: Locale = i18n.language.startsWith("zh") ? "en" : "zh"
+  const sidebarLabel = sidebarCollapsed
+    ? t("shell.expandSidebar")
+    : t("shell.collapseSidebar")
 
   return (
     <header
       className={cn(
-        "flex shrink-0 items-center justify-between gap-3 border-b bg-background px-3 [--wails-draggable:drag]",
+        "flex shrink-0 items-center justify-between gap-3 bg-muted/40 px-3",
         headerHeight,
-        isMacDesktop && "pl-[84px]"
+        // 拖拽区只属于桌面形态；浏览器 DOM 不携带 --wails-draggable。
+        isDesktop && "[--wails-draggable:drag]"
       )}
     >
-      <div className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden">
-        <span
-          className="grid size-5 shrink-0 place-items-center rounded-md bg-primary text-[9px] font-bold text-primary-foreground"
-          aria-hidden
-        >
-          O
-        </span>
-        <span className="font-heading text-xs font-semibold tracking-tight">
-          Ourboros
-        </span>
-        <div className="hidden min-w-0 shrink-0 overflow-hidden sm:block">
-          <RcloneStatusPill
-            offline={offline}
-            running={running}
-            status={status}
-          />
-        </div>
-      </div>
-
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        className="shrink-0 [--wails-draggable:no-drag]"
+        aria-label={sidebarLabel}
+        title={sidebarLabel}
+        onClick={onToggleSidebar}
+      >
+        {sidebarCollapsed ? <PanelLeftOpenIcon /> : <PanelLeftCloseIcon />}
+      </Button>
       <div className="flex shrink-0 items-center gap-1 [--wails-draggable:no-drag]">
         <CommandPalette />
 
-        <span className="mx-1 h-4 w-px bg-border" aria-hidden />
+        <Separator orientation="vertical" className="mx-1 h-4" />
         {!offline ? (
           <Button
             variant="outline"
@@ -78,13 +92,7 @@ export function AppHeader() {
               running ? t("shell.stopRclone") : t("shell.startRclone")
             }
           >
-            {busy ? (
-              <Loader2Icon className="animate-spin" />
-            ) : running ? (
-              <SquareIcon />
-            ) : (
-              <PlayIcon />
-            )}
+            {busy ? <Spinner /> : running ? <SquareIcon /> : <PlayIcon />}
             {running ? t("common.stop") : t("common.start")}
           </Button>
         ) : (
@@ -100,15 +108,6 @@ export function AppHeader() {
         <Button
           variant="ghost"
           size="icon-sm"
-          className="size-6 rounded-full text-[10px] font-semibold"
-          aria-label={t("shell.switchLanguage")}
-          onClick={() => changeLanguage(nextLocale)}
-        >
-          {nextLocale === "zh" ? "中" : "EN"}
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon-sm"
           className="size-6 [&>svg]:size-3.5"
           aria-label={theme === "dark" ? t("shell.toLight") : t("shell.toDark")}
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -117,45 +116,5 @@ export function AppHeader() {
         </Button>
       </div>
     </header>
-  )
-}
-
-function RcloneStatusPill({
-  offline,
-  running,
-  status,
-}: {
-  offline: boolean
-  running: boolean
-  status: RcloneStatus | null
-}) {
-  const { t } = useTranslation()
-  const label = offline
-    ? t("shell.offline")
-    : running
-      ? status?.mode === "attached"
-        ? t("shell.connected")
-        : t("shell.running")
-      : t("shell.stopped")
-  const dotClass = offline
-    ? "bg-destructive"
-    : running
-      ? "animate-pulse bg-emerald-500"
-      : "bg-amber-500"
-
-  return (
-    <div
-      className="flex min-w-0 items-center gap-2"
-      role="status"
-      aria-live="polite"
-    >
-      <span
-        className={cn("size-2 shrink-0 rounded-full", dotClass)}
-        aria-hidden
-      />
-      <Badge variant="outline" className="font-normal">
-        {label}
-      </Badge>
-    </div>
   )
 }

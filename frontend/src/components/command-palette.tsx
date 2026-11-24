@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button"
 import { Kbd } from "@/components/ui/kbd"
 import { changeLanguage, type Locale } from "@/i18n"
 import { NAV_ITEMS } from "@/lib/nav"
-import { isMacDesktop } from "@/lib/platform"
+import { isMacOs } from "@/lib/platform"
 import { useTheme } from "@/components/theme-provider"
 import { useRcloneStore } from "@/stores/rclone-store"
 
@@ -38,7 +38,8 @@ export function CommandPalette() {
   const start = useRcloneStore((state) => state.start)
   const stop = useRcloneStore((state) => state.stop)
   const [open, setOpen] = useState(false)
-  const shortcut = isMacDesktop ? "⌘ K" : "Ctrl K"
+  // 提示语按操作系统展示：mac 浏览器同样是 ⌘K；keydown 已同时接受两种修饰键。
+  const shortcut = isMacOs ? "⌘ K" : "Ctrl K"
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

@@ -18,6 +18,10 @@ export type NavItem = {
   /** 名称语言键（nav.*），侧边栏与命令面板共用。 */
   labelKey: string
   icon: LucideIcon
+  /**
+   * 钉在侧边栏底部的项（如设置）：不进分组列表，但仍在命令面板里。
+   */
+  pinned?: boolean
 }
 
 export type NavGroup = {
@@ -62,6 +66,7 @@ export const NAV_GROUPS: NavGroup[] = [
         path: "/settings",
         labelKey: "nav.settings",
         icon: SettingsIcon,
+        pinned: true,
       },
       {
         path: "/api",
@@ -72,5 +77,10 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ]
 
-/** 扁平化后的全部导航项，命令面板按此遍历。 */
+/** 扁平化后的全部导航项，命令面板按此遍历（含钉在底部的项）。 */
 export const NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((group) => group.items)
+
+/** 钉在侧边栏底部的导航项（设置等工具入口）。 */
+export const PINNED_NAV_ITEMS: NavItem[] = NAV_ITEMS.filter(
+  (item) => item.pinned
+)
