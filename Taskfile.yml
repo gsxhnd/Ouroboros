@@ -107,3 +107,24 @@ tasks:
     summary: wails3 dev（前端 HMR + .go 变更自动重建重启）
     cmds:
       - wails3 dev -config ./build/config.yml
+
+  dev:api:
+    summary: Runs the Go API server (127.0.0.1:8080)
+    cmds:
+      - go run ./cmd/ourboros server
+
+  dev:web:
+    summary: Runs the Vite dev server (127.0.0.1:1420, proxies /api to 8080)
+    deps:
+      - task: install:frontend:deps
+    dir: frontend
+    cmds:
+      - npm run dev
+
+  dev:server:
+    summary: >-
+      Browser development mode: Go API + Vite dev server. Same flow works on
+      Windows / macOS / Linux (arm64 + amd64); open http://127.0.0.1:1420.
+    deps:
+      - task: dev:api
+      - task: dev:web

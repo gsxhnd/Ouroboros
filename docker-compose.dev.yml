@@ -1,0 +1,33 @@
+# server 模式的开发环境（Docker）：源码挂载 + go run，无发布构建。
+#   docker compose -f docker-compose.dev.yml up
+# 服务绑定 0.0.0.0（端口映射需要），因此必须配置 token：
+#   - 后端：OURBOROS_TOKEN（默认 ourboros-dev-token，正式使用时务必覆盖）
+#   - 前端：浏览器首次打开 http://127.0.0.1:1420 时在令牌输入门里粘贴同一个值
+# 容器内没有 rclone 时服务照常启动，rclone 相关操作返回未就绪状态；
+# 需要真 rclone 时可在 volumes 里挂载宿主机的 rclone 并设置 RCLONE_BIN。
+#
+# 开发方式二选一：
+#   a) host 上 `task dev:web`，浏览器访问 1420（Vite 把 /api 代理到已发布的 8080）；
+#   b) host 上 `npm run build` 后取消注释 --webui，直接访问容器自托管 UI。
+services:
+  ourboros:
+    image: golang:1.26
+    working_dir: /src
+    # 取消注释以直接使用容器自托管 UI（需要先在宿主机 npm run build）：
+    # command: go run ./cmd/ourboros server --host 0.0.0.0 --port 8080 --webui /src/frontend/dist
+    command: go run ./cmd/ourboros server --host 0.0.0.0 --port 8080
+    environment:
+      OURBOROS_TOKEN: ${OURBOROS_TOKEN:-ourboros-dev-token}
+      OURBOROS_DATA_DIR: /data
+      CGO_ENABLED: "0"
+      GOCACHE: /tmp/gocache
+    volumes:
+      - .:/src
+      - ourboros-go-mod:/go/pkg/mod
+      - ourboros-data:/data
+    ports:
+      - "8080:8080"
+
+volumes:
+  ourboros-go-mod:
+  ourboros-data:
