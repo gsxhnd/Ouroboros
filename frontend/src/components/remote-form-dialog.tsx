@@ -101,7 +101,9 @@ export function RemoteFormDialog({
   }
 
   const loadProviders = async () => {
-    const data = await call<{ providers: RemoteProvider[] }>("/api/remotes/providers")
+    const data = await call<{ providers: RemoteProvider[] }>(
+      "/api/remotes/providers"
+    )
     setProviders(data.providers)
     return data.providers
   }
@@ -124,7 +126,10 @@ export function RemoteFormDialog({
           setForm({
             name: editing,
             type: detail.type,
-            values: valuesFromParameters(provider?.options ?? [], detail.parameters ?? {}),
+            values: valuesFromParameters(
+              provider?.options ?? [],
+              detail.parameters ?? {}
+            ),
             loaded: detail.parameters ?? {},
             editing,
           })
@@ -149,7 +154,8 @@ export function RemoteFormDialog({
       }
     }
     void run()
-    // 仅在打开或切换编辑目标时初始化表单。
+    // 仅在打开或切换编辑目标时初始化表单：running 轮询与 onOpenChange
+    // 变化不应触发重新加载，此处有意豁免 exhaustive-deps。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editing])
 
@@ -166,7 +172,12 @@ export function RemoteFormDialog({
       toast.error(t("remotes.needType"))
       return
     }
-    const built = parametersFromValues(options, form.values, Boolean(form.editing), form.loaded)
+    const built = parametersFromValues(
+      options,
+      form.values,
+      Boolean(form.editing),
+      form.loaded
+    )
     if (!built.ok) {
       toast.error(built.error)
       return
@@ -230,14 +241,18 @@ export function RemoteFormDialog({
           <DialogDescription>{t("remotes.formDescription")}</DialogDescription>
         </DialogHeader>
         {loadingForm ? (
-          <p className="text-sm text-muted-foreground">{t("remotes.loadingTypes")}</p>
+          <p className="text-sm text-muted-foreground">
+            {t("remotes.loadingTypes")}
+          </p>
         ) : !running && providers.length === 0 ? (
           <EmptyHint>{t("remotes.startFirst")}</EmptyHint>
         ) : (
           <div className="flex max-h-[min(32rem,62svh)] flex-col gap-4 overflow-y-auto pe-1">
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="remote-name">{t("common.name")}</FieldLabel>
+                <FieldLabel htmlFor="remote-name">
+                  {t("common.name")}
+                </FieldLabel>
                 <Input
                   id="remote-name"
                   value={form.name}
@@ -245,7 +260,10 @@ export function RemoteFormDialog({
                   placeholder="photos"
                   className="font-mono"
                   onChange={(event) =>
-                    setForm((current) => ({ ...current, name: event.target.value }))
+                    setForm((current) => ({
+                      ...current,
+                      name: event.target.value,
+                    }))
                   }
                 />
                 <FieldDescription>{t("remotes.nameHint")}</FieldDescription>
@@ -254,7 +272,9 @@ export function RemoteFormDialog({
 
             {form.editing ? (
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-muted-foreground">{t("common.type")}</span>
+                <span className="text-muted-foreground">
+                  {t("common.type")}
+                </span>
                 <Badge variant="secondary">{providerLabel(form.type)}</Badge>
               </div>
             ) : (
@@ -291,7 +311,10 @@ export function RemoteFormDialog({
                     >
                       <ChevronDownIcon
                         data-icon="inline-start"
-                        className={cn("transition-transform", !advancedOpen && "-rotate-90")}
+                        className={cn(
+                          "transition-transform",
+                          !advancedOpen && "-rotate-90"
+                        )}
                       />
                       {t("remotes.advanced")}
                       <Badge variant="outline">{advanced.length}</Badge>
@@ -322,7 +345,9 @@ export function RemoteFormDialog({
             disabled={loadingForm || (!form.editing && !form.type)}
             onClick={() =>
               void submit().catch((error: unknown) =>
-                toast.error(error instanceof Error ? error.message : errorMessage(null))
+                toast.error(
+                  error instanceof Error ? error.message : errorMessage(null)
+                )
               )
             }
           >
@@ -352,7 +377,9 @@ function TypePicker({
   const matches = useMemo(() => {
     const ranked = needle
       ? providers.filter((item) =>
-          `${item.name} ${item.prefix} ${item.description}`.toLowerCase().includes(needle)
+          `${item.name} ${item.prefix} ${item.description}`
+            .toLowerCase()
+            .includes(needle)
         )
       : providers.filter((item) => FEATURED.includes(item.name))
     return [...ranked].sort((a, b) => {
@@ -400,17 +427,23 @@ function TypePicker({
               <span className="block truncate text-sm font-medium">
                 {i18n.exists(key) ? i18n.t(key) : item.name}
               </span>
-              <span className="line-clamp-2 text-xs text-muted-foreground">{item.name}</span>
+              <span className="line-clamp-2 text-xs text-muted-foreground">
+                {item.name}
+              </span>
             </button>
           )
         })}
       </div>
       {matches.length === 0 ? (
-        <p className="text-xs text-muted-foreground">{t("remotes.noTypeMatch")}</p>
+        <p className="text-xs text-muted-foreground">
+          {t("remotes.noTypeMatch")}
+        </p>
       ) : null}
       {!needle ? (
         <p className="text-xs text-muted-foreground">
-          {t("remotes.moreTypes", { count: Math.max(providers.length - matches.length, 0) })}
+          {t("remotes.moreTypes", {
+            count: Math.max(providers.length - matches.length, 0),
+          })}
         </p>
       ) : null}
     </div>
@@ -449,7 +482,9 @@ function OptionControl({
         />
         <FieldContent>
           <FieldLabel htmlFor={id}>{option.name}</FieldLabel>
-          {help ? <FieldDescription title={option.help}>{help}</FieldDescription> : null}
+          {help ? (
+            <FieldDescription title={option.help}>{help}</FieldDescription>
+          ) : null}
         </FieldContent>
       </Field>
     )
@@ -476,7 +511,9 @@ function OptionControl({
         <SelectField
           label={optionLabel(option)}
           value={examples.some((example) => example.value === text) ? text : ""}
-          placeholder={option.required ? t("remotes.selectRequired") : t("remotes.unset")}
+          placeholder={
+            option.required ? t("remotes.selectRequired") : t("remotes.unset")
+          }
           options={examples.map((example) => ({
             value: example.value,
             label:
@@ -509,7 +546,9 @@ function OptionControl({
         value={text}
         autoComplete="off"
         className={secret ? undefined : "font-mono"}
-        placeholder={secret && editing ? t("remotes.keepOriginal") : (option.default ?? "")}
+        placeholder={
+          secret && editing ? t("remotes.keepOriginal") : (option.default ?? "")
+        }
         onChange={(event) => onChange(event.target.value)}
       />
       {listId ? (
@@ -521,7 +560,9 @@ function OptionControl({
           ))}
         </datalist>
       ) : null}
-      {help ? <FieldDescription title={option.help}>{help}</FieldDescription> : null}
+      {help ? (
+        <FieldDescription title={option.help}>{help}</FieldDescription>
+      ) : null}
     </Field>
   )
 }

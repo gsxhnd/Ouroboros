@@ -74,14 +74,17 @@ export function FilesPage() {
   }, [])
 
   const list = useCallback(async () => {
-    const fs = currentFs()
+    // 端点解析内联在回调里，依赖数组可被静态核对（fsKind / remoteName /
+    // remotePath / localPath 全部直接引用）。
+    const fs = fsKind === "remote" ? remoteName : localPath.trim()
+    const remote = fsKind === "remote" ? remotePath : ""
     if (!fs) {
       setItems([])
       return
     }
     setLoading(true)
     try {
-      const query = new URLSearchParams({ fs, remote: currentRemote() })
+      const query = new URLSearchParams({ fs, remote })
       const data = await call<FilesResponse>(`/api/files?${query}`)
       setItems(data.items)
     } catch {
@@ -89,7 +92,6 @@ export function FilesPage() {
     } finally {
       setLoading(false)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fsKind, remoteName, remotePath, localPath])
 
   useEffect(() => {
@@ -315,10 +317,7 @@ export function FilesPage() {
 
   return (
     <PageContainer>
-      <PageHeader
-        title={t("nav.files")}
-        description={t("nav.filesHint")}
-      />
+      <PageHeader title={t("nav.files")} description={t("nav.filesHint")} />
 
       <Card>
         <CardHeader>
@@ -347,7 +346,9 @@ export function FilesPage() {
                 setRemotePath("")
               }}
               disabled={remotes.length === 0}
-              placeholder={remotes.length === 0 ? t("files.noRemotes") : undefined}
+              placeholder={
+                remotes.length === 0 ? t("files.noRemotes") : undefined
+              }
             />
           ) : (
             <div className="flex flex-col gap-1.5">
@@ -363,7 +364,11 @@ export function FilesPage() {
           <Button size="sm" variant="outline" onClick={() => void list()}>
             <RefreshCcwIcon /> {t("common.refresh")}
           </Button>
-          <Button size="sm" variant="outline" onClick={() => setMkdirOpen(true)}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setMkdirOpen(true)}
+          >
             <FolderPlusIcon /> {t("files.newDir")}
           </Button>
         </CardContent>
@@ -415,7 +420,9 @@ export function FilesPage() {
               ) : (
                 localCrumbs.map((crumb, index) => (
                   <span key={crumb.path} className="flex items-center gap-1">
-                    {index > 0 ? <ChevronRightIcon className="size-3.5" /> : null}
+                    {index > 0 ? (
+                      <ChevronRightIcon className="size-3.5" />
+                    ) : null}
                     <Button
                       variant="ghost"
                       size="xs"
@@ -480,9 +487,7 @@ export function FilesPage() {
       <TransferDialog
         state={transfer}
         onTargetChange={(target) =>
-          setTransfer((current) =>
-            current ? { ...current, target } : current
-          )
+          setTransfer((current) => (current ? { ...current, target } : current))
         }
         onClose={() => setTransfer(null)}
         onSubmit={() => void submitTransfer()}
