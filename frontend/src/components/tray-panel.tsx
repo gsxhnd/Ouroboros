@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Loader2Icon, PlayIcon, SquareIcon } from "lucide-react"
+import { PlayIcon, SquareIcon } from "lucide-react"
 import { Events } from "@wailsio/runtime"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Progress } from "@/components/ui/progress"
+import { Spinner } from "@/components/ui/spinner"
+import { Switch } from "@/components/ui/switch"
 import { call, callQuiet } from "@/lib/client"
 import { openEventSource, parseEventPayload } from "@/lib/api"
 import { useRcloneStore } from "@/stores/rclone-store"
@@ -204,13 +207,7 @@ export function TrayPanel() {
             onClick={() => void (running ? stop() : start())}
             className="w-full justify-center"
           >
-            {busy ? (
-              <Loader2Icon className="animate-spin" />
-            ) : running ? (
-              <SquareIcon />
-            ) : (
-              <PlayIcon />
-            )}
+            {busy ? <Spinner /> : running ? <SquareIcon /> : <PlayIcon />}
             {running ? t("shell.stopRclone") : t("shell.startRclone")}
           </Button>
         ) : null}
@@ -254,7 +251,7 @@ export function TrayPanel() {
                     disabled={inFlight}
                     onClick={() => void toggleMount(edge.id, mounted)}
                   >
-                    {inFlight ? <Loader2Icon className="animate-spin" /> : null}
+                    {inFlight ? <Spinner /> : null}
                     {mounted ? t("tray.unmount") : t("tray.mount")}
                   </Button>
                 </div>
@@ -296,14 +293,7 @@ export function TrayPanel() {
                       {t("tray.stopJob")}
                     </Button>
                   </div>
-                  <div className="h-1 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full bg-primary transition-[width]"
-                      style={{
-                        width: `${Math.min(100, job.progress.percentage)}%`,
-                      }}
-                    />
-                  </div>
+                  <Progress value={Math.min(100, job.progress.percentage)} />
                 </div>
               ))}
               {runningJobs.length > MAX_ROWS ? (
@@ -317,15 +307,27 @@ export function TrayPanel() {
       </div>
 
       <footer className="flex shrink-0 flex-col gap-1 border-t px-3 py-2">
-        <label className="flex cursor-pointer items-center justify-between gap-2 rounded-md px-1 py-1 text-xs hover:bg-accent">
+        <div
+          className="flex cursor-pointer items-center justify-between gap-2 rounded-md px-1 py-1 text-xs hover:bg-accent"
+          onClick={(event) => {
+            // 点文本 / 空白处手动切换；点在开关本体上交给 Switch 处理。
+            if (
+              event.target instanceof Element &&
+              event.target.closest("[data-slot=switch]")
+            ) {
+              return
+            }
+            void toggleAutoStart(!autoStart)
+          }}
+        >
           <span>{t("tray.autoStart")}</span>
-          <input
-            type="checkbox"
-            className="size-3.5 accent-primary"
+          <Switch
+            size="sm"
+            aria-label={t("tray.autoStart")}
             checked={autoStart}
-            onChange={(event) => void toggleAutoStart(event.target.checked)}
+            onCheckedChange={(checked) => void toggleAutoStart(checked)}
           />
-        </label>
+        </div>
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="xs" onClick={() => void reload()}>
             {t("tray.refresh")}

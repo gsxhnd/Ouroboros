@@ -5,6 +5,7 @@ import { StatusChip } from "@/components/shared"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { locatorLabel } from "@/components/sync/labels"
+import { Progress } from "@/components/ui/progress"
 import type { JobSnapshot } from "@/lib/types"
 import { formatBytes } from "@/lib/client"
 
@@ -70,20 +71,8 @@ export function JobProgress({ job }: { job: JobSnapshot }) {
   )
 }
 
+/** 任务进度的统一进度条，内部是 shadcn ui/progress（自带 progressbar 语义）。 */
 export function JobProgressBar({ percentage }: { percentage: number }) {
   const value = Math.min(100, Math.max(0, percentage))
-  return (
-    <div
-      className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
-      role="progressbar"
-      aria-valuenow={Math.round(value)}
-      aria-valuemin={0}
-      aria-valuemax={100}
-    >
-      <div
-        className="h-full rounded-full bg-primary transition-all"
-        style={{ width: `${value}%` }}
-      />
-    </div>
-  )
+  return <Progress value={value} />
 }

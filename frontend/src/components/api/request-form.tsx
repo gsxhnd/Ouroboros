@@ -17,6 +17,13 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Kbd } from "@/components/ui/kbd"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 import type { HttpMethod } from "@/lib/api"
@@ -70,20 +77,23 @@ export function RequestForm({
             <div className="flex flex-col gap-3 sm:flex-row">
               <Field className="sm:max-w-36">
                 <FieldLabel htmlFor="request-method">Method</FieldLabel>
-                <select
-                  id="request-method"
+                <Select
                   value={method}
-                  onChange={(event) =>
-                    onMethodChange(event.target.value as HttpMethod)
+                  onValueChange={(next) =>
+                    onMethodChange((next ?? method) as HttpMethod)
                   }
-                  className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
                 >
-                  {HTTP_METHODS.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger id="request-method" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {HTTP_METHODS.map((item) => (
+                      <SelectItem key={item} value={item}>
+                        {item}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </Field>
               <Field className="flex-1">
                 <FieldLabel htmlFor="request-path">Path</FieldLabel>

@@ -2,11 +2,21 @@ import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { cn } from "cn"
 
-const SELECT_CLASS =
-  "h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 disabled:cursor-not-allowed disabled:opacity-50"
-
+/**
+ * 表单里的下拉选择，内部是 shadcn ui/select（Base UI 弹层）。
+ * 保留旧的原生 select 契约：value 为 "" 表示未选，placeholder 是一个
+ * 可选项；映射为 Base UI 的 null 中性值以获得占位符样式。
+ */
 export function SelectField<T extends string>({
   label,
   value,
@@ -27,23 +37,34 @@ export function SelectField<T extends string>({
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
       {label ? <Label>{label}</Label> : null}
-      <select
-        className={SELECT_CLASS}
-        value={value}
+      <Select
+        items={options}
+        value={value === "" ? null : value}
+        onValueChange={(next) => onChange((next ?? "") as T)}
         disabled={disabled}
-        onChange={(event) => onChange(event.target.value as T)}
       >
-        {placeholder ? <option value="">{placeholder}</option> : null}
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder={placeholder ?? ""} />
+        </SelectTrigger>
+        <SelectContent>
+          {placeholder ? <SelectItem value="">{placeholder}</SelectItem> : null}
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   )
 }
 
+/**
+ * 带文字标签的开关，内部是 shadcn ui/switch。
+ * Base UI 把 switch 渲染成按钮，label 元素的原生联动不可依赖：点在
+ * 文本 / 空白处手动切换；点在开关本体上交给 Switch 自己处理（冒泡上来
+ * 时 target 在开关内，直接跳过，避免双切）。
+ */
 export function SwitchField({
   label,
   checked,
@@ -56,16 +77,32 @@ export function SwitchField({
   disabled?: boolean
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-2 text-sm select-none">
-      <input
-        type="checkbox"
-        className="size-4 accent-[var(--primary)]"
+    <div
+      className={cn(
+        "flex items-center gap-2 text-sm select-none",
+        disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+      )}
+      onClick={(event) => {
+        if (disabled) {
+          return
+        }
+        if (
+          event.target instanceof Element &&
+          event.target.closest("[data-slot=switch]")
+        ) {
+          return
+        }
+        onCheckedChange(!checked)
+      }}
+    >
+      <Switch
+        aria-label={label}
         checked={checked}
+        onCheckedChange={onCheckedChange}
         disabled={disabled}
-        onChange={(event) => onCheckedChange(event.target.checked)}
       />
-      {label}
-    </label>
+      <span>{label}</span>
+    </div>
   )
 }
 

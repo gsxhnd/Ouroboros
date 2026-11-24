@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 
-import { SelectField, SwitchField } from "@/components/shared"
+import { SelectField, SwitchField, WarningNote } from "@/components/shared"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -284,17 +284,11 @@ function TaskForm({
         </div>
 
         {form.mode === "two_way" ? (
-          <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-amber-700 dark:text-amber-400">
-            {t("sync.bisyncHint")}
-          </p>
+          <WarningNote>{t("sync.bisyncHint")}</WarningNote>
         ) : form.operation === "sync" ? (
-          <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-amber-700 dark:text-amber-400">
-            {t("sync.opSyncHint")}
-          </p>
+          <WarningNote>{t("sync.opSyncHint")}</WarningNote>
         ) : form.operation === "move" ? (
-          <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-amber-700 dark:text-amber-400">
-            {t("sync.opMoveHint")}
-          </p>
+          <WarningNote>{t("sync.opMoveHint")}</WarningNote>
         ) : null}
 
         <div className="grid gap-4 sm:grid-cols-2">

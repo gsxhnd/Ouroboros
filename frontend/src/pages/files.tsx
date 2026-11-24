@@ -20,6 +20,7 @@ import {
 import { FileTable, type SortKey } from "@/components/files/file-table"
 import { PageContainer, PageHeader } from "@/components/page-header"
 import { EmptyHint, SelectField } from "@/components/shared"
+import { ConfirmNameDialog } from "@/components/confirm-name-dialog"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -28,6 +29,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { call, errorMessage } from "@/lib/client"
@@ -56,6 +62,7 @@ export function FilesPage() {
   const [mkdirOpen, setMkdirOpen] = useState(false)
   const [transfer, setTransfer] = useState<TransferState | null>(null)
   const [rename, setRename] = useState<RenameState | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<ListItem | null>(null)
   const [sortKey, setSortKey] = useState<SortKey>("name")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc")
   const [filter, setFilter] = useState("")
@@ -172,17 +179,26 @@ export function FilesPage() {
     }
   }
 
-  const deleteItem = async (item: ListItem) => {
-    const name = item.name ?? item.path ?? ""
-    if (
-      !window.confirm(
-        item.is_dir
-          ? t("files.deleteDirConfirm", { name })
-          : t("files.deleteFileConfirm", { name })
-      )
-    ) {
+  // 删除是危险操作：先弹 ConfirmNameDialog 展示名称与影响（目录会连同
+  // 内容一并 purge），确认后才发请求，与任务 / 存储的删除确认同一套路。
+  const deleteWarning =
+    deleteTarget === null
+      ? ""
+      : deleteTarget.is_dir
+        ? t("files.deleteDirConfirm", {
+            name: deleteTarget.name ?? deleteTarget.path ?? "",
+          })
+        : t("files.deleteFileConfirm", {
+            name: deleteTarget.name ?? deleteTarget.path ?? "",
+          })
+
+  const runDelete = async () => {
+    const item = deleteTarget
+    setDeleteTarget(null)
+    if (!item) {
       return
     }
+    const name = item.name ?? item.path ?? ""
     const params = new URLSearchParams({
       fs: currentFs(),
       remote: join(currentRemote(), name),
@@ -437,15 +453,19 @@ export function FilesPage() {
                   </span>
                 ))
               )}
-              <div className="relative ms-auto">
-                <SearchIcon className="pointer-events-none absolute top-1/2 left-2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  className="h-8 w-44 pl-7 text-xs sm:w-56"
-                  placeholder={t("files.filterPlaceholder")}
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                  aria-label={t("files.filterPlaceholder")}
-                />
+              <div className="ms-auto">
+                <InputGroup className="w-44 sm:w-56">
+                  <InputGroupAddon>
+                    <SearchIcon className="size-3.5" />
+                  </InputGroupAddon>
+                  <InputGroupInput
+                    className="text-xs"
+                    placeholder={t("files.filterPlaceholder")}
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    aria-label={t("files.filterPlaceholder")}
+                  />
+                </InputGroup>
               </div>
             </div>
             <FileTable
@@ -472,7 +492,7 @@ export function FilesPage() {
                   target: fsKind === "remote" ? "" : remotePath,
                 })
               }
-              onDelete={(item) => void deleteItem(item)}
+              onDelete={(item) => setDeleteTarget(item)}
             />
           </CardContent>
         </Card>
@@ -500,6 +520,20 @@ export function FilesPage() {
         }
         onClose={() => setRename(null)}
         onSubmit={() => void submitRename()}
+      />
+
+      <ConfirmNameDialog
+        open={deleteTarget !== null}
+        title={t("common.delete")}
+        warning={deleteWarning}
+        expectedName={null}
+        confirmLabel={t("common.delete")}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null)
+          }
+        }}
+        onConfirm={() => void runDelete()}
       />
     </PageContainer>
   )

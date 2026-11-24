@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { EmptyHint, SelectField } from "@/components/shared"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogClose,
@@ -473,12 +474,10 @@ function OptionControl({
   if (option.type === "bool") {
     return (
       <Field orientation="horizontal">
-        <input
+        <Checkbox
           id={id}
-          type="checkbox"
-          className="mt-0.5 size-4 accent-primary"
           checked={value === true}
-          onChange={(event) => onChange(event.target.checked)}
+          onCheckedChange={(checked) => onChange(checked)}
         />
         <FieldContent>
           <FieldLabel htmlFor={id}>{option.name}</FieldLabel>
