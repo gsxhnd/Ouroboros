@@ -134,9 +134,7 @@ export function FileTable({
                 {item.is_dir ? "—" : formatBytes(item.size)}
               </td>
               <td className="hidden px-3 py-2 text-xs text-muted-foreground sm:table-cell">
-                {item.mod_time
-                  ? new Date(item.mod_time).toLocaleString()
-                  : "—"}
+                {item.mod_time ? new Date(item.mod_time).toLocaleString() : "—"}
               </td>
               <td className="px-3 py-2">
                 <div className="flex gap-1">

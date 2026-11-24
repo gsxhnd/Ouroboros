@@ -110,9 +110,7 @@ export function AppHeader() {
           variant="ghost"
           size="icon-sm"
           className="size-6 [&>svg]:size-3.5"
-          aria-label={
-            theme === "dark" ? t("shell.toLight") : t("shell.toDark")
-          }
+          aria-label={theme === "dark" ? t("shell.toLight") : t("shell.toDark")}
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
         >
           {theme === "dark" ? <SunIcon /> : <MoonIcon />}

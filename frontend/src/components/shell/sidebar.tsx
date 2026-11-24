@@ -67,23 +67,16 @@ export function Sidebar() {
         ))}
       </nav>
       <div
-        className={cn(
-          "flex p-2",
-          collapsed ? "justify-center" : "justify-end"
-        )}
+        className={cn("flex p-2", collapsed ? "justify-center" : "justify-end")}
       >
         <Button
           variant="ghost"
           size="icon-xs"
           aria-label={
-            collapsed
-              ? t("shell.expandSidebar")
-              : t("shell.collapseSidebar")
+            collapsed ? t("shell.expandSidebar") : t("shell.collapseSidebar")
           }
           title={
-            collapsed
-              ? t("shell.expandSidebar")
-              : t("shell.collapseSidebar")
+            collapsed ? t("shell.expandSidebar") : t("shell.collapseSidebar")
           }
           onClick={toggleSidebar}
         >
@@ -112,7 +105,10 @@ function SidebarItem({
       title={collapsed ? label : undefined}
       className={({ isActive }) =>
         cn(
-          buttonVariants({ variant: isActive ? "secondary" : "ghost", size: "sm" }),
+          buttonVariants({
+            variant: isActive ? "secondary" : "ghost",
+            size: "sm",
+          }),
           "relative w-full text-muted-foreground hover:text-foreground",
           collapsed ? "justify-center px-0" : "justify-start gap-2.5 px-2.5"
         )

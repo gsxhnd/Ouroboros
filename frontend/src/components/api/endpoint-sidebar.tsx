@@ -43,7 +43,9 @@ export function EndpointSidebar({
   return (
     <div className="flex h-full min-h-80 flex-col gap-3 p-3">
       <Field>
-        <FieldLabel htmlFor="endpoint-filter">{t("api.filterLabel")}</FieldLabel>
+        <FieldLabel htmlFor="endpoint-filter">
+          {t("api.filterLabel")}
+        </FieldLabel>
         <Input
           id="endpoint-filter"
           value={query}

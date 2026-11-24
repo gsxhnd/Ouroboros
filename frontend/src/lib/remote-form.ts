@@ -85,7 +85,8 @@ export function valuesFromParameters(
   options: RemoteOption[],
   parameters: Record<string, unknown>
 ): FieldValues {
-  const provider = typeof parameters.provider === "string" ? parameters.provider : ""
+  const provider =
+    typeof parameters.provider === "string" ? parameters.provider : ""
   const values = valuesForProvider(options, provider)
   for (const option of options) {
     const raw = parameters[option.name]
@@ -142,7 +143,10 @@ export function parametersFromValues(
     const text = typeof value === "string" ? value.trim() : ""
     if (!text) {
       if (option.required && !(editing && isCredential(option))) {
-        return { ok: false, error: i18n.t("errors.fillField", { name: option.name }) }
+        return {
+          ok: false,
+          error: i18n.t("errors.fillField", { name: option.name }),
+        }
       }
       continue
     }
@@ -152,7 +156,10 @@ export function parametersFromValues(
     if (option.type === "int") {
       const parsed = Number(text)
       if (!Number.isInteger(parsed)) {
-        return { ok: false, error: i18n.t("errors.integerRequired", { name: option.name }) }
+        return {
+          ok: false,
+          error: i18n.t("errors.integerRequired", { name: option.name }),
+        }
       }
       parameters[option.name] = parsed
       continue

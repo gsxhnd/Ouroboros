@@ -107,20 +107,14 @@ export function CommandPalette() {
             </CommandGroup>
             <CommandGroup heading={t("command.actions")}>
               <CommandItem
-                onSelect={() =>
-                  run(() => void (running ? stop() : start()))
-                }
+                onSelect={() => run(() => void (running ? stop() : start()))}
               >
                 <PlayIcon />
-                {running
-                  ? t("command.stopRclone")
-                  : t("command.startRclone")}
+                {running ? t("command.stopRclone") : t("command.startRclone")}
               </CommandItem>
               <CommandItem
                 onSelect={() =>
-                  run(() =>
-                    setTheme(theme === "dark" ? "light" : "dark")
-                  )
+                  run(() => setTheme(theme === "dark" ? "light" : "dark"))
                 }
               >
                 {theme === "dark" ? <SunIcon /> : <MoonIcon />}

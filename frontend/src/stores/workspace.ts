@@ -13,7 +13,9 @@ export function useWorkspace() {
       setDoc(await call<WorkspaceDocument>("/api/workspace"))
       setError(null)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : i18n.t("errors.loadFailed"))
+      setError(
+        cause instanceof Error ? cause.message : i18n.t("errors.loadFailed")
+      )
     }
   }, [])
 

@@ -86,7 +86,6 @@ export function WarningNote({ children }: { children: ReactNode }) {
   )
 }
 
-
 type Tone = "ok" | "busy" | "bad" | "idle"
 
 /** 已知状态的色调；文案统一走 status.* 语言包，未知状态原样显示。 */

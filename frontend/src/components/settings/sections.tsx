@@ -247,7 +247,13 @@ export function RuntimeSection() {
   if (!document) {
     return <SettingsLoading />
   }
-  return <RuntimeForm key={document.updated_at} document={document} onPatch={patch} />
+  return (
+    <RuntimeForm
+      key={document.updated_at}
+      document={document}
+      onPatch={patch}
+    />
+  )
 }
 
 function RuntimeForm({

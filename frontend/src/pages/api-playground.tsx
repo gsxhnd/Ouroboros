@@ -266,11 +266,7 @@ export function ApiPlaygroundPage() {
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={72} minSize={40} className="min-w-0">
             <ResizablePanelGroup orientation="vertical">
-              <ResizablePanel
-                defaultSize={48}
-                minSize={30}
-                className="min-w-0"
-              >
+              <ResizablePanel defaultSize={48} minSize={30} className="min-w-0">
                 <RequestForm
                   method={method}
                   path={path}
@@ -288,11 +284,7 @@ export function ApiPlaygroundPage() {
                 />
               </ResizablePanel>
               <ResizableHandle withHandle />
-              <ResizablePanel
-                defaultSize={52}
-                minSize={24}
-                className="min-w-0"
-              >
+              <ResizablePanel defaultSize={52} minSize={24} className="min-w-0">
                 <ResponsePane
                   result={result}
                   sseLog={sseLog}

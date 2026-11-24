@@ -4,7 +4,7 @@ import type { JobLocator, SyncTask, TaskEndpoint } from "@/lib/types"
 export function endpointLabel(endpoint: TaskEndpoint): string {
   return endpoint.kind === "remote"
     ? `${endpoint.remote}:${endpoint.path ?? ""}`
-    : endpoint.path ?? ""
+    : (endpoint.path ?? "")
 }
 
 /** 单向同步的操作徽标文案。 */

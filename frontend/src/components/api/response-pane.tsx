@@ -8,10 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  formatResponseBody,
-  type ApiResult,
-} from "@/lib/api"
+import { formatResponseBody, type ApiResult } from "@/lib/api"
 import { cn } from "cn"
 
 /** 响应面板：JSON 美化展示或 SSE 日志流。 */

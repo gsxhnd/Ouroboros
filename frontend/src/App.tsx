@@ -37,10 +37,7 @@ export function App() {
             <Route path="storages" element={<StoragesPage />} />
             <Route path="overview" element={<OverviewPage />} />
             <Route path="settings" element={<SettingsPage />}>
-              <Route
-                index
-                element={<Navigate to="connection" replace />}
-              />
+              <Route index element={<Navigate to="connection" replace />} />
               <Route path="connection" element={<ConnectionSection />} />
               <Route path="shortcuts" element={<ShortcutsSection />} />
               <Route path="runtime" element={<RuntimeSection />} />

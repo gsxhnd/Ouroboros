@@ -73,6 +73,4 @@ export const NAV_GROUPS: NavGroup[] = [
 ]
 
 /** 扁平化后的全部导航项，命令面板按此遍历。 */
-export const NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap(
-  (group) => group.items
-)
+export const NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((group) => group.items)

@@ -119,7 +119,10 @@ export function TrayPanel() {
     setPending((current) => new Set(current).add(edgeId))
     try {
       const path = `/api/mounts/${encodeURIComponent(edgeId)}/${mounted ? "stop" : "start"}`
-      const snapshot = await call<MountSnapshot>(path, { method: "POST", body: {} })
+      const snapshot = await call<MountSnapshot>(path, {
+        method: "POST",
+        body: {},
+      })
       setMounts((current) => [
         ...current.filter((m) => m.edge_id !== snapshot.edge_id),
         snapshot,
@@ -171,7 +174,9 @@ export function TrayPanel() {
             O
           </span>
           <div className="min-w-0">
-            <div className="truncate font-heading text-sm font-semibold">Ourboros</div>
+            <div className="truncate font-heading text-sm font-semibold">
+              Ourboros
+            </div>
             <div className="truncate text-xs text-muted-foreground">
               {offline
                 ? t("tray.offline")
@@ -182,7 +187,11 @@ export function TrayPanel() {
           </div>
         </div>
         <Badge variant="outline" className="font-normal">
-          {offline ? t("shell.offline") : running ? t("shell.running") : t("shell.stopped")}
+          {offline
+            ? t("shell.offline")
+            : running
+              ? t("shell.running")
+              : t("shell.stopped")}
         </Badge>
       </header>
 
@@ -230,7 +239,8 @@ export function TrayPanel() {
                 >
                   <div className="min-w-0">
                     <div className="truncate text-xs font-medium">
-                      {nodeLabel(nodes, edge.source)} → {nodeLabel(nodes, edge.target)}
+                      {nodeLabel(nodes, edge.source)} →{" "}
+                      {nodeLabel(nodes, edge.target)}
                     </div>
                     {snapshot?.status === "failed" ? (
                       <div className="truncate text-[11px] text-destructive">
@@ -289,7 +299,9 @@ export function TrayPanel() {
                   <div className="h-1 overflow-hidden rounded-full bg-muted">
                     <div
                       className="h-full bg-primary transition-[width]"
-                      style={{ width: `${Math.min(100, job.progress.percentage)}%` }}
+                      style={{
+                        width: `${Math.min(100, job.progress.percentage)}%`,
+                      }}
                     />
                   </div>
                 </div>
@@ -319,10 +331,18 @@ export function TrayPanel() {
             {t("tray.refresh")}
           </Button>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="xs" onClick={() => void Events.Emit(TRAY_OPEN_MAIN)}>
+            <Button
+              variant="ghost"
+              size="xs"
+              onClick={() => void Events.Emit(TRAY_OPEN_MAIN)}
+            >
               {t("tray.openMain")}
             </Button>
-            <Button variant="ghost" size="xs" onClick={() => void Events.Emit(TRAY_QUIT)}>
+            <Button
+              variant="ghost"
+              size="xs"
+              onClick={() => void Events.Emit(TRAY_QUIT)}
+            >
               {t("tray.quit")}
             </Button>
           </div>

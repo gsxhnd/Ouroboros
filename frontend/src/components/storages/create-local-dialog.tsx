@@ -31,7 +31,10 @@ export function CreateLocalDialog({
         <DialogHeader>
           <DialogTitle>{t("storage.newLocal")}</DialogTitle>
         </DialogHeader>
-        <CreateLocalForm onCreate={onCreate} onDone={() => onOpenChange(false)} />
+        <CreateLocalForm
+          onCreate={onCreate}
+          onDone={() => onOpenChange(false)}
+        />
       </DialogContent>
     </Dialog>
   )
