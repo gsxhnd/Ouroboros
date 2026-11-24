@@ -23,6 +23,7 @@
   "nav": {
     "mainNav": "Main navigation",
     "system": "System",
+    "tasks": "Tasks",
     "overview": "Overview",
     "overviewHint": "rclone status and control",
     "files": "Files",
@@ -77,6 +78,7 @@
     "navigation": "Navigation",
     "actions": "Actions",
     "overview": "Open overview",
+    "files": "Open files",
     "settings": "Open settings",
     "api": "Open API playground",
     "startRclone": "Start rclone",

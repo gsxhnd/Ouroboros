@@ -1,11 +1,14 @@
-import { useEffect, useRef, useState, type ReactNode } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import {
   FolderOpenIcon,
+  FolderSyncIcon,
   GaugeIcon,
   HardDriveIcon,
   Loader2Icon,
   MoonIcon,
+  PanelLeftCloseIcon,
+  PanelLeftOpenIcon,
   PlayIcon,
   RefreshCcwIcon,
   SettingsIcon,
@@ -42,8 +45,13 @@ import { cn } from "cn"
 const headerHeight = isMacDesktop ? "h-12" : isDesktop ? "h-10" : "h-14 md:h-12"
 
 /**
- * 应用外壳：同步任务页是唯一的主视图，
- * 概览、文件、设置和接口演示以浮层形式打开，不切换页面。
+ * 侧边栏折叠状态的 localStorage 键，与 ourboros.lang 等应用级键共用前缀。
+ */
+const sidebarStorageKey = "ourboros.sidebar"
+
+/**
+ * 应用外壳：顶部承载全局状态与控制，左侧侧边栏承载功能导航；
+ * 同步任务页是唯一的主视图，概览、文件、存储、设置和接口演示以浮层形式打开，不切换页面。
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const { t, i18n } = useTranslation()
@@ -58,6 +66,25 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [apiOpen, setApiOpen] = useState(false)
   const [filesOpen, setFilesOpen] = useState(false)
   const [storagesOpen, setStoragesOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    () => localStorage.getItem(sidebarStorageKey) === "collapsed"
+  )
+
+  /** 侧边栏的「任务」即主视图：点击时收起全部浮层。 */
+  const closeOverlays = () => {
+    setOverviewOpen(false)
+    setSettingsOpen(false)
+    setApiOpen(false)
+    setFilesOpen(false)
+    setStoragesOpen(false)
+  }
+
+  const toggleSidebar = () =>
+    setSidebarCollapsed((current) => {
+      const next = !current
+      localStorage.setItem(sidebarStorageKey, next ? "collapsed" : "expanded")
+      return next
+    })
 
   useEffect(() => startRcloneStatusPolling(), [])
 
@@ -93,10 +120,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        <nav
-          className="flex shrink-0 items-center gap-1 [--wails-draggable:no-drag]"
-          aria-label={t("nav.mainNav")}
-        >
+        <div className="flex shrink-0 items-center gap-1 [--wails-draggable:no-drag]">
           <CommandPalette
             isDark={theme === "dark"}
             isRunning={running}
@@ -105,55 +129,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             onToggleLanguage={() => changeLanguage(nextLocale)}
             onToggleRclone={() => void (running ? stop() : start())}
             onOpenOverview={() => setOverviewOpen(true)}
+            onOpenFiles={() => setFilesOpen(true)}
             onOpenStorages={() => setStoragesOpen(true)}
             onOpenSettings={() => setSettingsOpen(true)}
             onOpenApi={() => setApiOpen(true)}
           />
-          <HeaderPopover
-            open={overviewOpen}
-            onOpenChange={setOverviewOpen}
-            label={t("nav.overview")}
-            icon={<GaugeIcon />}
-          >
-            <OverviewPage />
-          </HeaderPopover>
-
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            aria-label={t("nav.storages")}
-            title={t("nav.storages")}
-            onClick={() => setStoragesOpen(true)}
-          >
-            <HardDriveIcon />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            aria-label={t("nav.files")}
-            title={t("nav.files")}
-            onClick={() => setFilesOpen(true)}
-          >
-            <FolderOpenIcon />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            aria-label={t("nav.settings")}
-            title={t("nav.settings")}
-            onClick={() => setSettingsOpen(true)}
-          >
-            <SettingsIcon />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            aria-label={t("nav.api")}
-            title={t("nav.api")}
-            onClick={() => setApiOpen(true)}
-          >
-            <TerminalSquareIcon />
-          </Button>
 
           <span className="mx-1 h-4 w-px bg-border" aria-hidden />
           {!offline ? (
@@ -205,12 +185,105 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             {theme === "dark" ? <SunIcon /> : <MoonIcon />}
           </Button>
-        </nav>
+        </div>
       </header>
 
-      <main className="flex min-h-0 flex-1 flex-col bg-muted/40 p-3">
-        {children}
-      </main>
+      <div className="flex min-h-0 flex-1">
+        <aside
+          className={cn(
+            "flex shrink-0 flex-col border-e bg-background transition-[width] [--wails-draggable:no-drag]",
+            sidebarCollapsed ? "w-11" : "w-44"
+          )}
+        >
+          <nav
+            aria-label={t("nav.mainNav")}
+            className="flex min-h-0 flex-1 flex-col gap-1 p-1.5"
+          >
+            <SidebarItem
+              icon={<FolderSyncIcon />}
+              label={t("nav.tasks")}
+              active
+              collapsed={sidebarCollapsed}
+              onClick={closeOverlays}
+            />
+            <SidebarItem
+              icon={<FolderOpenIcon />}
+              label={t("nav.files")}
+              collapsed={sidebarCollapsed}
+              onClick={() => setFilesOpen(true)}
+            />
+            <SidebarItem
+              icon={<HardDriveIcon />}
+              label={t("nav.storages")}
+              collapsed={sidebarCollapsed}
+              onClick={() => setStoragesOpen(true)}
+            />
+            <SidebarItem
+              icon={<GaugeIcon />}
+              label={t("nav.overview")}
+              collapsed={sidebarCollapsed}
+              onClick={() => setOverviewOpen(true)}
+            />
+            <SidebarItem
+              icon={<SettingsIcon />}
+              label={t("nav.settings")}
+              collapsed={sidebarCollapsed}
+              onClick={() => setSettingsOpen(true)}
+            />
+            <SidebarItem
+              icon={<TerminalSquareIcon />}
+              label={t("nav.api")}
+              collapsed={sidebarCollapsed}
+              onClick={() => setApiOpen(true)}
+            />
+          </nav>
+          <div
+            className={cn(
+              "flex p-1.5",
+              sidebarCollapsed ? "justify-center" : "justify-end"
+            )}
+          >
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              aria-label={
+                sidebarCollapsed
+                  ? t("shell.expandSidebar")
+                  : t("shell.collapseSidebar")
+              }
+              title={
+                sidebarCollapsed
+                  ? t("shell.expandSidebar")
+                  : t("shell.collapseSidebar")
+              }
+              onClick={toggleSidebar}
+            >
+              {sidebarCollapsed ? (
+                <PanelLeftOpenIcon />
+              ) : (
+                <PanelLeftCloseIcon />
+              )}
+            </Button>
+          </div>
+        </aside>
+
+        <main className="flex min-h-0 flex-1 flex-col bg-muted/40 p-3">
+          {children}
+        </main>
+      </div>
+
+      <Dialog open={overviewOpen} onOpenChange={setOverviewOpen}>
+        <DialogContent className="flex h-[min(86vh,44rem)] w-[min(94vw,44rem)] max-w-none flex-col gap-0 p-0 sm:max-w-none">
+          <DialogHeader className="border-b px-4 py-3">
+            <DialogTitle>{t("nav.overview")}</DialogTitle>
+          </DialogHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto p-3 select-text">
+            <div className="flex flex-col gap-3">
+              <OverviewPage />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={storagesOpen} onOpenChange={setStoragesOpen}>
         <DialogContent className="flex h-[min(86vh,54rem)] w-[min(94vw,64rem)] max-w-none flex-col gap-0 p-0 sm:max-w-none">
@@ -259,62 +332,35 @@ export function AppShell({ children }: { children: ReactNode }) {
   )
 }
 
-/** 顶栏按钮下方展开的内容浮层，点击外部或按 Esc 关闭。 */
-function HeaderPopover({
-  open,
-  onOpenChange,
-  label,
+/** 侧边栏导航项：折叠时只显示图标，靠 title 提示名称。 */
+function SidebarItem({
   icon,
-  children,
+  label,
+  collapsed,
+  active,
+  onClick,
 }: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  label: string
   icon: ReactNode
-  children: ReactNode
+  label: string
+  collapsed: boolean
+  active?: boolean
+  onClick: () => void
 }) {
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) {
-      return
-    }
-    const onPointerDown = (event: PointerEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        onOpenChange(false)
-      }
-    }
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onOpenChange(false)
-      }
-    }
-    window.addEventListener("pointerdown", onPointerDown)
-    window.addEventListener("keydown", onKeyDown)
-    return () => {
-      window.removeEventListener("pointerdown", onPointerDown)
-      window.removeEventListener("keydown", onKeyDown)
-    }
-  }, [open, onOpenChange])
-
   return (
-    <div ref={ref} className="relative">
-      <Button
-        variant={open ? "secondary" : "ghost"}
-        size="icon-xs"
-        aria-label={label}
-        title={label}
-        aria-expanded={open}
-        onClick={() => onOpenChange(!open)}
-      >
-        {icon}
-      </Button>
-      {open ? (
-        <div className="absolute end-0 top-full z-50 mt-1 max-h-[min(78vh,40rem)] w-[min(92vw,44rem)] overflow-y-auto rounded-xl border bg-popover p-3 text-popover-foreground shadow-lg select-text">
-          <div className="flex flex-col gap-3">{children}</div>
-        </div>
-      ) : null}
-    </div>
+    <Button
+      variant={active ? "secondary" : "ghost"}
+      size="sm"
+      className={cn(
+        "w-full text-muted-foreground hover:text-foreground",
+        collapsed ? "justify-center px-0" : "justify-start gap-2"
+      )}
+      aria-current={active ? "page" : undefined}
+      title={collapsed ? label : undefined}
+      onClick={onClick}
+    >
+      {icon}
+      {!collapsed && <span className="truncate">{label}</span>}
+    </Button>
   )
 }
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
   CodeXmlIcon,
+  FolderOpenIcon,
   GaugeIcon,
   HardDriveIcon,
   LanguagesIcon,
@@ -32,6 +33,7 @@ type CommandPaletteProps = {
   onToggleLanguage: () => void
   onToggleRclone: () => void
   onOpenOverview: () => void
+  onOpenFiles: () => void
   onOpenStorages: () => void
   onOpenSettings: () => void
   onOpenApi: () => void
@@ -45,6 +47,7 @@ export function CommandPalette({
   onToggleLanguage,
   onToggleRclone,
   onOpenOverview,
+  onOpenFiles,
   onOpenStorages,
   onOpenSettings,
   onOpenApi,
@@ -110,6 +113,10 @@ export function CommandPalette({
                 <GaugeIcon />
                 {t("command.overview")}
                 <CommandShortcut>↵</CommandShortcut>
+              </CommandItem>
+              <CommandItem onSelect={() => run(onOpenFiles)}>
+                <FolderOpenIcon />
+                {t("command.files")}
               </CommandItem>
               <CommandItem onSelect={() => run(onOpenStorages)}>
                 <HardDriveIcon />

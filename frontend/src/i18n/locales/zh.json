@@ -23,6 +23,7 @@
   "nav": {
     "mainNav": "主导航",
     "system": "系统",
+    "tasks": "任务",
     "overview": "概览",
     "overviewHint": "rclone 状态与控制",
     "files": "文件",
@@ -77,6 +78,7 @@
     "navigation": "导航",
     "actions": "操作",
     "overview": "打开概览",
+    "files": "打开文件",
     "settings": "打开设置",
     "api": "打开接口演示",
     "startRclone": "启动 rclone",
