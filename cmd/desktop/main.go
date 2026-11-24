@@ -94,6 +94,15 @@ func main() {
 			TitleBar: application.MacTitleBarHidden,
 		}
 	}
+	// 上次退出时的窗口大小 / 位置：有合法记录就原位恢复，免得每次启动
+	// 都回到默认尺寸重新拖。尺寸低于最小值视为损坏记录，走默认值。
+	if state := loadWindowState(windowOptions.MinWidth, windowOptions.MinHeight); state != nil {
+		windowOptions.Width = state.Width
+		windowOptions.Height = state.Height
+		windowOptions.X = state.X
+		windowOptions.Y = state.Y
+		windowOptions.InitialPosition = application.WindowXY
+	}
 	win := app.Window.NewWithOptions(windowOptions)
 
 	// 用户点击关闭按钮时隐藏窗口而不是销毁（托盘负责唤回 / 退出）。
@@ -101,6 +110,11 @@ func main() {
 		windowEvent.Cancel()
 		win.Hide()
 	})
+
+	// 移动 / 缩放后立即把窗口几何写盘（见 window_state.go 的写入约定）。
+	saveFrame := func(*application.WindowEvent) { saveWindowState(win) }
+	win.RegisterHook(events.Common.WindowDidMove, saveFrame)
+	win.RegisterHook(events.Common.WindowDidResize, saveFrame)
 
 	// Ctrl+C / SIGTERM 与托盘“退出”走同一条路径，保证 rclone 与挂载被正常清理。
 	signals := make(chan os.Signal, 1)
