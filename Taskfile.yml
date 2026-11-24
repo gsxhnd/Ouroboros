@@ -1,0 +1,109 @@
+version: '3'
+
+# Ourboros 的 wails3 任务编排。`wails3 dev`（见 build/config.yml）按固定名称调用：
+#   - blocking:   `wails3 build DEV=true`        -> build -> {{OS}}:build
+#   - background: `wails3 task common:dev:frontend`（wails3 会给这条命令自动注入
+#                 “等待 FRONTEND_DEVSERVER_URL 端口就绪”的后台探测，名称不可改）
+#   - primary:    `wails3 task run`              -> run -> {{OS}}:run
+# 前端在 frontend/（React + Vite），桌面入口在 cmd/desktop。
+# Ourboros 不使用 Wails 服务绑定，因此不走模板的 generate:bindings / go mod tidy；
+# dev 模式窗口直接加载 Vite dev server（cmd/desktop 读取 FRONTEND_DEVSERVER_URL），
+# 无需构建 frontend/dist，改 .go 触发的重建循环里也就不跑 npm build。
+
+vars:
+  APP_NAME: "Ourboros"
+  BIN_DIR: "bin"
+  VITE_PORT: '{{.WAILS_VITE_PORT | default 9245}}'
+
+tasks:
+  install:frontend:deps:
+    summary: Install frontend dependencies
+    dir: frontend
+    sources:
+      - package.json
+      - package-lock.json
+    generates:
+      - node_modules
+    preconditions:
+      - sh: npm version
+        msg: "npm isn't installed (Node 24 via mise, see AGENTS.md)."
+    cmds:
+      - npm install
+
+  common:dev:frontend:
+    summary: Starts the Vite dev server used by wails3 dev
+    deps:
+      - task: install:frontend:deps
+    dir: frontend
+    cmds:
+      - npm run dev -- --port {{.VITE_PORT}} --strictPort
+
+  build:frontend:
+    summary: Production build of the React app into frontend/dist
+    deps:
+      - task: install:frontend:deps
+    dir: frontend
+    cmds:
+      - npm run build
+
+  build:
+    summary: Builds the desktop app (wails3 passes DEV=true in dev mode)
+    cmds:
+      - task: "{{OS}}:build"
+
+  run:
+    summary: >-
+      Runs the desktop app. In wails3 dev the window loads the Vite dev server;
+      a standalone run needs --webui to serve the UI.
+    cmds:
+      - task: "{{OS}}:run"
+
+  package:
+    summary: Production build (frontend/dist + -tags production)
+    cmds:
+      - task: build:frontend
+      - task: "{{OS}}:build"
+
+  darwin:build:
+    summary: Builds the macOS desktop app
+    cmds:
+      - go build {{.BUILD_FLAGS}} -o {{.BIN_DIR}}/{{.APP_NAME}} ./cmd/desktop
+    vars:
+      BUILD_FLAGS: '{{if eq .DEV "true"}}-buildvcs=false -gcflags=all="-l"{{else}}-tags production -trimpath -buildvcs=false -ldflags="-w -s"{{end}}'
+    env:
+      CGO_ENABLED: "1"
+      GOARCH: '{{.ARCH | default ARCH}}'
+      CGO_CFLAGS: "-mmacosx-version-min=12.0"
+      CGO_LDFLAGS: "-mmacosx-version-min=12.0"
+      MACOSX_DEPLOYMENT_TARGET: "12.0"
+
+  windows:build:
+    summary: Builds the Windows desktop app
+    cmds:
+      - go build {{.BUILD_FLAGS}} -o {{.BIN_DIR}}/{{.APP_NAME}}.exe ./cmd/desktop
+    vars:
+      BUILD_FLAGS: '{{if eq .DEV "true"}}-buildvcs=false -gcflags=all="-l"{{else}}-tags production -trimpath -buildvcs=false -ldflags="-w -s -H windowsgui"{{end}}'
+
+  linux:build:
+    summary: Builds the Linux desktop app (needs GTK4 / WebKitGTK 6.0)
+    cmds:
+      - go build {{.BUILD_FLAGS}} -o {{.BIN_DIR}}/{{.APP_NAME}} ./cmd/desktop
+    vars:
+      BUILD_FLAGS: '{{if eq .DEV "true"}}-buildvcs=false -gcflags=all="-l"{{else}}-tags production -trimpath -buildvcs=false -ldflags="-w -s"{{end}}'
+
+  darwin:run:
+    cmds:
+      - ./{{.BIN_DIR}}/{{.APP_NAME}}
+
+  windows:run:
+    cmds:
+      - ./{{.BIN_DIR}}/{{.APP_NAME}}.exe
+
+  linux:run:
+    cmds:
+      - ./{{.BIN_DIR}}/{{.APP_NAME}}
+
+  dev:
+    summary: wails3 dev（前端 HMR + .go 变更自动重建重启）
+    cmds:
+      - wails3 dev -config ./build/config.yml

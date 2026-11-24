@@ -59,12 +59,24 @@ func main() {
 		},
 	})
 
-	// 应用菜单（macOS 顶部菜单栏，含 About/Edit/Window 标准角色）
+	// 应用菜单（macOS 顶部菜单栏，含 About/Edit/View/Window 标准角色）。
+	// View 菜单自带 Reload / 缩放 / 全屏；dev 构建（未打 -tags production）时
+	// 额外包含 "Open Developer Tools"（Alt+Cmd+I），用于打开 WebView 检查器。
+	// production 构建默认剥离该入口，需要排查线上问题时用 -tags devtools 保留。
 	appMenu := app.Menu.New()
 	appMenu.AddRole(application.AppMenu)
 	appMenu.AddRole(application.EditMenu)
+	appMenu.AddRole(application.ViewMenu)
 	appMenu.AddRole(application.WindowMenu)
 	app.Menu.Set(appMenu)
+
+	// wails3 dev 会注入 FRONTEND_DEVSERVER_URL 指向 Vite dev server（其已把 /api
+	// 与 /health 代理到本机服务），窗口直接加载它即可获得前端热更新；
+	// 未注入时加载 Ourboros 自托管的前端（--webui / OURBOROS_WEB_DIR）。
+	pageURL := running.URL + "/?platform=" + runtime.GOOS
+	if devServer := os.Getenv("FRONTEND_DEVSERVER_URL"); devServer != "" {
+		pageURL = devServer + "/?platform=" + runtime.GOOS
+	}
 
 	windowOptions := application.WebviewWindowOptions{
 		Name:             "main",
@@ -73,7 +85,7 @@ func main() {
 		Height:           900,
 		MinWidth:         960,
 		MinHeight:        640,
-		URL:              running.URL + "/?platform=" + runtime.GOOS,
+		URL:              pageURL,
 		BackgroundColour: application.NewRGB(15, 17, 21),
 	}
 	if runtime.GOOS == "darwin" {
@@ -98,7 +110,7 @@ func main() {
 		app.Quit()
 	}()
 
-	shell := newTrayShell(ctx, app, win, running.State, running.URL+"/?platform="+runtime.GOOS)
+	shell := newTrayShell(ctx, app, win, running.State, pageURL)
 	app.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(*application.ApplicationEvent) {
 		go shell.run()
 		go shell.watchSettings(running.State.Events)
