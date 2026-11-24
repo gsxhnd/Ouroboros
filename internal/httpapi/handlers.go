@@ -19,6 +19,7 @@ import (
 	"github.com/gsxhnd/ourboros/internal/app"
 	"github.com/gsxhnd/ourboros/internal/core"
 	"github.com/gsxhnd/ourboros/internal/events"
+	"github.com/gsxhnd/ourboros/internal/jobs"
 	"github.com/gsxhnd/ourboros/internal/paths"
 	"github.com/gsxhnd/ourboros/internal/rclone"
 	"github.com/gsxhnd/ourboros/internal/settings"
@@ -54,6 +55,7 @@ func Handler(state *app.State, webDir string) http.Handler {
 	mux.HandleFunc("POST /api/remotes", api.remotesCreate)
 	mux.HandleFunc("GET /api/remotes/{name}", api.remotesGet)
 	mux.HandleFunc("PATCH /api/remotes/{name}", api.remotesUpdate)
+	mux.HandleFunc("DELETE /api/remotes/{name}", api.remotesDelete)
 	mux.HandleFunc("GET /api/files", api.filesList)
 	mux.HandleFunc("GET /api/files/download", api.filesDownload)
 	mux.HandleFunc("DELETE /api/files", api.filesDelete)
@@ -61,7 +63,11 @@ func Handler(state *app.State, webDir string) http.Handler {
 	mux.HandleFunc("POST /api/files/copy", api.filesCopy)
 	mux.HandleFunc("POST /api/files/move", api.filesMove)
 	mux.HandleFunc("POST /api/sync/{edge_id}/run", api.syncRun)
-	mux.HandleFunc("POST /api/actions/{node_id}/run", api.actionRun)
+	mux.HandleFunc("GET /api/sync/tasks", api.syncTasksList)
+	mux.HandleFunc("POST /api/sync/tasks", api.syncTasksCreate)
+	mux.HandleFunc("PATCH /api/sync/tasks/{id}", api.syncTasksPatch)
+	mux.HandleFunc("DELETE /api/sync/tasks/{id}", api.syncTasksDelete)
+	mux.HandleFunc("POST /api/sync/tasks/{id}/run", api.syncRun)
 	mux.HandleFunc("GET /api/sync/jobs", api.syncJobs)
 	mux.HandleFunc("GET /api/sync/jobs/events", api.syncEvents)
 	mux.HandleFunc("POST /api/sync/jobs/{job_id}/stop", api.syncStop)
@@ -503,6 +509,35 @@ func (a *api) remotesGet(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (a *api) remotesDelete(w http.ResponseWriter, r *http.Request) {
+	name := r.PathValue("name")
+	if !validRemoteName(name) {
+		badRequest(w, "invalid remote name")
+		return
+	}
+	// 仍被存储节点（同步任务/挂载端点）引用的 remote 不允许删除。
+	doc := a.state.Workspace.Get()
+	for i := range doc.Nodes {
+		node := &doc.Nodes[i]
+		if node.Kind == workspace.NodeRemote && node.Remote != nil && node.Remote.Name == name {
+			writeAPIError(w, http.StatusConflict, "conflict",
+				"remote is referenced by sync tasks or mounts; delete those first",
+				map[string]any{"kind": "remote_in_use"})
+			return
+		}
+	}
+	response, err := a.state.Rclone.CallInternal(r.Context(), "config/delete", map[string]any{"name": name})
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	if err := mapUpstream(response); err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"deleted": name})
+}
+
 func (a *api) providerList(ctx context.Context) ([]rclone.Provider, error) {
 	response, err := a.state.Rclone.CallInternal(ctx, "config/providers", map[string]any{})
 	if err != nil {
@@ -793,24 +828,44 @@ func (a *api) filesDelete(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// syncRunBody 是手动运行同步任务的可选参数。
+type syncRunBody struct {
+	// Resync 仅对双向同步（bisync）有效：执行重新初始化运行。
+	Resync bool `json:"resync,omitempty"`
+}
+
+// syncRun 运行一条同步规则。手动运行使用任务上保存的参数（限速、限额），
+// 与计划执行保持一致。双向同步首次运行需要 resync=true 建立基线。
 func (a *api) syncRun(w http.ResponseWriter, r *http.Request) {
-	edgeID := r.PathValue("edge_id")
+	taskID := r.PathValue("id")
+	if taskID == "" {
+		taskID = r.PathValue("edge_id")
+	}
+	var body syncRunBody
+	if err := decodeJSONOptional(r, &body); err != nil {
+		writeError(w, err)
+		return
+	}
 	doc := a.state.Workspace.Get()
-	edge := doc.Edge(edgeID)
+	edge := doc.Edge(taskID)
 	if edge == nil {
-		writeError(w, core.NotFound("edge "+edgeID))
+		writeError(w, core.NotFound("sync task "+taskID))
 		return
 	}
 	if edge.Kind != workspace.EdgeSync {
-		badRequest(w, "only sync edges can be run")
+		badRequest(w, "only sync tasks can be run")
 		return
 	}
 	if edge.Sync == nil {
-		badRequest(w, "sync edge is missing configuration")
+		badRequest(w, "sync task is missing configuration")
 		return
 	}
 	if !edge.Sync.Enabled {
-		writeAPIError(w, http.StatusConflict, "conflict", "sync edge is disabled", map[string]any{})
+		writeAPIError(w, http.StatusConflict, "conflict", "sync task is disabled", map[string]any{})
+		return
+	}
+	if edge.Sync.Operation.TwoWay() && edge.Sync.LastResult == nil && !body.Resync {
+		writeAPIError(w, http.StatusConflict, "conflict", "two-way sync requires an initial resync run", map[string]any{"kind": "bisync_resync_required"})
 		return
 	}
 	source, err := doc.NodeLocator(edge.Source, a.state.HomeDir)
@@ -823,7 +878,11 @@ func (a *api) syncRun(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	snapshot, err := a.state.Jobs.Start(a.state.Rclone, a.state.Workspace, edgeID, edge.Sync.Operation, source, target)
+	snapshot, err := a.state.Jobs.Start(a.state.Rclone, a.state.Workspace, taskID, edge.Sync.Operation, source, target, jobs.Options{
+		BWLimit:     edge.Sync.BWLimit,
+		MaxTransfer: edge.Sync.MaxTransfer,
+		Resync:      body.Resync,
+	})
 	if err != nil {
 		writeError(w, err)
 		return
@@ -831,39 +890,66 @@ func (a *api) syncRun(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, snapshot)
 }
 
-func (a *api) actionRun(w http.ResponseWriter, r *http.Request) {
-	nodeID := r.PathValue("node_id")
-	doc := a.state.Workspace.Get()
-	node := doc.Node(nodeID)
-	if node == nil || node.Kind != workspace.NodeAction || node.Action == nil {
-		writeError(w, core.NotFound("action node "+nodeID))
+func (a *api) syncTasksList(w http.ResponseWriter, _ *http.Request) {
+	tasks, revision := a.state.Workspace.SyncTasks()
+	writeJSON(w, http.StatusOK, map[string]any{"tasks": tasks, "revision": revision})
+}
+
+func (a *api) syncTasksCreate(w http.ResponseWriter, r *http.Request) {
+	var body workspace.CreateSyncTask
+	if err := decodeJSON(r, &body); err != nil {
+		writeError(w, err)
 		return
 	}
-	if !node.Action.Enabled {
-		writeAPIError(w, http.StatusConflict, "conflict", "action node is disabled", map[string]any{})
-		return
-	}
-	sourceNode, targetNode, err := workspace.ActionEndpoints(doc, nodeID)
+	remotes, known, err := a.remotesIfReady(r.Context())
 	if err != nil {
 		writeError(w, err)
 		return
 	}
-	source, err := sourceNode.Locator(a.state.HomeDir)
+	task, doc, err := a.state.Workspace.CreateSyncTask(body, remotes, known)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
-	target, err := targetNode.Locator(a.state.HomeDir)
+	writeJSON(w, http.StatusCreated, map[string]any{"task": task, "revision": doc.Revision})
+}
+
+func (a *api) syncTasksPatch(w http.ResponseWriter, r *http.Request) {
+	var body workspace.PatchSyncTask
+	if err := decodeJSON(r, &body); err != nil {
+		writeError(w, err)
+		return
+	}
+	remotes, known, err := a.remotesIfReady(r.Context())
 	if err != nil {
 		writeError(w, err)
 		return
 	}
-	snapshot, err := a.state.Jobs.Start(a.state.Rclone, a.state.Workspace, nodeID, node.Action.Operation, source, target)
+	task, doc, err := a.state.Workspace.PatchSyncTask(r.PathValue("id"), body, remotes, known)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, snapshot)
+	writeJSON(w, http.StatusOK, map[string]any{"task": task, "revision": doc.Revision})
+}
+
+func (a *api) syncTasksDelete(w http.ResponseWriter, r *http.Request) {
+	revision, err := revisionQuery(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	id := r.PathValue("id")
+	if err := a.ensureIdle([]string{id}); err != nil {
+		writeError(w, err)
+		return
+	}
+	doc, err := a.state.Workspace.DeleteSyncTask(id, revision)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, doc)
 }
 
 func (a *api) syncJobs(w http.ResponseWriter, _ *http.Request) {

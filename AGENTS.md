@@ -20,18 +20,19 @@ Go is 1.26 and Node is 24 per `mise.toml`. CI uses Node 22, so use the local too
 
 - `cmd/ourboros`: service entrypoint. `cmd/desktop`: Wails entrypoint plus tray code.
 - `internal/serve`: startup wiring. `Run` validates the bind host, resolves the web dir, starts app state and rclone, then starts the HTTP server.
-- `internal/httpapi`: handlers and error mapping. `internal/rclone`: process supervision, RC client, download/discovery. `internal/workspace`: versioned JSON documents and validation. `internal/mounts`, `internal/scheduler`, `internal/jobs`, `internal/settings`, `internal/persist`: supporting state.
-- `web/src`: React app. `components/canvas`, `lib/canvas`, `stores/canvas-store.ts`, and `pages/` are the canvas workspace. The i18n locale files are `web/src/i18n/locales/{en,zh}.json`.
+- `internal/httpapi`: handlers and error mapping. `internal/rclone`: process supervision, RC client, download/discovery. `internal/workspace`: versioned JSON documents (sync tasks live on sync edges), sync-task CRUD in `tasks.go`, and validation. `internal/mounts`, `internal/scheduler`, `internal/jobs`, `internal/settings`, `internal/persist`: supporting state.
+- `web/src`: React app. The home page is `pages/sync.tsx` (sync tasks) backed by `stores/sync-store.ts` and `components/sync/`; `pages/storages.tsx` manages local directories and remotes (storage), and `pages/files.tsx` opens as an overlay from the shell. The i18n locale files are `web/src/i18n/locales/{en,zh}.json`.
 - `docs/dev/` holds the design docs, written in Chinese. `10-设计决策与注意事项.md` lists the rules below in full, and `11-打包和发布指南.md` covers release.
 
 ## Constraints that are easy to break
 
 - The server refuses to bind non-loopback addresses (`cli.AssertBindHost`). Do not relax this without adding HTTP auth, CSRF/Origin checks, and TLS first.
 - RC binds only to 127.0.0.1. Never return RC URLs, RC credentials, remote tokens, or `config/dump` to the browser or the logs.
-- Typed API input must validate remote names, relative paths, absolute local paths, operation kind, and edge direction.
-- Dangerous operations (`sync`, `move`, delete, purge, mount) must show source, target, and impact in the UI before running.
-- Workspace and settings JSON carry a schema version and are written atomically. Workspace saves use revision-based optimistic concurrency, and conflicts return 409.
+- Typed API input must validate remote names, relative paths, absolute local paths, operation kind, and sync/mount endpoints.
+- Dangerous operations (`sync`, `move`, `bisync`, delete, purge, mount) must show source, target, and impact in the UI before running. Two-way sync (bisync) needs an explicit resync confirmation on its first run.
+- Workspace and settings JSON carry a schema version and are written atomically. Sync-task writes use revision-based optimistic concurrency, and conflicts return 409.
 - rclone may be missing. The service must still start, and rclone-dependent operations return a diagnosable not-ready state. Never overwrite an rclone installed by a system package manager.
+- rclone's bandwidth limiter is process-global: `jobs.Store` applies the smallest bwlimit among running tasks via `core/bwlimit` and resets to `off` when none remain. `max_transfer` is per-call through `_config` with `CutoffMode=HARD`.
 - An explicit `--webui` path without `index.html` is a startup error. Without the flag, the server runs in API-only mode.
 - Mount is remote → local only. Mount options are not passed through from the frontend without platform validation.
 - Auto-restore of mounts is off by default. Turning it on needs the startup, PID, and cleanup work described in `docs/dev/10-设计决策与注意事项.md`.

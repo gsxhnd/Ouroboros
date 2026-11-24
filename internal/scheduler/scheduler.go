@@ -36,12 +36,21 @@ func tick(ws *workspace.Store, jobStore *jobs.Store, rc *rclone.Supervisor) erro
 		if edge.Kind != workspace.EdgeSync || edge.Sync == nil {
 			continue
 		}
+		// 双向同步（bisync）必须先手动完成一次 resync 初始化，否则计划任务
+		// 每轮都会失败。
+		if edge.Sync.Operation.TwoWay() && edge.Sync.LastResult == nil {
+			continue
+		}
 		unit := runUnit{
 			id:        edge.ID,
 			enabled:   edge.Sync.Enabled,
 			schedule:  edge.Sync.Schedule,
 			nextRun:   edge.Sync.NextRun,
 			operation: edge.Sync.Operation,
+			options: jobs.Options{
+				BWLimit:     edge.Sync.BWLimit,
+				MaxTransfer: edge.Sync.MaxTransfer,
+			},
 			endpoints: func() (paths.Locator, paths.Locator, error) {
 				source, err := doc.NodeLocator(edge.Source, ws.Home())
 				if err != nil {
@@ -56,45 +65,17 @@ func tick(ws *workspace.Store, jobStore *jobs.Store, rc *rclone.Supervisor) erro
 			errs = append(errs, fmt.Errorf("edge %s: %w", edge.ID, err))
 		}
 	}
-	for _, node := range doc.Nodes {
-		if node.Kind != workspace.NodeAction || node.Action == nil {
-			continue
-		}
-		nodeID := node.ID
-		action := node.Action
-		unit := runUnit{
-			id:        nodeID,
-			enabled:   action.Enabled,
-			schedule:  action.Schedule,
-			nextRun:   action.NextRun,
-			operation: action.Operation,
-			endpoints: func() (paths.Locator, paths.Locator, error) {
-				source, target, err := workspace.ActionEndpoints(doc, nodeID)
-				if err != nil {
-					return paths.Locator{}, paths.Locator{}, err
-				}
-				from, err := source.Locator(ws.Home())
-				if err != nil {
-					return paths.Locator{}, paths.Locator{}, err
-				}
-				to, err := target.Locator(ws.Home())
-				return from, to, err
-			},
-		}
-		if err := runDue(ws, jobStore, rc, unit); err != nil {
-			errs = append(errs, fmt.Errorf("node %s: %w", nodeID, err))
-		}
-	}
 	return errors.Join(errs...)
 }
 
-// runUnit 是一个可按计划运行的单元：同步边或动作节点。
+// runUnit 是一个可按计划运行的单元：同步边。
 type runUnit struct {
 	id        string
 	enabled   bool
 	schedule  workspace.Schedule
 	nextRun   *time.Time
 	operation workspace.Operation
+	options   jobs.Options
 	endpoints func() (paths.Locator, paths.Locator, error)
 }
 
@@ -123,7 +104,7 @@ func runDue(ws *workspace.Store, jobStore *jobs.Store, rc *rclone.Supervisor, un
 	if err != nil {
 		return err
 	}
-	if _, err := jobStore.Start(rc, ws, unit.id, unit.operation, source, target); err != nil {
+	if _, err := jobStore.Start(rc, ws, unit.id, unit.operation, source, target, unit.options); err != nil {
 		slog.Warn("scheduled run failed to start", "id", unit.id, "err", err)
 		return nil
 	}

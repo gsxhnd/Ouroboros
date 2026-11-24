@@ -80,7 +80,7 @@ PATCH  /api/workspace/edges/{id}
 DELETE /api/workspace/edges/{id}
 ```
 
-`GET /api/workspace` 返回当前 `WorkspaceDocument` 和 `revision`。普通画布编辑使用节点/边资源接口；`PUT /api/workspace` 用于整体替换、导入和恢复，必须提交期望的 `revision`。
+Workspace API 是同步任务的存储层：节点表示端点，sync 边表示同步规则，mount 边表示挂载规则。浏览器 UI 不直接使用节点/边写接口，而是使用下面的同步任务 API；`PUT /api/workspace` 保留给整体替换、导入和恢复，必须提交期望的 `revision`。
 
 ### WorkspaceDocument
 
@@ -104,19 +104,36 @@ DELETE /api/workspace/edges/{id}
       "remote": { "name": "archive", "path": "ourboros" }
     }
   ],
-  "edges": [],
+  "edges": [
+    {
+      "id": "edge-sync-1",
+      "source": "node-local-1",
+      "target": "node-remote-1",
+      "kind": "sync",
+      "sync": {
+        "name": "备份",
+        "operation": "sync",
+        "bw_limit": "10MiB",
+        "max_transfer": "1GiB",
+        "schedule": { "mode": "preset", "preset": "daily", "timezone": "Asia/Shanghai", "enabled": true },
+        "enabled": true
+      }
+    }
+  ],
   "viewport": { "x": 0, "y": 0, "zoom": 1 }
 }
 ```
 
-服务端拒绝孤儿边、重复边、非法路径、不存在 remote、路径穿越以及非法挂载方向。
+`viewport` 是历史画布遗留字段，加载新文档时会清理旧的画布专用数据（action 节点、flow 边）。服务端拒绝孤儿边、重复挂载、非法路径、不存在 remote、路径穿越以及非法挂载方向。
 
 ## Remote 与文件 API
 
 ```text
 GET    /api/remotes
 POST   /api/remotes
+GET    /api/remotes/{name}
 PATCH  /api/remotes/{name}
+DELETE /api/remotes/{name}
 
 GET    /api/files?fs=...&remote=...&path=...
 POST   /api/files/mkdir
@@ -127,24 +144,41 @@ DELETE /api/files
 
 文件请求必须明确 `fs`、`remote` 和相对路径。删除、purge、move 和 `sync` 的请求/响应必须携带可展示的源、目标和破坏性提示。
 
+### 存储 API
+
+存储页把本地目录和 remote 统一为"存储"：
+
+- 本地存储 = workspace 文档中的 local 节点（`POST /api/workspace/nodes` + `DELETE /api/workspace/nodes/{id}`），同步任务按路径自动复用。
+- 远程存储 = rclone remote（`POST /api/remotes`、`PATCH /api/remotes/{name}`、`DELETE /api/remotes/{name}`）。
+- 删除仍被同步任务/挂载引用的存储端点返回 `409`（`details.kind = "node_in_use"` / `"remote_in_use"`），不允许级联删除用户配置。
+
 ## 同步任务 API
 
 ```text
-POST   /api/sync/{edge_id}/run
+GET    /api/sync/tasks
+POST   /api/sync/tasks
+PATCH  /api/sync/tasks/{id}
+DELETE /api/sync/tasks/{id}?revision=N
+POST   /api/sync/tasks/{id}/run
 GET    /api/sync/jobs
 GET    /api/sync/jobs/events
 POST   /api/sync/jobs/{job_id}/stop
 ```
 
-同步边在建线时保存：
+创建任务（`POST /api/sync/tasks`）：
 
 ```json
 {
-  "operation": "copy | move | sync",
+  "revision": 3,
+  "name": "照片备份",
+  "operation": "sync",
+  "source": { "kind": "local", "path": "/Users/example/Photos" },
+  "target": { "kind": "remote", "remote": "archive", "path": "photos" },
+  "bw_limit": "10MiB",
+  "max_transfer": "1GiB",
   "schedule": {
-    "mode": "preset | cron",
-    "preset": "hourly | daily | weekly",
-    "cron": "0 */6 * * *",
+    "mode": "preset",
+    "preset": "daily",
     "timezone": "Asia/Shanghai",
     "enabled": true
   },
@@ -152,7 +186,12 @@ POST   /api/sync/jobs/{job_id}/stop
 }
 ```
 
-`POST /api/sync/{edge_id}/run` 返回 job 快照；同一边有运行中的 job 时返回 `409`。计划任务不得绕过同样的权限、路径和危险操作校验。
+- `operation` 为 `copy | move | sync | bisync`：前三者是单向同步，`bisync` 是双向同步。
+- 端点 `kind` 为 `local`（绝对目录）或 `remote`（remote 名 + 可选子路径）。
+- `bw_limit` / `max_transfer` 接受单个 rclone 容量字符串（如 `10MiB`、`1.5G`），空或 `off` 表示不限；不接受带宽时间表。
+- 响应为 `{ "task": SyncTask, "revision": N }`；`SyncTask` 含服务端计算的 `destructive` 与 `impact`，供 UI 在运行前展示。
+
+`POST /api/sync/tasks/{id}/run` 按任务保存的参数启动 job，可选 body `{"resync": true}`：双向同步首次运行必须带 `resync`，否则返回 `409`（`details.kind = "bisync_resync_required"`）。同一条任务有运行中的 job 时返回 `409`。计划任务不得绕过同样的权限、路径和危险操作校验。
 
 ## 挂载 API
 

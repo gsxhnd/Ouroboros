@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gsxhnd/ourboros/internal/events"
+	"github.com/gsxhnd/ourboros/internal/paths"
 )
 
 func unixTime(unix int) time.Time {
@@ -176,5 +177,95 @@ func TestAwaitJobID(t *testing.T) {
 	store.mu.Unlock()
 	if got := store.awaitJobID("j", time.Second); got == nil || *got != id {
 		t.Fatalf("got %v", got)
+	}
+}
+
+func TestBuildJobBodyOneWay(t *testing.T) {
+	source := locatorFor("/tmp/src", "")
+	target := locatorFor("/tmp/dst", "")
+	body := buildJobBody("copy", source, target, Options{}, "group-1")
+	if body["srcFs"] != "/tmp/src" || body["dstFs"] != "/tmp/dst" {
+		t.Fatalf("unexpected body %v", body)
+	}
+	if body["_async"] != true || body["_group"] != "group-1" {
+		t.Fatalf("unexpected async fields %v", body)
+	}
+	if _, ok := body["_config"]; ok {
+		t.Fatal("unexpected _config without options")
+	}
+}
+
+func TestBuildJobBodyMaxTransfer(t *testing.T) {
+	source := locatorFor("/tmp/src", "")
+	target := locatorFor("/tmp/dst", "")
+	body := buildJobBody("sync", source, target, Options{MaxTransfer: "1GiB"}, "group-1")
+	config, ok := body["_config"].(map[string]any)
+	if !ok {
+		t.Fatalf("missing _config %v", body)
+	}
+	if config["MaxTransfer"] != "1GiB" || config["CutoffMode"] != "HARD" {
+		t.Fatalf("unexpected config %v", config)
+	}
+	// "off" 表示不限，不应携带 _config。
+	body = buildJobBody("sync", source, target, Options{MaxTransfer: "off"}, "group-1")
+	if _, ok := body["_config"]; ok {
+		t.Fatalf("off should omit _config %v", body)
+	}
+}
+
+func TestBuildJobBodyBisync(t *testing.T) {
+	source := locatorFor("/tmp/src", "")
+	target := locatorFor("remote", "docs")
+	body := buildJobBody("bisync", source, target, Options{}, "group-1")
+	if body["path1"] != "/tmp/src" || body["path2"] != "remote:docs" {
+		t.Fatalf("unexpected bisync body %v", body)
+	}
+	if _, ok := body["resync"]; ok {
+		t.Fatal("resync should be omitted by default")
+	}
+	body = buildJobBody("bisync", source, target, Options{Resync: true}, "group-1")
+	if body["resync"] != true {
+		t.Fatalf("resync flag missing %v", body)
+	}
+	if _, ok := body["srcFs"]; ok {
+		t.Fatal("bisync must not send srcFs")
+	}
+}
+
+func TestMinBwLimit(t *testing.T) {
+	if got := minBwLimit(nil); got != "" {
+		t.Fatalf("empty list should be unlimited, got %q", got)
+	}
+	if got := minBwLimit([]string{"", "off"}); got != "" {
+		t.Fatalf("off values should be ignored, got %q", got)
+	}
+	if got := minBwLimit([]string{"10MiB", "1M", "5G"}); got != "1M" {
+		t.Fatalf("expected smallest limit, got %q", got)
+	}
+	if got := minBwLimit([]string{"bogus", "2G"}); got != "2G" {
+		t.Fatalf("unparsable values should be skipped, got %q", got)
+	}
+}
+
+func locatorFor(fs, remote string) paths.Locator {
+	if remote != "" {
+		return paths.Locator{Kind: paths.KindRemote, FS: fs, Remote: remote}
+	}
+	return paths.Locator{Kind: paths.KindLocal, FS: fs}
+}
+
+func TestMaxTransferLimit(t *testing.T) {
+	if bytes, display := maxTransferLimit(Options{}); bytes != 0 || display != "" {
+		t.Fatalf("empty options should have no limit, got %d %q", bytes, display)
+	}
+	if bytes, display := maxTransferLimit(Options{MaxTransfer: "off"}); bytes != 0 || display != "" {
+		t.Fatalf("off should have no limit, got %d %q", bytes, display)
+	}
+	bytes, display := maxTransferLimit(Options{MaxTransfer: "300k"})
+	if bytes != 300*1024 || display != "300k" {
+		t.Fatalf("unexpected limit %d %q", bytes, display)
+	}
+	if bytes, _ := maxTransferLimit(Options{MaxTransfer: "bogus"}); bytes != 0 {
+		t.Fatalf("bogus value should be no limit, got %d", bytes)
 	}
 }

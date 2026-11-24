@@ -99,7 +99,7 @@ export type FilesResponse = {
   items: ListItem[]
 }
 
-export type NodeKind = "local" | "remote" | "action"
+export type NodeKind = "local" | "remote"
 
 export type RemoteRef = { name: string; path?: string }
 
@@ -114,25 +114,9 @@ export type StorageNode = {
   position: Position
   local_path?: string
   remote?: RemoteRef
-  action?: ActionConfig
 }
 
-/** 动作节点的运行参数。上游存储节点是源，下游存储节点是目标。 */
-export type ActionConfig = {
-  operation: SyncOperation
-  schedule: {
-    mode: string
-    preset?: string
-    cron?: string
-    timezone: string
-    enabled: boolean
-  }
-  enabled: boolean
-  next_run?: string
-  last_result?: LastResult
-}
-
-export type SyncOperation = "copy" | "move" | "sync"
+export type SyncOperation = "copy" | "move" | "sync" | "bisync"
 
 export type LastResult = {
   job_id: string
@@ -142,7 +126,10 @@ export type LastResult = {
 }
 
 export type SyncConfig = {
+  name?: string
   operation: SyncOperation
+  bw_limit?: string
+  max_transfer?: string
   enabled: boolean
   schedule?: {
     mode: string
@@ -157,7 +144,7 @@ export type SyncConfig = {
 
 export type MountConfig = { enabled: boolean }
 
-export type EdgeKind = "sync" | "mount" | "flow"
+export type EdgeKind = "sync" | "mount"
 
 export type ConnectionEdge = {
   id: string
@@ -177,6 +164,36 @@ export type WorkspaceDocument = {
   updated_at: string
 }
 
+/** 同步任务的端点：本地目录或 remote 内路径。 */
+export type TaskEndpoint = {
+  kind: "local" | "remote"
+  path?: string
+  remote?: string
+}
+
+/** 同步任务：同步规则的后端只读视图。 */
+export type SyncTask = {
+  id: string
+  name: string
+  operation: SyncOperation
+  source: TaskEndpoint
+  target: TaskEndpoint
+  bw_limit?: string
+  max_transfer?: string
+  schedule?: {
+    mode: string
+    preset?: string
+    cron?: string
+    timezone: string
+    enabled: boolean
+  }
+  enabled: boolean
+  next_run?: string
+  last_result?: LastResult
+  destructive: boolean
+  impact: string
+}
+
 export type JobStatus =
   | "queued"
   | "running"
@@ -186,6 +203,13 @@ export type JobStatus =
   | "partial_failed"
   | "cancelled"
   | "expired"
+
+/** 任务快照里的源/目标端点（paths.Locator 的 JSON 形式）。 */
+export type JobLocator = {
+  kind: "local" | "remote"
+  fs: string
+  remote: string
+}
 
 export type JobProgress = {
   bytes: number
@@ -203,8 +227,8 @@ export type JobSnapshot = {
   operation: string
   status: JobStatus
   destructive: boolean
-  source: Record<string, unknown>
-  target: Record<string, unknown>
+  source: JobLocator
+  target: JobLocator
   impact: string
   progress: JobProgress
   error?: string

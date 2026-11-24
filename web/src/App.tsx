@@ -1,7 +1,7 @@
 import { AppShell } from "@/components/app-shell"
 import { TrayPanel } from "@/components/tray-panel"
 import { isTrayView } from "@/lib/platform"
-import { CanvasPage } from "@/pages/canvas"
+import { SyncPage } from "@/pages/sync"
 
 export function App() {
   if (isTrayView) {
@@ -10,7 +10,7 @@ export function App() {
 
   return (
     <AppShell>
-      <CanvasPage />
+      <SyncPage />
     </AppShell>
   )
 }

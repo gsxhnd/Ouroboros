@@ -23,17 +23,24 @@ func Validate(doc *Document, remotes []string, remotesKnown bool, home string) e
 		}
 	}
 	edges := map[string]struct{}{}
-	pairs := map[string]struct{}{}
+	mountPairs := map[string]struct{}{}
 	for _, edge := range doc.Edges {
 		if _, ok := edges[edge.ID]; ok {
 			return core.InvalidRequest("duplicate edge id " + edge.ID)
 		}
 		edges[edge.ID] = struct{}{}
-		pair := edge.Source + "\x00" + edge.Target
-		if _, ok := pairs[pair]; ok {
-			return core.InvalidRequest("duplicate edge from " + edge.Source + " to " + edge.Target)
+		if edge.Kind != EdgeSync && edge.Kind != EdgeMount {
+			return core.InvalidRequest("unknown edge kind " + string(edge.Kind))
 		}
-		pairs[pair] = struct{}{}
+		// 同一端点对允许多条同步规则（例如复制 + 双向同步），但重复挂载同一
+		// remote/path 到同一本地目录会互相冲突，仍然拒绝。
+		if edge.Kind == EdgeMount {
+			pair := edge.Source + "\x00" + edge.Target
+			if _, ok := mountPairs[pair]; ok {
+				return core.InvalidRequest("duplicate mount from " + edge.Source + " to " + edge.Target)
+			}
+			mountPairs[pair] = struct{}{}
+		}
 		source := doc.Node(edge.Source)
 		if source == nil {
 			return core.InvalidRequest("edge " + edge.ID + " references missing source")
@@ -52,73 +59,15 @@ func Validate(doc *Document, remotes []string, remotesKnown bool, home string) e
 			if err := ValidateSchedule(edge.Sync.Schedule); err != nil {
 				return err
 			}
-		}
-		if edge.Kind == EdgeFlow {
-			if err := validateFlowEdge(source, target); err != nil {
+			if err := ValidateBWLimit(edge.Sync.BWLimit); err != nil {
 				return err
 			}
-		}
-	}
-	for i := range doc.Nodes {
-		node := &doc.Nodes[i]
-		if node.Kind == NodeAction {
-			if err := validateActionNode(node); err != nil {
+			if err := ValidateMaxTransfer(edge.Sync.MaxTransfer); err != nil {
 				return err
 			}
 		}
 	}
 	return nil
-}
-
-// validateFlowEdge 只允许 存储 → 动作 或 动作 → 存储，禁止动作直连动作和存储直连存储。
-func validateFlowEdge(source, target *Node) error {
-	sourceAction := source.Kind == NodeAction
-	targetAction := target.Kind == NodeAction
-	if sourceAction == targetAction {
-		return core.InvalidRequest("flow edges must connect a storage node and an action node")
-	}
-	return nil
-}
-
-// validateActionNode 只校验字段本身。画布允许先放置动作节点再逐步连线，
-// 上下游数量在运行时由 ActionEndpoints 检查。
-func validateActionNode(node *Node) error {
-	if node.Action == nil {
-		return core.InvalidRequest("action node " + node.ID + " is missing action configuration")
-	}
-	return ValidateSchedule(node.Action.Schedule)
-}
-
-// ActionEndpoints 返回动作节点唯一的上游和下游存储节点，结构不满足时返回错误。
-func ActionEndpoints(doc Document, nodeID string) (source, target *Node, err error) {
-	node := doc.Node(nodeID)
-	if node == nil || node.Kind != NodeAction {
-		return nil, nil, core.NotFound("action node " + nodeID)
-	}
-	var inputs, outputs []string
-	for _, edge := range doc.Edges {
-		if edge.Kind != EdgeFlow {
-			continue
-		}
-		if edge.Target == nodeID {
-			inputs = append(inputs, edge.Source)
-		}
-		if edge.Source == nodeID {
-			outputs = append(outputs, edge.Target)
-		}
-	}
-	if len(inputs) != 1 || len(outputs) != 1 {
-		return nil, nil, core.InvalidRequest("action node " + nodeID + " needs exactly one source and one destination")
-	}
-	source = doc.Node(inputs[0])
-	target = doc.Node(outputs[0])
-	if source == nil || target == nil {
-		return nil, nil, core.InvalidRequest("action node " + nodeID + " references a missing node")
-	}
-	if source.Kind == NodeAction || target.Kind == NodeAction {
-		return nil, nil, core.InvalidRequest("action node " + nodeID + " cannot chain with another action node")
-	}
-	return source, target, nil
 }
 
 func validateNode(node *Node, remotes []string, remotesKnown bool, home string) error {
@@ -166,10 +115,6 @@ func validateNode(node *Node, remotes []string, remotesKnown bool, home string) 
 		}
 		if node.LocalPath != nil {
 			return core.InvalidRequest("remote node " + node.ID + " must not include local_path")
-		}
-	case NodeAction:
-		if node.Remote != nil || node.LocalPath != nil {
-			return core.InvalidRequest("action node " + node.ID + " must not include a location")
 		}
 	default:
 		return core.InvalidRequest("unknown node kind")
@@ -227,5 +172,20 @@ func migrate(value map[string]any) (Document, error) {
 	if err := json.Unmarshal(raw, &doc); err != nil {
 		return Document{}, core.CorruptStore("workspace: " + err.Error())
 	}
+	// 画布功能已移除：清理历史文档里遗留的 action 节点和 flow 边。
+	nodes := doc.Nodes[:0]
+	for _, node := range doc.Nodes {
+		if node.Kind == NodeLocal || node.Kind == NodeRemote {
+			nodes = append(nodes, node)
+		}
+	}
+	doc.Nodes = nodes
+	edges := doc.Edges[:0]
+	for _, edge := range doc.Edges {
+		if edge.Kind == EdgeSync || edge.Kind == EdgeMount {
+			edges = append(edges, edge)
+		}
+	}
+	doc.Edges = edges
 	return doc, nil
 }

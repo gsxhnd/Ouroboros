@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import {
+  FolderOpenIcon,
   GaugeIcon,
+  HardDriveIcon,
   Loader2Icon,
   MoonIcon,
   PlayIcon,
@@ -25,8 +27,10 @@ import {
 import { useTheme } from "@/components/theme-provider"
 import { changeLanguage, type Locale } from "@/i18n"
 import { isDesktop, isMacDesktop } from "@/lib/platform"
+import { FilesPage } from "@/pages/files"
 import { OverviewPage } from "@/pages/overview"
 import { SettingsPage } from "@/pages/settings"
+import { StoragesPage } from "@/pages/storages"
 import { startRcloneStatusPolling, useRcloneStore } from "@/stores/rclone-store"
 import type { RcloneStatus } from "@/lib/types"
 import { cn } from "cn"
@@ -38,8 +42,8 @@ import { cn } from "cn"
 const headerHeight = isMacDesktop ? "h-12" : isDesktop ? "h-10" : "h-14 md:h-12"
 
 /**
- * 应用外壳：画布始终是唯一的主视图，
- * 概览、设置和接口演示以浮层形式打开，不再切换页面。
+ * 应用外壳：同步任务页是唯一的主视图，
+ * 概览、文件、设置和接口演示以浮层形式打开，不切换页面。
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const { t, i18n } = useTranslation()
@@ -52,6 +56,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [overviewOpen, setOverviewOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [apiOpen, setApiOpen] = useState(false)
+  const [filesOpen, setFilesOpen] = useState(false)
+  const [storagesOpen, setStoragesOpen] = useState(false)
 
   useEffect(() => startRcloneStatusPolling(), [])
 
@@ -99,6 +105,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             onToggleLanguage={() => changeLanguage(nextLocale)}
             onToggleRclone={() => void (running ? stop() : start())}
             onOpenOverview={() => setOverviewOpen(true)}
+            onOpenStorages={() => setStoragesOpen(true)}
             onOpenSettings={() => setSettingsOpen(true)}
             onOpenApi={() => setApiOpen(true)}
           />
@@ -111,6 +118,24 @@ export function AppShell({ children }: { children: ReactNode }) {
             <OverviewPage />
           </HeaderPopover>
 
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label={t("nav.storages")}
+            title={t("nav.storages")}
+            onClick={() => setStoragesOpen(true)}
+          >
+            <HardDriveIcon />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label={t("nav.files")}
+            title={t("nav.files")}
+            onClick={() => setFilesOpen(true)}
+          >
+            <FolderOpenIcon />
+          </Button>
           <Button
             variant="ghost"
             size="icon-xs"
@@ -186,6 +211,28 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main className="flex min-h-0 flex-1 flex-col bg-muted/40 p-3">
         {children}
       </main>
+
+      <Dialog open={storagesOpen} onOpenChange={setStoragesOpen}>
+        <DialogContent className="flex h-[min(86vh,54rem)] w-[min(94vw,64rem)] max-w-none flex-col gap-0 p-0 sm:max-w-none">
+          <DialogHeader className="border-b px-4 py-3">
+            <DialogTitle>{t("nav.storages")}</DialogTitle>
+          </DialogHeader>
+          <div className="min-h-0 flex-1 select-text">
+            <StoragesPage />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={filesOpen} onOpenChange={setFilesOpen}>
+        <DialogContent className="flex h-[min(86vh,54rem)] w-[min(94vw,72rem)] max-w-none flex-col gap-0 p-0 sm:max-w-none">
+          <DialogHeader className="border-b px-4 py-3">
+            <DialogTitle>{t("nav.files")}</DialogTitle>
+          </DialogHeader>
+          <div className="min-h-0 flex-1 select-text">
+            <FilesPage />
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
         <DialogContent className="flex h-[min(86vh,54rem)] w-[min(94vw,64rem)] max-w-none flex-col gap-0 p-0 sm:max-w-none">

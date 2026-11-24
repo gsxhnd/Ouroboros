@@ -67,22 +67,10 @@ type Node struct {
 	Position  Position `json:"position"`
 	LocalPath *string  `json:"local_path,omitempty"`
 	Remote    *Remote  `json:"remote,omitempty"`
-	Action    *Action  `json:"action,omitempty"`
-}
-
-// Action 是画布上的中间处理节点：它接收上游存储节点的数据，按自身的操作写入下游存储节点。
-type Action struct {
-	Operation  Operation   `json:"operation"`
-	Schedule   Schedule    `json:"schedule"`
-	Enabled    bool        `json:"enabled"`
-	NextRun    *time.Time  `json:"next_run,omitempty"`
-	LastResult *LastResult `json:"last_result,omitempty"`
 }
 
 func (n Node) Locator(home string) (paths.Locator, error) {
 	switch n.Kind {
-	case NodeAction:
-		return paths.Locator{}, core.InvalidRequest("action node " + n.ID + " has no storage location")
 	case NodeLocal:
 		if n.LocalPath == nil {
 			return paths.Locator{}, core.InvalidPath("local node " + n.ID + " is missing local_path")
@@ -103,7 +91,6 @@ type NodeKind string
 const (
 	NodeLocal  NodeKind = "local"
 	NodeRemote NodeKind = "remote"
-	NodeAction NodeKind = "action"
 )
 
 type Remote struct {
@@ -136,29 +123,37 @@ type EdgeKind string
 const (
 	EdgeSync  EdgeKind = "sync"
 	EdgeMount EdgeKind = "mount"
-	EdgeFlow  EdgeKind = "flow"
 )
 
 type SyncConfig struct {
-	Operation  Operation   `json:"operation"`
-	Schedule   Schedule    `json:"schedule"`
-	Enabled    bool        `json:"enabled"`
-	NextRun    *time.Time  `json:"next_run,omitempty"`
-	LastResult *LastResult `json:"last_result,omitempty"`
+	Name        string      `json:"name,omitempty"`
+	Operation   Operation   `json:"operation"`
+	BWLimit     string      `json:"bw_limit,omitempty"`
+	MaxTransfer string      `json:"max_transfer,omitempty"`
+	Schedule    Schedule    `json:"schedule"`
+	Enabled     bool        `json:"enabled"`
+	NextRun     *time.Time  `json:"next_run,omitempty"`
+	LastResult  *LastResult `json:"last_result,omitempty"`
 }
 
 func (s *SyncConfig) UnmarshalJSON(data []byte) error {
 	var raw struct {
-		Operation  Operation   `json:"operation"`
-		Schedule   Schedule    `json:"schedule"`
-		Enabled    *bool       `json:"enabled"`
-		NextRun    *time.Time  `json:"next_run"`
-		LastResult *LastResult `json:"last_result"`
+		Name        string      `json:"name"`
+		Operation   Operation   `json:"operation"`
+		BWLimit     string      `json:"bw_limit"`
+		MaxTransfer string      `json:"max_transfer"`
+		Schedule    Schedule    `json:"schedule"`
+		Enabled     *bool       `json:"enabled"`
+		NextRun     *time.Time  `json:"next_run"`
+		LastResult  *LastResult `json:"last_result"`
 	}
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
+	s.Name = raw.Name
 	s.Operation = raw.Operation
+	s.BWLimit = raw.BWLimit
+	s.MaxTransfer = raw.MaxTransfer
 	s.Schedule = raw.Schedule
 	s.Enabled = true
 	if raw.Enabled != nil {
@@ -183,9 +178,10 @@ func DefaultSync(operation Operation) SyncConfig {
 type Operation string
 
 const (
-	OpCopy Operation = "copy"
-	OpMove Operation = "move"
-	OpSync Operation = "sync"
+	OpCopy   Operation = "copy"
+	OpMove   Operation = "move"
+	OpSync   Operation = "sync"
+	OpBisync Operation = "bisync"
 )
 
 func (o Operation) RcloneCommand() string {
@@ -194,13 +190,19 @@ func (o Operation) RcloneCommand() string {
 		return "sync/move"
 	case OpSync:
 		return "sync/sync"
+	case OpBisync:
+		return "sync/bisync"
 	default:
 		return "sync/copy"
 	}
 }
 
 func (o Operation) Destructive() bool {
-	return o == OpMove || o == OpSync
+	return o != OpCopy
+}
+
+func (o Operation) TwoWay() bool {
+	return o == OpBisync
 }
 
 func (o Operation) Impact(source, target string) string {
@@ -209,8 +211,19 @@ func (o Operation) Impact(source, target string) string {
 		return "Move files from " + source + " to " + target + ". Files will be removed from the source."
 	case OpSync:
 		return "Sync " + source + " to " + target + ". Extra files on the destination may be deleted."
+	case OpBisync:
+		return "Two-way sync between " + source + " and " + target + ". Changes including deletions propagate in BOTH directions."
 	default:
 		return "Copy files from " + source + " to " + target + ". Source is unchanged."
+	}
+}
+
+func ParseOperation(value string) (Operation, error) {
+	switch Operation(value) {
+	case OpCopy, OpMove, OpSync, OpBisync:
+		return Operation(value), nil
+	default:
+		return "", core.InvalidRequest("operation must be one of copy, move, sync or bisync")
 	}
 }
 
@@ -267,30 +280,21 @@ type MountConfig struct {
 }
 
 type CreateNode struct {
-	Revision  uint64       `json:"revision"`
-	ID        *string      `json:"id"`
-	Kind      NodeKind     `json:"kind"`
-	Label     string       `json:"label"`
-	Position  Position     `json:"position"`
-	LocalPath *string      `json:"local_path"`
-	Remote    *Remote      `json:"remote"`
-	Action    *ActionPatch `json:"action"`
+	Revision  uint64   `json:"revision"`
+	ID        *string  `json:"id"`
+	Kind      NodeKind `json:"kind"`
+	Label     string   `json:"label"`
+	Position  Position `json:"position"`
+	LocalPath *string  `json:"local_path"`
+	Remote    *Remote  `json:"remote"`
 }
 
 type PatchNode struct {
-	Revision  uint64       `json:"revision"`
-	Label     *string      `json:"label"`
-	Position  *Position    `json:"position"`
-	LocalPath *string      `json:"local_path"`
-	Remote    *Remote      `json:"remote"`
-	Action    *ActionPatch `json:"action"`
-}
-
-// ActionPatch 只携带动作节点可编辑的字段，未填写的字段保持原值。
-type ActionPatch struct {
-	Operation *Operation `json:"operation"`
-	Schedule  *Schedule  `json:"schedule"`
-	Enabled   *bool      `json:"enabled"`
+	Revision  uint64    `json:"revision"`
+	Label     *string   `json:"label"`
+	Position  *Position `json:"position"`
+	LocalPath *string   `json:"local_path"`
+	Remote    *Remote   `json:"remote"`
 }
 
 type CreateEdge struct {
@@ -381,11 +385,6 @@ func (s *Store) CreateNode(req CreateNode, remotes []string, remotesKnown bool) 
 			LocalPath: req.LocalPath,
 			Remote:    req.Remote,
 		}
-		if req.Kind == NodeAction {
-			action := DefaultAction()
-			applyActionPatch(&action, req.Action)
-			node.Action = &action
-		}
 		if doc.Node(node.ID) != nil {
 			return core.Conflict("node " + node.ID + " already exists")
 		}
@@ -412,48 +411,24 @@ func (s *Store) PatchNode(id string, req PatchNode, remotes []string, remotesKno
 		if req.Remote != nil {
 			node.Remote = req.Remote
 		}
-		if req.Action != nil {
-			if node.Kind != NodeAction {
-				return core.InvalidRequest("node " + id + " is not an action node")
-			}
-			if node.Action == nil {
-				action := DefaultAction()
-				node.Action = &action
-			}
-			applyActionPatch(node.Action, req.Action)
-		}
 		return nil
 	})
-}
-
-// DefaultAction 是新建动作节点的初始配置：复制、手动触发、启用。
-func DefaultAction() Action {
-	return Action{
-		Operation: OpCopy,
-		Schedule:  DisabledSchedule(),
-		Enabled:   true,
-	}
-}
-
-func applyActionPatch(action *Action, patch *ActionPatch) {
-	if patch == nil {
-		return
-	}
-	if patch.Operation != nil {
-		action.Operation = *patch.Operation
-	}
-	if patch.Schedule != nil {
-		action.Schedule = *patch.Schedule
-	}
-	if patch.Enabled != nil {
-		action.Enabled = *patch.Enabled
-	}
 }
 
 func (s *Store) DeleteNode(id string, revision uint64, remotes []string, remotesKnown bool) (Document, error) {
 	return s.mutate(revision, remotes, remotesKnown, func(doc *Document) error {
 		if doc.Node(id) == nil {
 			return core.NotFound("node " + id)
+		}
+		// 存储页的删除不允许级联：仍被同步任务或挂载引用的端点必须先删除
+		// 对应规则，避免静默连带删除用户配置。
+		for _, edge := range doc.Edges {
+			if edge.Source == id || edge.Target == id {
+				return core.ConflictDetail(
+					"storage is referenced by a sync task or mount; delete those first",
+					map[string]any{"kind": "node_in_use"},
+				)
+			}
 		}
 		nodes := make([]Node, 0, len(doc.Nodes))
 		for _, node := range doc.Nodes {
@@ -462,13 +437,6 @@ func (s *Store) DeleteNode(id string, revision uint64, remotes []string, remotes
 			}
 		}
 		doc.Nodes = nodes
-		edges := make([]Edge, 0, len(doc.Edges))
-		for _, edge := range doc.Edges {
-			if edge.Source != id && edge.Target != id {
-				edges = append(edges, edge)
-			}
-		}
-		doc.Edges = edges
 		return nil
 	})
 }
@@ -500,8 +468,8 @@ func (s *Store) CreateEdge(req CreateEdge, remotes []string, remotesKnown bool) 
 				enabled = *req.Enabled
 			}
 			edge.Mount = &MountConfig{Enabled: enabled}
-		case EdgeFlow:
-			// 数据流边只表示关系，运行参数由动作节点持有。
+		default:
+			return core.InvalidRequest("unknown edge kind " + string(req.Kind))
 		}
 		if doc.Edge(edge.ID) != nil {
 			return core.Conflict("edge " + edge.ID + " already exists")
@@ -563,12 +531,7 @@ func (s *Store) DeleteEdge(id string, revision uint64, remotes []string, remotes
 func (s *Store) RecordJobResult(runID string, result LastResult, nextRun *time.Time) (Document, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if node := s.doc.Node(runID); node != nil && node.Kind == NodeAction && node.Action != nil {
-		node.Action.LastResult = &result
-		if nextRun != nil {
-			node.Action.NextRun = nextRun
-		}
-	} else if edge := s.doc.Edge(runID); edge != nil && edge.Sync != nil {
+	if edge := s.doc.Edge(runID); edge != nil && edge.Sync != nil {
 		edge.Sync.LastResult = &result
 		if nextRun != nil {
 			edge.Sync.NextRun = nextRun
@@ -587,9 +550,7 @@ func (s *Store) RecordJobResult(runID string, result LastResult, nextRun *time.T
 func (s *Store) SetNextRun(runID string, nextRun *time.Time) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if node := s.doc.Node(runID); node != nil && node.Kind == NodeAction && node.Action != nil {
-		node.Action.NextRun = nextRun
-	} else if edge := s.doc.Edge(runID); edge != nil && edge.Sync != nil {
+	if edge := s.doc.Edge(runID); edge != nil && edge.Sync != nil {
 		edge.Sync.NextRun = nextRun
 	} else {
 		return nil
