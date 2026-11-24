@@ -37,6 +37,11 @@ export const NAV_GROUPS: NavGroup[] = [
     labelKey: "nav.workspace",
     items: [
       {
+        path: "/overview",
+        labelKey: "nav.overview",
+        icon: GaugeIcon,
+      },
+      {
         path: "/tasks",
         labelKey: "nav.tasks",
         icon: FolderSyncIcon,
@@ -58,20 +63,15 @@ export const NAV_GROUPS: NavGroup[] = [
     labelKey: "nav.system",
     items: [
       {
-        path: "/overview",
-        labelKey: "nav.overview",
-        icon: GaugeIcon,
+        path: "/api",
+        labelKey: "nav.api",
+        icon: TerminalSquareIcon,
       },
       {
         path: "/settings",
         labelKey: "nav.settings",
         icon: SettingsIcon,
         pinned: true,
-      },
-      {
-        path: "/api",
-        labelKey: "nav.api",
-        icon: TerminalSquareIcon,
       },
     ],
   },
