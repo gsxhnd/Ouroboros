@@ -25,7 +25,10 @@ export type SystemInfo = {
 export type RcloneSourceKind = "system" | "managed" | "custom"
 
 export type ShortcutAction =
-  "show_main" | "toggle_panel" | "toggle_rclone" | "quit"
+  | "show_main"
+  | "toggle_panel"
+  | "toggle_rclone"
+  | "quit"
 
 export type SettingsDocument = {
   schema_version: number
@@ -237,7 +240,11 @@ export type JobSnapshot = {
 }
 
 export type MountStatus =
-  "starting" | "mounted" | "stopping" | "stopped" | "failed"
+  | "starting"
+  | "mounted"
+  | "stopping"
+  | "stopped"
+  | "failed"
 
 export type MountSnapshot = {
   edge_id: string

@@ -22,7 +22,9 @@ import { useStorageStore } from "@/stores/storage-store"
 import { useRcloneStore } from "@/stores/rclone-store"
 
 type DeleteTarget =
-  { kind: "local"; node: StorageNode } | { kind: "remote"; name: string } | null
+  | { kind: "local"; node: StorageNode }
+  | { kind: "remote"; name: string }
+  | null
 
 export function StoragesPage() {
   const { t, i18n } = useTranslation()
