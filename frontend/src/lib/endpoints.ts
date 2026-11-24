@@ -245,7 +245,6 @@ export const ENDPOINTS: Endpoint[] = [
       revision: 0,
       kind: "local",
       label: "Backups",
-      position: { x: 0, y: 0 },
       local_path: "/tmp/backups",
     }),
   },

@@ -21,12 +21,6 @@ import { ApiPlayground } from "@/components/api-playground"
 import { CommandPalette } from "@/components/command-palette"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { useTheme } from "@/components/theme-provider"
 import { changeLanguage, type Locale } from "@/i18n"
 import { isDesktop, isMacDesktop } from "@/lib/platform"
@@ -50,9 +44,12 @@ const headerHeight = isMacDesktop ? "h-12" : isDesktop ? "h-10" : "h-14 md:h-12"
 const sidebarStorageKey = "ourboros.sidebar"
 
 /**
- * 应用外壳：顶部承载全局状态与控制，左侧侧边栏承载功能导航；
- * 同步任务页是唯一的主视图，概览、文件、存储、设置和接口演示以浮层形式打开，不切换页面。
+ * 应用外壳：顶部承载全局状态与控制，左侧侧边栏承载功能导航。
+ * 画布移除后不再有浮层页面：侧边栏直接切换主区域视图，Dialog 只保留在
+ * 表单（新建任务 / 新建 remote）和危险操作确认里。
  */
+type View = "tasks" | "files" | "storages" | "overview" | "settings" | "api"
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { t, i18n } = useTranslation()
   const { theme, setTheme } = useTheme()
@@ -61,23 +58,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   const start = useRcloneStore((state) => state.start)
   const stop = useRcloneStore((state) => state.stop)
 
-  const [overviewOpen, setOverviewOpen] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const [apiOpen, setApiOpen] = useState(false)
-  const [filesOpen, setFilesOpen] = useState(false)
-  const [storagesOpen, setStoragesOpen] = useState(false)
+  const [view, setView] = useState<View>("tasks")
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     () => localStorage.getItem(sidebarStorageKey) === "collapsed"
   )
 
-  /** 侧边栏的「任务」即主视图：点击时收起全部浮层。 */
-  const closeOverlays = () => {
-    setOverviewOpen(false)
-    setSettingsOpen(false)
-    setApiOpen(false)
-    setFilesOpen(false)
-    setStoragesOpen(false)
-  }
+  /** 侧边栏的「任务」即主视图。 */
+  const showTasks = () => setView("tasks")
 
   const toggleSidebar = () =>
     setSidebarCollapsed((current) => {
@@ -128,11 +115,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
             onToggleLanguage={() => changeLanguage(nextLocale)}
             onToggleRclone={() => void (running ? stop() : start())}
-            onOpenOverview={() => setOverviewOpen(true)}
-            onOpenFiles={() => setFilesOpen(true)}
-            onOpenStorages={() => setStoragesOpen(true)}
-            onOpenSettings={() => setSettingsOpen(true)}
-            onOpenApi={() => setApiOpen(true)}
+            onOpenOverview={() => setView("overview")}
+            onOpenFiles={() => setView("files")}
+            onOpenStorages={() => setView("storages")}
+            onOpenSettings={() => setView("settings")}
+            onOpenApi={() => setView("api")}
           />
 
           <span className="mx-1 h-4 w-px bg-border" aria-hidden />
@@ -202,39 +189,44 @@ export function AppShell({ children }: { children: ReactNode }) {
             <SidebarItem
               icon={<FolderSyncIcon />}
               label={t("nav.tasks")}
-              active
+              active={view === "tasks"}
               collapsed={sidebarCollapsed}
-              onClick={closeOverlays}
+              onClick={showTasks}
             />
             <SidebarItem
               icon={<FolderOpenIcon />}
               label={t("nav.files")}
+              active={view === "files"}
               collapsed={sidebarCollapsed}
-              onClick={() => setFilesOpen(true)}
+              onClick={() => setView("files")}
             />
             <SidebarItem
               icon={<HardDriveIcon />}
               label={t("nav.storages")}
+              active={view === "storages"}
               collapsed={sidebarCollapsed}
-              onClick={() => setStoragesOpen(true)}
+              onClick={() => setView("storages")}
             />
             <SidebarItem
               icon={<GaugeIcon />}
               label={t("nav.overview")}
+              active={view === "overview"}
               collapsed={sidebarCollapsed}
-              onClick={() => setOverviewOpen(true)}
+              onClick={() => setView("overview")}
             />
             <SidebarItem
               icon={<SettingsIcon />}
               label={t("nav.settings")}
+              active={view === "settings"}
               collapsed={sidebarCollapsed}
-              onClick={() => setSettingsOpen(true)}
+              onClick={() => setView("settings")}
             />
             <SidebarItem
               icon={<TerminalSquareIcon />}
               label={t("nav.api")}
+              active={view === "api"}
               collapsed={sidebarCollapsed}
-              onClick={() => setApiOpen(true)}
+              onClick={() => setView("api")}
             />
           </nav>
           <div
@@ -267,67 +259,23 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </aside>
 
-        <main className="flex min-h-0 flex-1 flex-col bg-muted/40 p-3">
-          {children}
-        </main>
-      </div>
-
-      <Dialog open={overviewOpen} onOpenChange={setOverviewOpen}>
-        <DialogContent className="flex h-[min(86vh,44rem)] w-[min(94vw,44rem)] max-w-none flex-col gap-0 p-0 sm:max-w-none">
-          <DialogHeader className="border-b px-4 py-3">
-            <DialogTitle>{t("nav.overview")}</DialogTitle>
-          </DialogHeader>
-          <div className="min-h-0 flex-1 overflow-y-auto p-3 select-text">
-            <div className="flex flex-col gap-3">
+        <main className="flex min-h-0 flex-1 flex-col bg-muted/40 p-3 select-text">
+          {view === "tasks" && children}
+          {view === "files" && (
+            <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col gap-3 overflow-y-auto">
+              <FilesPage />
+            </div>
+          )}
+          {view === "storages" && <StoragesPage />}
+          {view === "overview" && (
+            <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col gap-3 overflow-y-auto">
               <OverviewPage />
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={storagesOpen} onOpenChange={setStoragesOpen}>
-        <DialogContent className="flex h-[min(86vh,54rem)] w-[min(94vw,64rem)] max-w-none flex-col gap-0 p-0 sm:max-w-none">
-          <DialogHeader className="border-b px-4 py-3">
-            <DialogTitle>{t("nav.storages")}</DialogTitle>
-          </DialogHeader>
-          <div className="min-h-0 flex-1 select-text">
-            <StoragesPage />
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={filesOpen} onOpenChange={setFilesOpen}>
-        <DialogContent className="flex h-[min(86vh,54rem)] w-[min(94vw,72rem)] max-w-none flex-col gap-0 p-0 sm:max-w-none">
-          <DialogHeader className="border-b px-4 py-3">
-            <DialogTitle>{t("nav.files")}</DialogTitle>
-          </DialogHeader>
-          <div className="min-h-0 flex-1 select-text">
-            <FilesPage />
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogContent className="flex h-[min(86vh,54rem)] w-[min(94vw,64rem)] max-w-none flex-col gap-0 p-0 sm:max-w-none">
-          <DialogHeader className="border-b px-4 py-3">
-            <DialogTitle>{t("nav.settings")}</DialogTitle>
-          </DialogHeader>
-          <div className="min-h-0 flex-1 select-text">
-            <SettingsPage />
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={apiOpen} onOpenChange={setApiOpen}>
-        <DialogContent className="flex h-[min(85vh,52rem)] w-[min(94vw,80rem)] max-w-none flex-col gap-0 p-0 sm:max-w-none">
-          <DialogHeader className="border-b px-4 py-3">
-            <DialogTitle>{t("nav.api")}</DialogTitle>
-          </DialogHeader>
-          <div className="min-h-0 flex-1 overflow-hidden select-text [&>div]:h-full">
-            <ApiPlayground />
-          </div>
-        </DialogContent>
-      </Dialog>
+          )}
+          {view === "settings" && <SettingsPage />}
+          {view === "api" && <ApiPlayground />}
+        </main>
+      </div>
     </div>
   )
 }

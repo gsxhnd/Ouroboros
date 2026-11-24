@@ -81,7 +81,6 @@ export const useStorageStore = create<StorageState>()((set, get) => {
             revision: get().revision,
             kind: "local",
             label: input.label,
-            position: { x: 0, y: 0 },
             local_path: input.local_path,
           },
         })
