@@ -155,6 +155,8 @@
     "newDir": "新建目录",
     "root": "根目录",
     "empty": "此目录为空，或 rclone 还没有运行。",
+    "loading": "正在读取…",
+    "noMatches": "没有匹配的名称",
     "columnSize": "大小",
     "columnModified": "修改时间",
     "mkdirPlaceholder": "目录名",

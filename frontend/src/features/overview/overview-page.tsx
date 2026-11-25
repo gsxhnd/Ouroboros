@@ -24,6 +24,7 @@ import { call } from "@/lib/http/client"
 import type { HttpMethod } from "@/lib/http/transport"
 import { useRcloneStore } from "@/stores/rclone-store"
 import type { RcloneStatus, SettingsDocument } from "@/lib/types"
+import { cn } from "cn"
 
 type Candidate = {
   source: "system" | "managed" | "custom"
@@ -150,7 +151,7 @@ export function OverviewPage() {
                 disabled={rcloneBusy || status === null || status.running}
                 onClick={() => void startRclone()}
               >
-                <PlayIcon data-icon="inline-start" />{" "}
+                <PlayIcon data-icon="inline-start" />
                 {t("overview.startOrConnect")}
               </Button>
               <Button
@@ -159,7 +160,8 @@ export function OverviewPage() {
                 disabled={rcloneBusy || status === null || !status.running}
                 onClick={() => void stopRclone()}
               >
-                <SquareIcon data-icon="inline-start" /> {t("common.stop")}
+                <SquareIcon data-icon="inline-start" />
+                {t("common.stop")}
               </Button>
             </div>
           </CardAction>
@@ -183,10 +185,10 @@ export function OverviewPage() {
             {connectionFacts(status, t, i18n).map((fact) => (
               <div
                 key={fact.label}
-                className="flex min-w-0 flex-col gap-1 rounded-lg bg-muted/50 px-3 py-2"
+                className="flex min-w-0 flex-col gap-1 rounded-lg bg-muted/50 px-3 py-2.5"
               >
                 <dt className="text-xs text-muted-foreground">{fact.label}</dt>
-                <dd className="truncate font-mono text-xs" title={fact.value}>
+                <dd className="truncate font-mono text-sm" title={fact.value}>
                   {fact.value}
                 </dd>
               </div>
@@ -213,7 +215,10 @@ export function OverviewPage() {
               return (
                 <div
                   key={`${candidate.source}:${candidate.path}`}
-                  className="flex flex-wrap items-center gap-2 rounded-xl bg-background px-3 py-2.5 text-sm ring-1 ring-foreground/10"
+                  className={cn(
+                    "flex flex-wrap items-center gap-2 rounded-lg bg-muted/50 px-3 py-2.5 text-sm",
+                    selected && "ring-1 ring-primary/40"
+                  )}
                 >
                   <Badge variant="outline">
                     {translateOr(
@@ -280,13 +285,14 @@ export function OverviewPage() {
               disabled={busy || releases.length === 0}
               onClick={() => void startDownload()}
             >
-              <DownloadIcon /> {t("overview.download")}
+              <DownloadIcon data-icon="inline-start" />
+              {t("overview.download")}
             </Button>
           </div>
           {downloads.map((download) => (
             <div
               key={download.id}
-              className="flex flex-wrap items-center gap-2 rounded-xl bg-background px-3 py-2.5 text-sm ring-1 ring-foreground/10"
+              className="flex flex-wrap items-center gap-2 rounded-lg bg-muted/50 px-3 py-2.5 text-sm"
             >
               <Badge variant="outline">{download.version}</Badge>
               <StatusChip status={download.status} />

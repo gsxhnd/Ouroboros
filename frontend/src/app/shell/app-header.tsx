@@ -32,7 +32,8 @@ const headerHeight = isDesktop
  * 顶栏：左侧是侧边栏展开 / 收起开关，右侧一簇快捷控制（命令面板、
  * 主题切换）。品牌不占顶栏（窗口身份交给系统标题栏），rclone 启停归
  * 概览页与命令面板，服务状态常驻侧边栏底部，语言切换收进命令面板。
- * 顶栏与主区同底色（bg-muted/40）且不画分隔线，中间留白即窗口拖拽区。
+ * 顶栏与主区同底色（bg-muted/40），底边一条分隔线把工具行和内容分开，
+ * 中间留白即窗口拖拽区。
  */
 export function AppHeader({
   sidebarCollapsed,
@@ -50,7 +51,7 @@ export function AppHeader({
   return (
     <header
       className={cn(
-        "flex shrink-0 items-center justify-between gap-3 bg-muted/40 px-3",
+        "flex shrink-0 items-center justify-between gap-3 border-b bg-muted/40 px-3",
         headerHeight,
         // 拖拽区只属于桌面形态；浏览器 DOM 不携带 --wails-draggable。
         isDesktop && "[--wails-draggable:drag]"
@@ -73,7 +74,6 @@ export function AppHeader({
         <Button
           variant="ghost"
           size="icon-sm"
-          className="size-6 [&>svg]:size-3.5"
           aria-label={theme === "dark" ? t("shell.toLight") : t("shell.toDark")}
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
         >

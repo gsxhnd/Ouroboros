@@ -2,6 +2,7 @@ import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -43,12 +44,16 @@ export function SelectField<T extends string>({
           <SelectValue placeholder={placeholder ?? ""} />
         </SelectTrigger>
         <SelectContent>
-          {placeholder ? <SelectItem value="">{placeholder}</SelectItem> : null}
-          {options.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
+          <SelectGroup>
+            {placeholder ? (
+              <SelectItem value="">{placeholder}</SelectItem>
+            ) : null}
+            {options.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
         </SelectContent>
       </Select>
     </div>

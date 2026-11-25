@@ -25,23 +25,26 @@ export function ActiveJobRow({
           className="size-4 shrink-0 text-muted-foreground"
           aria-hidden
         />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 text-xs">
-            <span className="truncate font-medium">
-              {operationLabel(job, t)} · {locatorLabel(job.source)}
-              <ArrowRightIcon className="mx-1 inline size-3" aria-hidden />
-              {locatorLabel(job.target)}
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="min-w-0 flex-1 truncate text-sm font-medium">
+              {operationLabel(job, t)}
             </span>
             <StatusChip status={job.status} />
-            <span className="shrink-0 text-muted-foreground">
-              {formatBytes(job.progress.bytes)} · {job.progress.transfers}{" "}
-              {t("sync.transfersCount")} · {formatBytes(job.progress.speed)}/s
-            </span>
           </div>
+          <p className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+            <span className="min-w-0 truncate">{locatorLabel(job.source)}</span>
+            <ArrowRightIcon className="size-3 shrink-0" aria-hidden />
+            <span className="min-w-0 truncate">{locatorLabel(job.target)}</span>
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {formatBytes(job.progress.bytes)} · {job.progress.transfers}{" "}
+            {t("sync.transfersCount")} · {formatBytes(job.progress.speed)}/s
+          </p>
           <JobProgressBar percentage={job.progress.percentage} />
         </div>
         <Button size="xs" variant="outline" onClick={onStop}>
-          <SquareIcon />
+          <SquareIcon data-icon="inline-start" />
           {t("sync.stop")}
         </Button>
       </CardContent>

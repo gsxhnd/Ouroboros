@@ -20,6 +20,7 @@ import { Kbd } from "@/components/ui/kbd"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -89,11 +90,13 @@ export function RequestForm({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {HTTP_METHODS.map((item) => (
-                      <SelectItem key={item} value={item}>
-                        {item}
-                      </SelectItem>
-                    ))}
+                    <SelectGroup>
+                      {HTTP_METHODS.map((item) => (
+                        <SelectItem key={item} value={item}>
+                          {item}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
               </Field>

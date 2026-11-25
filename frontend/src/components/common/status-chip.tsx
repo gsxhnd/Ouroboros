@@ -25,15 +25,15 @@ const STATUS_TONES: Record<string, Tone> = {
 }
 
 const TONE_CLASS: Record<Tone, string> = {
-  ok: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-  busy: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+  ok: "bg-success/12 text-success-foreground",
+  busy: "bg-warning/15 text-warning-foreground",
   bad: "bg-destructive/10 text-destructive",
   idle: "bg-muted text-muted-foreground",
 }
 
 const DOT_CLASS: Record<Tone, string> = {
-  ok: "bg-emerald-500",
-  busy: "animate-pulse bg-amber-500",
+  ok: "bg-success",
+  busy: "animate-pulse bg-warning",
   bad: "bg-destructive",
   idle: "bg-muted-foreground/50",
 }

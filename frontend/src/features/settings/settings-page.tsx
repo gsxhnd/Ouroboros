@@ -32,15 +32,15 @@ export function SettingsPage() {
   const { t } = useTranslation()
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden p-4 md:p-6">
+    <div className="flex h-full min-h-0 flex-col gap-6 overflow-hidden p-4 md:p-6">
       <PageHeader
         title={t("nav.settings")}
         description={t("nav.settingsHint")}
       />
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 sm:flex-row sm:gap-4">
-        <aside className="shrink-0 border-b bg-muted/20 p-2 sm:w-52 sm:rounded-xl sm:border sm:p-3">
-          <p className="hidden px-2 pt-1 pb-2 text-xs font-medium tracking-wide text-muted-foreground sm:block">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 sm:flex-row">
+        <aside className="shrink-0 rounded-xl bg-card p-2 ring-1 ring-foreground/10 sm:w-52 sm:p-3">
+          <p className="hidden px-2.5 pt-1 pb-2 text-xs font-medium text-muted-foreground sm:block">
             {t("settings.categories")}
           </p>
           <nav
@@ -53,7 +53,7 @@ export function SettingsPage() {
                 to={path}
                 className={({ isActive }) =>
                   cn(
-                    "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors",
+                    "flex shrink-0 items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm transition-colors",
                     isActive
                       ? "bg-accent font-medium text-accent-foreground"
                       : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"

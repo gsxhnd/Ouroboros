@@ -41,7 +41,7 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
                 <Separator className="mx-auto my-1.5 w-6" />
               ) : null
             ) : (
-              <p className="px-2.5 pt-1 pb-0.5 text-[11px] font-medium tracking-wider text-muted-foreground/80 uppercase">
+              <p className="px-2.5 pt-2 pb-1 text-xs font-medium text-muted-foreground">
                 {t(group.labelKey)}
               </p>
             )}
@@ -52,7 +52,7 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
                   key={item.path}
                   path={item.path}
                   label={t(item.labelKey)}
-                  icon={<item.icon className="size-4 shrink-0" />}
+                  icon={<item.icon />}
                   collapsed={collapsed}
                 />
               ))}
@@ -65,7 +65,7 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
             key={item.path}
             path={item.path}
             label={t(item.labelKey)}
-            icon={<item.icon className="size-4 shrink-0" />}
+            icon={<item.icon />}
             collapsed={collapsed}
           />
         ))}
@@ -96,8 +96,8 @@ function SidebarStatus({ collapsed }: { collapsed: boolean }) {
   const dotClass = offline
     ? "bg-destructive"
     : running
-      ? "animate-pulse bg-emerald-500"
-      : "bg-amber-500"
+      ? "bg-success"
+      : "bg-warning"
 
   if (collapsed) {
     return (
@@ -153,26 +153,19 @@ function SidebarItem({
       className={({ isActive }) =>
         cn(
           buttonVariants({
-            variant: isActive ? "secondary" : "ghost",
+            variant: "ghost",
             size: "sm",
           }),
-          "relative w-full text-muted-foreground hover:text-foreground",
-          collapsed ? "justify-center px-0" : "justify-start gap-2.5 px-2.5"
+          "w-full",
+          collapsed ? "justify-center px-0" : "justify-start px-2.5",
+          isActive
+            ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            : "text-muted-foreground"
         )
       }
     >
-      {({ isActive }) => (
-        <>
-          {isActive ? (
-            <span
-              className="absolute start-0 h-4 w-0.5 rounded-full bg-primary"
-              aria-hidden
-            />
-          ) : null}
-          {icon}
-          {!collapsed && <span className="truncate">{label}</span>}
-        </>
-      )}
+      {icon}
+      {!collapsed && <span className="truncate">{label}</span>}
     </NavLink>
   )
 }

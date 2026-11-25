@@ -12,11 +12,16 @@ import { toast } from "sonner"
 import { ConfirmNameDialog } from "@/components/common/confirm-name-dialog"
 import { CreateLocalDialog } from "@/features/storages/components/create-local-dialog"
 import { RemoteFormDialog } from "@/features/storages/remote-form/remote-form-dialog"
-import { EmptyHint, WarningNote } from "@/components/common/notes"
+import { EmptyHint, LoadingBlock, WarningNote } from "@/components/common/notes"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { PageContainer, PageHeader } from "@/components/common/page-header"
+import { Separator } from "@/components/ui/separator"
+import {
+  PageContainer,
+  PageHeader,
+  SectionHeading,
+} from "@/components/common/page-header"
 import type { StorageNode } from "@/lib/types"
 import { useStorageStore } from "@/features/storages/storage-store"
 import { providerLabel } from "@/features/storages/remote-form/provider-label"
@@ -91,132 +96,145 @@ export function StoragesPage() {
         description={t("storage.subtitle")}
       />
 
-      <section className="flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <h2 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-            <HardDriveIcon className="size-3.5" aria-hidden />
-            {t("storage.localSection")}
-          </h2>
-          <Button size="xs" onClick={() => setLocalOpen(true)}>
-            <PlusIcon />
-            {t("storage.newLocal")}
-          </Button>
-        </div>
+      <section className="flex flex-col gap-3">
+        <SectionHeading
+          title={t("storage.localSection")}
+          icon={
+            <HardDriveIcon
+              className="size-4 text-muted-foreground"
+              aria-hidden
+            />
+          }
+          actions={
+            <Button size="sm" onClick={() => setLocalOpen(true)}>
+              <PlusIcon data-icon="inline-start" />
+              {t("storage.newLocal")}
+            </Button>
+          }
+        />
         {!loaded ? (
-          <p className="rounded-lg border border-dashed px-4 py-8 text-center text-sm text-muted-foreground">
-            {t("storage.loading")}
-          </p>
+          <LoadingBlock>{t("storage.loading")}</LoadingBlock>
         ) : localNodes.length === 0 ? (
           <EmptyHint>{t("storage.localEmpty")}</EmptyHint>
         ) : (
-          localNodes.map((node) => {
-            const used = usageCount(node.id)
-            return (
-              <Card key={node.id} className="py-2.5">
-                <CardContent className="flex items-center gap-3 px-4">
-                  <HardDriveIcon
-                    className="size-4 shrink-0 text-muted-foreground"
-                    aria-hidden
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="truncate text-sm font-medium">
-                        {node.label || node.local_path}
-                      </span>
-                      <Badge
-                        variant={used > 0 ? "secondary" : "outline"}
-                        className="font-normal"
+          <Card className="py-0">
+            <CardContent className="p-0">
+              {localNodes.map((node, index) => {
+                const used = usageCount(node.id)
+                return (
+                  <div key={node.id}>
+                    {index > 0 ? <Separator /> : null}
+                    <div className="flex items-center gap-3 px-4 py-3">
+                      <HardDriveIcon
+                        className="size-4 shrink-0 text-muted-foreground"
+                        aria-hidden
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="truncate text-sm font-medium">
+                            {node.label || node.local_path}
+                          </span>
+                          <Badge
+                            variant={used > 0 ? "secondary" : "outline"}
+                            className="font-normal"
+                          >
+                            {used > 0
+                              ? t("storage.usedBy", { count: used })
+                              : t("storage.unused")}
+                          </Badge>
+                        </div>
+                        <p className="truncate font-mono text-xs text-muted-foreground">
+                          {node.local_path}
+                        </p>
+                      </div>
+                      <Button
+                        size="icon-xs"
+                        variant="ghost"
+                        aria-label={t("common.delete")}
+                        title={t("common.delete")}
+                        onClick={() => setDeleteTarget({ kind: "local", node })}
                       >
-                        {used > 0
-                          ? t("storage.usedBy", { count: used })
-                          : t("storage.unused")}
-                      </Badge>
+                        <TrashIcon />
+                      </Button>
                     </div>
-                    <p className="truncate font-mono text-xs text-muted-foreground">
-                      {node.local_path}
-                    </p>
                   </div>
-                  <Button
-                    size="icon-xs"
-                    variant="ghost"
-                    aria-label={t("common.delete")}
-                    title={t("common.delete")}
-                    onClick={() => setDeleteTarget({ kind: "local", node })}
-                  >
-                    <TrashIcon />
-                  </Button>
-                </CardContent>
-              </Card>
-            )
-          })
+                )
+              })}
+            </CardContent>
+          </Card>
         )}
       </section>
 
-      <section className="flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <h2 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-            <CloudIcon className="size-3.5" aria-hidden />
-            {t("storage.remoteSection")}
-          </h2>
-          <Button
-            size="xs"
-            onClick={() => {
-              setEditingRemote(null)
-              setRemoteDialogOpen(true)
-            }}
-          >
-            <PlusIcon />
-            {t("storage.newRemote")}
-          </Button>
-        </div>
+      <section className="flex flex-col gap-3">
+        <SectionHeading
+          title={t("storage.remoteSection")}
+          icon={
+            <CloudIcon className="size-4 text-muted-foreground" aria-hidden />
+          }
+          actions={
+            <Button
+              size="sm"
+              onClick={() => {
+                setEditingRemote(null)
+                setRemoteDialogOpen(true)
+              }}
+            >
+              <PlusIcon data-icon="inline-start" />
+              {t("storage.newRemote")}
+            </Button>
+          }
+        />
         {!rcloneRunning ? (
           <WarningNote>{t("storage.rcloneOfflineRemotes")}</WarningNote>
         ) : remotes.length === 0 ? (
           <EmptyHint>{t("storage.remoteEmpty")}</EmptyHint>
         ) : (
-          remotes.map((remote) => (
-            <Card key={remote.name} className="py-2.5">
-              <CardContent className="flex items-center gap-3 px-4">
-                <CloudIcon
-                  className="size-4 shrink-0 text-muted-foreground"
-                  aria-hidden
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate font-mono text-sm font-medium">
-                      {remote.name}
-                    </span>
-                    <Badge variant="secondary" className="font-normal">
-                      {providerLabel(remote.type)}
-                    </Badge>
+          <Card className="py-0">
+            <CardContent className="p-0">
+              {remotes.map((remote, index) => (
+                <div key={remote.name}>
+                  {index > 0 ? <Separator /> : null}
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <CloudIcon
+                      className="size-4 shrink-0 text-muted-foreground"
+                      aria-hidden
+                    />
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                      <span className="truncate font-mono text-sm font-medium">
+                        {remote.name}
+                      </span>
+                      <Badge variant="secondary" className="font-normal">
+                        {providerLabel(remote.type)}
+                      </Badge>
+                    </div>
+                    <Button
+                      size="icon-xs"
+                      variant="ghost"
+                      aria-label={t("common.edit")}
+                      title={t("common.edit")}
+                      onClick={() => {
+                        setEditingRemote(remote.name)
+                        setRemoteDialogOpen(true)
+                      }}
+                    >
+                      <PencilIcon />
+                    </Button>
+                    <Button
+                      size="icon-xs"
+                      variant="ghost"
+                      aria-label={t("common.delete")}
+                      title={t("common.delete")}
+                      onClick={() =>
+                        setDeleteTarget({ kind: "remote", name: remote.name })
+                      }
+                    >
+                      <TrashIcon />
+                    </Button>
                   </div>
                 </div>
-                <Button
-                  size="icon-xs"
-                  variant="ghost"
-                  aria-label={t("common.edit")}
-                  title={t("common.edit")}
-                  onClick={() => {
-                    setEditingRemote(remote.name)
-                    setRemoteDialogOpen(true)
-                  }}
-                >
-                  <PencilIcon />
-                </Button>
-                <Button
-                  size="icon-xs"
-                  variant="ghost"
-                  aria-label={t("common.delete")}
-                  title={t("common.delete")}
-                  onClick={() =>
-                    setDeleteTarget({ kind: "remote", name: remote.name })
-                  }
-                >
-                  <TrashIcon />
-                </Button>
-              </CardContent>
-            </Card>
-          ))
+              ))}
+            </CardContent>
+          </Card>
         )}
       </section>
 

@@ -9,6 +9,7 @@ import {
   DialogContent,
   DialogFooter,
   DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -29,7 +30,9 @@ export function MkdirDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader>{t("files.newDir")}</DialogHeader>
+        <DialogHeader>
+          <DialogTitle>{t("files.newDir")}</DialogTitle>
+        </DialogHeader>
         <MkdirForm onCreate={onCreate} onDone={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
@@ -104,8 +107,10 @@ export function TransferDialog({
     >
       <DialogContent>
         <DialogHeader>
-          {state?.kind === "copy" ? t("common.copy") : t("common.move")}{" "}
-          {state?.item.name}
+          <DialogTitle className="truncate">
+            {state?.kind === "copy" ? t("common.copy") : t("common.move")}{" "}
+            {state?.item.name}
+          </DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-2">
           <Label>{t("files.target")}</Label>
@@ -162,7 +167,9 @@ export function RenameDialog({
     >
       <DialogContent>
         <DialogHeader>
-          {t("files.rename")} {state?.item.name}
+          <DialogTitle className="truncate">
+            {t("files.rename")} {state?.item.name}
+          </DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-2">
           <Label>{t("files.renameTarget")}</Label>

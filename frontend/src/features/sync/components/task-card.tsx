@@ -14,6 +14,7 @@ import { SwitchField } from "@/components/common/switch-field"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
 import { JobProgress } from "@/features/sync/components/job-rows"
 import {
   endpointLabel,
@@ -53,82 +54,88 @@ export function TaskCard({
   const lastResult = task.last_result
 
   return (
-    <Card className="py-3">
-      <CardContent className="flex flex-col gap-2.5 px-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium">{task.name}</span>
-          <Badge variant="outline" className="font-normal">
-            {operationLabel(task, t)}
-          </Badge>
-          {task.bw_limit ? (
-            <Badge variant="secondary" className="font-normal">
-              {t("sync.bwLimit")} {task.bw_limit}
-            </Badge>
-          ) : null}
-          {task.max_transfer ? (
-            <Badge variant="secondary" className="font-normal">
-              {t("sync.maxTransfer")} {task.max_transfer}
-            </Badge>
-          ) : null}
-          <span className="ms-auto flex items-center gap-3">
+    <Card className="py-0">
+      <CardContent className="flex flex-col px-0">
+        <div className="flex flex-col gap-3 px-4 py-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+              <span className="truncate text-sm font-medium">{task.name}</span>
+              <Badge variant="outline" className="font-normal">
+                {operationLabel(task, t)}
+              </Badge>
+              {task.bw_limit ? (
+                <Badge variant="secondary" className="font-normal">
+                  {t("sync.bwLimit")} {task.bw_limit}
+                </Badge>
+              ) : null}
+              {task.max_transfer ? (
+                <Badge variant="secondary" className="font-normal">
+                  {t("sync.maxTransfer")} {task.max_transfer}
+                </Badge>
+              ) : null}
+            </div>
             <SwitchField
               label={t("sync.enabled")}
               checked={task.enabled}
               disabled={running}
               onCheckedChange={onToggleEnabled}
             />
-          </span>
+          </div>
+
+          <div
+            className="flex min-w-0 items-center gap-2 rounded-lg bg-muted/60 px-3 py-2"
+            title={task.impact}
+          >
+            <span className="min-w-0 flex-1 truncate font-mono text-xs">
+              {endpointLabel(task.source)}
+            </span>
+            <ArrowRightIcon
+              className="size-3.5 shrink-0 text-muted-foreground"
+              aria-hidden
+            />
+            <span className="min-w-0 flex-1 truncate font-mono text-xs">
+              {endpointLabel(task.target)}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <ClockIcon className="size-3.5" aria-hidden />
+              {scheduleLabel(task, t)}
+            </span>
+            <span>
+              {t("sync.nextRun")}
+              {formatTime(task.next_run)}
+            </span>
+            <span className="flex min-w-0 items-center gap-1">
+              {t("sync.lastResult")}
+              <StatusChip status={lastResult?.status ?? null} />
+              {lastResult?.status === "failed" || lastResult?.error ? (
+                <span className="max-w-56 truncate" title={lastResult.error}>
+                  {lastResult.error}
+                </span>
+              ) : null}
+            </span>
+          </div>
+
+          {running && job ? <JobProgress job={job} /> : null}
         </div>
 
-        <div
-          className="flex min-w-0 flex-wrap items-center gap-1 text-sm text-muted-foreground"
-          title={task.impact}
-        >
-          <span className="truncate font-mono text-xs">
-            {endpointLabel(task.source)}
-          </span>
-          <ArrowRightIcon className="size-3.5 shrink-0" aria-hidden />
-          <span className="truncate font-mono text-xs">
-            {endpointLabel(task.target)}
-          </span>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <ClockIcon className="size-3.5" aria-hidden />
-            {scheduleLabel(task, t)}
-          </span>
-          <span>
-            {t("sync.nextRun")}
-            {formatTime(task.next_run)}
-          </span>
-          <span className="flex items-center gap-1">
-            {t("sync.lastResult")}
-            <StatusChip status={lastResult?.status ?? null} />
-            {lastResult?.status === "failed" || lastResult?.error ? (
-              <span className="max-w-56 truncate" title={lastResult.error}>
-                {lastResult.error}
-              </span>
-            ) : null}
-          </span>
-        </div>
-
-        {running && job ? <JobProgress job={job} /> : null}
-
-        <div className="flex flex-wrap items-center gap-2">
+        <Separator />
+        <div className="flex flex-wrap items-center gap-2 px-4 py-3">
           <Button size="xs" disabled={running || !task.enabled} onClick={onRun}>
-            <PlayIcon />
+            <PlayIcon data-icon="inline-start" />
             {t("sync.runNow")}
           </Button>
           {running ? (
             <Button size="xs" variant="outline" onClick={onStop}>
-              <SquareIcon />
+              <SquareIcon data-icon="inline-start" />
               {t("sync.stop")}
             </Button>
           ) : null}
           {task.operation === "bisync" && !running ? (
             <Button size="xs" variant="outline" onClick={onResync}>
-              <RefreshCcwIcon />
+              <RefreshCcwIcon data-icon="inline-start" />
               {t("sync.resyncAction")}
             </Button>
           ) : null}

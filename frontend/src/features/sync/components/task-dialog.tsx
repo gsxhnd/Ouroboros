@@ -246,7 +246,7 @@ function TaskForm({
           onCheckedChange={(checked) => update({ enabled: checked })}
         />
       </div>
-      <DialogFooter className="border-t px-4 py-3">
+      <DialogFooter className="mx-0 mb-0 rounded-none px-4 py-3">
         <DialogClose render={<Button variant="outline" />}>
           {t("common.cancel")}
         </DialogClose>

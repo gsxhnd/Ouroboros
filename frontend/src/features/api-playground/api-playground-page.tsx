@@ -5,6 +5,7 @@ import { toast } from "sonner"
 import { EndpointSidebar } from "@/features/api-playground/components/endpoint-sidebar"
 import { RequestForm } from "@/features/api-playground/components/request-form"
 import { ResponsePane } from "@/features/api-playground/components/response-pane"
+import { PageHeader } from "@/components/common/page-header"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -172,13 +173,11 @@ export function ApiPlaygroundPage() {
   const rcloneRunning = Boolean(info?.rclone?.running)
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden p-4 md:p-6">
-      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="font-heading text-lg leading-tight font-semibold tracking-tight">
-              {t("api.title")}
-            </h1>
+    <div className="flex h-full min-h-0 flex-col gap-6 overflow-hidden p-4 md:p-6">
+      <PageHeader
+        title={
+          <span className="flex flex-wrap items-center gap-2">
+            {t("api.title")}
             <Badge variant={online ? "secondary" : "destructive"}>
               {online == null
                 ? t("api.checking")
@@ -192,101 +191,113 @@ export function ApiPlaygroundPage() {
             {info?.version ? (
               <Badge variant="outline">v{info.version}</Badge>
             ) : null}
-          </div>
-          <p className="mt-0.5 truncate text-sm text-muted-foreground">
-            {info?.home_dir
-              ? t("api.home", { path: info.home_dir })
-              : t("api.homeHint")}
-          </p>
-        </div>
-        {revision !== undefined ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setBody((current) =>
-                revision === undefined
-                  ? current
-                  : replaceJsonNumber(current, "revision", revision)
-              )
-            }}
-          >
-            {t("api.insertRevision", { revision })}
-          </Button>
-        ) : null}
-      </div>
+          </span>
+        }
+        description={
+          info?.home_dir
+            ? t("api.home", { path: info.home_dir })
+            : t("api.homeHint")
+        }
+        actions={
+          revision !== undefined ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setBody((current) =>
+                  revision === undefined
+                    ? current
+                    : replaceJsonNumber(current, "revision", revision)
+                )
+              }}
+            >
+              {t("api.insertRevision", { revision })}
+            </Button>
+          ) : null
+        }
+      />
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-auto lg:hidden">
-        <EndpointSidebar
-          query={query}
-          onQueryChange={setQuery}
-          groups={groups}
-          endpoints={filtered}
-          selectedId={selectedId}
-          onSelect={applyEndpoint}
-        />
-        <Separator />
-        <RequestForm
-          method={method}
-          path={path}
-          body={body}
-          sse={sse}
-          pending={pending}
-          listening={listening}
-          onMethodChange={setMethod}
-          onPathChange={setPath}
-          onBodyChange={setBody}
-          onSend={() => {
-            void handleSend()
-          }}
-          onSseToggle={handleSseToggle}
-        />
-        <Separator />
-        <ResponsePane result={result} sseLog={sseLog} listening={listening} />
-      </div>
-      <div className="hidden min-h-0 flex-1 lg:flex">
-        <ResizablePanelGroup orientation="horizontal">
-          <ResizablePanel defaultSize={28} minSize={18} className="min-w-0">
-            <EndpointSidebar
-              query={query}
-              onQueryChange={setQuery}
-              groups={groups}
-              endpoints={filtered}
-              selectedId={selectedId}
-              onSelect={applyEndpoint}
-            />
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={72} minSize={40} className="min-w-0">
-            <ResizablePanelGroup orientation="vertical">
-              <ResizablePanel defaultSize={48} minSize={30} className="min-w-0">
-                <RequestForm
-                  method={method}
-                  path={path}
-                  body={body}
-                  sse={sse}
-                  pending={pending}
-                  listening={listening}
-                  onMethodChange={setMethod}
-                  onPathChange={setPath}
-                  onBodyChange={setBody}
-                  onSend={() => {
-                    void handleSend()
-                  }}
-                  onSseToggle={handleSseToggle}
-                />
-              </ResizablePanel>
-              <ResizableHandle withHandle />
-              <ResizablePanel defaultSize={52} minSize={24} className="min-w-0">
-                <ResponsePane
-                  result={result}
-                  sseLog={sseLog}
-                  listening={listening}
-                />
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          </ResizablePanel>
-        </ResizablePanelGroup>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10">
+        <div className="flex min-h-0 flex-1 flex-col overflow-auto lg:hidden">
+          <EndpointSidebar
+            query={query}
+            onQueryChange={setQuery}
+            groups={groups}
+            endpoints={filtered}
+            selectedId={selectedId}
+            onSelect={applyEndpoint}
+          />
+          <Separator />
+          <RequestForm
+            method={method}
+            path={path}
+            body={body}
+            sse={sse}
+            pending={pending}
+            listening={listening}
+            onMethodChange={setMethod}
+            onPathChange={setPath}
+            onBodyChange={setBody}
+            onSend={() => {
+              void handleSend()
+            }}
+            onSseToggle={handleSseToggle}
+          />
+          <Separator />
+          <ResponsePane result={result} sseLog={sseLog} listening={listening} />
+        </div>
+        <div className="hidden min-h-0 flex-1 lg:flex">
+          <ResizablePanelGroup orientation="horizontal">
+            <ResizablePanel defaultSize={28} minSize={18} className="min-w-0">
+              <EndpointSidebar
+                query={query}
+                onQueryChange={setQuery}
+                groups={groups}
+                endpoints={filtered}
+                selectedId={selectedId}
+                onSelect={applyEndpoint}
+              />
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={72} minSize={40} className="min-w-0">
+              <ResizablePanelGroup orientation="vertical">
+                <ResizablePanel
+                  defaultSize={48}
+                  minSize={30}
+                  className="min-w-0"
+                >
+                  <RequestForm
+                    method={method}
+                    path={path}
+                    body={body}
+                    sse={sse}
+                    pending={pending}
+                    listening={listening}
+                    onMethodChange={setMethod}
+                    onPathChange={setPath}
+                    onBodyChange={setBody}
+                    onSend={() => {
+                      void handleSend()
+                    }}
+                    onSseToggle={handleSseToggle}
+                  />
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel
+                  defaultSize={52}
+                  minSize={24}
+                  className="min-w-0"
+                >
+                  <ResponsePane
+                    result={result}
+                    sseLog={sseLog}
+                    listening={listening}
+                  />
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </div>
       </div>
     </div>
   )

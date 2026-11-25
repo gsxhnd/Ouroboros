@@ -325,7 +325,7 @@ function RuntimeForm({
                 className="flex min-w-0 flex-col gap-1 rounded-lg bg-muted/50 px-3 py-2"
               >
                 <dt className="text-xs text-muted-foreground">{fact.label}</dt>
-                <dd className="truncate font-mono text-xs" title={fact.value}>
+                <dd className="truncate font-mono text-sm" title={fact.value}>
                   {fact.value}
                 </dd>
               </div>

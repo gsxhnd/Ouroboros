@@ -19,17 +19,10 @@ import {
 } from "@/features/files/components/dialogs"
 import { FileTable, type SortKey } from "@/features/files/components/file-table"
 import { PageContainer, PageHeader } from "@/components/common/page-header"
-import { EmptyHint } from "@/components/common/notes"
-import { SelectField } from "@/components/common/select-field"
 import { ConfirmNameDialog } from "@/components/common/confirm-name-dialog"
+import { SelectField } from "@/components/common/select-field"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   InputGroup,
   InputGroupAddon,
@@ -37,6 +30,8 @@ import {
 } from "@/components/ui/input-group"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
+import { Spinner } from "@/components/ui/spinner"
 import { withAccessToken } from "@/lib/http/transport"
 import { getAuthToken } from "@/lib/auth"
 import { call, errorMessage } from "@/lib/http/client"
@@ -331,166 +326,184 @@ export function FilesPage() {
     <PageContainer>
       <PageHeader title={t("nav.files")} description={t("nav.filesHint")} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("files.locationTitle")}</CardTitle>
-          <CardDescription>{t("files.locationDescription")}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-end gap-3">
-          <SelectField
-            label={t("files.source")}
-            className="w-56"
-            value={fsKind}
-            options={[
-              { value: "remote", label: t("files.sourceRemote") },
-              { value: "local", label: t("files.sourceLocal") },
-            ]}
-            onChange={setFsKind}
-          />
-          {fsKind === "remote" ? (
+      <Card className="py-0">
+        <CardContent className="flex flex-col gap-3 p-4">
+          <p className="text-xs text-muted-foreground">
+            {t("files.locationDescription")}
+          </p>
+          <div className="flex flex-wrap items-end gap-3">
             <SelectField
-              label={t("files.remoteLabel")}
-              className="w-56"
-              value={remoteName}
-              options={remotes.map((r) => ({ value: r.name, label: r.name }))}
-              onChange={(next) => {
-                setRemoteName(next)
-                setRemotePath("")
-              }}
-              disabled={remotes.length === 0}
-              placeholder={
-                remotes.length === 0 ? t("files.noRemotes") : undefined
-              }
+              label={t("files.source")}
+              className="w-full sm:w-52"
+              value={fsKind}
+              options={[
+                { value: "remote", label: t("files.sourceRemote") },
+                { value: "local", label: t("files.sourceLocal") },
+              ]}
+              onChange={setFsKind}
             />
-          ) : (
-            <div className="flex flex-col gap-1.5">
-              <Label>{t("files.localDir")}</Label>
-              <Input
-                className="w-72 font-mono"
-                placeholder="/absolute/path"
-                value={localPath}
-                onChange={(e) => setLocalPath(e.target.value)}
+            {fsKind === "remote" ? (
+              <SelectField
+                label={t("files.remoteLabel")}
+                className="w-full sm:w-56"
+                value={remoteName}
+                options={remotes.map((r) => ({ value: r.name, label: r.name }))}
+                onChange={(next) => {
+                  setRemoteName(next)
+                  setRemotePath("")
+                }}
+                disabled={remotes.length === 0}
+                placeholder={
+                  remotes.length === 0 ? t("files.noRemotes") : undefined
+                }
               />
-            </div>
-          )}
-          <Button size="sm" variant="outline" onClick={() => void list()}>
-            <RefreshCcwIcon /> {t("common.refresh")}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setMkdirOpen(true)}
-          >
-            <FolderPlusIcon /> {t("files.newDir")}
-          </Button>
-        </CardContent>
-      </Card>
-
-      {items.length === 0 && !loading ? (
-        <EmptyHint>{t("files.empty")}</EmptyHint>
-      ) : (
-        <Card size="sm" className="py-0">
-          <CardContent className="p-0">
-            <div className="flex flex-wrap items-center gap-1 px-3 py-2 text-sm text-muted-foreground">
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                aria-label={t("files.up")}
-                disabled={!canGoUp}
-                onClick={goUp}
-              >
-                <CornerLeftUpIcon />
+            ) : (
+              <div className="flex w-full flex-col gap-1.5 sm:w-72">
+                <Label>{t("files.localDir")}</Label>
+                <Input
+                  className="font-mono"
+                  placeholder="/absolute/path"
+                  value={localPath}
+                  onChange={(e) => setLocalPath(e.target.value)}
+                />
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => void list()}>
+                <RefreshCcwIcon data-icon="inline-start" />
+                {t("common.refresh")}
               </Button>
-              {fsKind === "remote" ? (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="xs"
-                    onClick={() => setRemotePath("")}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setMkdirOpen(true)}
+              >
+                <FolderPlusIcon data-icon="inline-start" />
+                {t("files.newDir")}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+        <Separator />
+        <div className="flex min-w-0 items-center gap-2 px-3 py-2">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t("files.up")}
+            disabled={!canGoUp}
+            onClick={goUp}
+          >
+            <CornerLeftUpIcon />
+          </Button>
+          <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto text-sm text-muted-foreground">
+            {fsKind === "remote" ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    crumbs.length === 0 && "font-medium text-foreground"
+                  )}
+                  onClick={() => setRemotePath("")}
+                >
+                  <HardDriveIcon data-icon="inline-start" />
+                  {t("files.root")}
+                </Button>
+                {crumbs.map((crumb, index) => (
+                  <span
+                    key={crumbs.slice(0, index + 1).join("/")}
+                    className="flex shrink-0 items-center gap-1"
                   >
-                    <HardDriveIcon data-icon="inline-start" />
-                    {t("files.root")}
-                  </Button>
-                  {crumbs.map((crumb, index) => (
-                    <span
-                      key={crumbs.slice(0, index + 1).join("/")}
-                      className="flex items-center gap-1"
-                    >
-                      <ChevronRightIcon className="size-3.5" />
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        onClick={() =>
-                          setRemotePath(crumbs.slice(0, index + 1).join("/"))
-                        }
-                      >
-                        {crumb}
-                      </Button>
-                    </span>
-                  ))}
-                </>
-              ) : (
-                localCrumbs.map((crumb, index) => (
-                  <span key={crumb.path} className="flex items-center gap-1">
-                    {index > 0 ? (
-                      <ChevronRightIcon className="size-3.5" />
-                    ) : null}
+                    <ChevronRightIcon className="size-3.5 shrink-0" />
                     <Button
                       variant="ghost"
-                      size="xs"
+                      size="sm"
                       className={cn(
-                        index === localCrumbs.length - 1 &&
+                        index === crumbs.length - 1 &&
                           "font-medium text-foreground"
                       )}
-                      onClick={() => setLocalPath(crumb.path)}
+                      onClick={() =>
+                        setRemotePath(crumbs.slice(0, index + 1).join("/"))
+                      }
                     >
-                      {crumb.name}
+                      {crumb}
                     </Button>
                   </span>
-                ))
-              )}
-              <div className="ms-auto">
-                <InputGroup className="w-44 sm:w-56">
-                  <InputGroupAddon>
-                    <SearchIcon className="size-3.5" />
-                  </InputGroupAddon>
-                  <InputGroupInput
-                    className="text-xs"
-                    placeholder={t("files.filterPlaceholder")}
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
-                    aria-label={t("files.filterPlaceholder")}
-                  />
-                </InputGroup>
-              </div>
-            </div>
-            <FileTable
-              items={visibleItems}
-              sortKey={sortKey}
-              sortDir={sortDir}
-              onToggleSort={toggleSort}
-              onEnterDir={enterDir}
-              onDownload={(item) => void downloadItem(item)}
-              onRename={(item) => setRename({ item, name: itemName(item) })}
-              onCopy={(item) =>
-                setTransfer({
-                  kind: "copy",
-                  item,
-                  target: fsKind === "remote" ? remoteName : "",
-                })
-              }
-              onMove={(item) =>
-                setTransfer({
-                  kind: "move",
-                  item,
-                  target: fsKind === "remote" ? "" : remotePath,
-                })
-              }
-              onDelete={(item) => setDeleteTarget(item)}
+                ))}
+              </>
+            ) : (
+              localCrumbs.map((crumb, index) => (
+                <span
+                  key={crumb.path}
+                  className="flex shrink-0 items-center gap-1"
+                >
+                  {index > 0 ? (
+                    <ChevronRightIcon className="size-3.5 shrink-0" />
+                  ) : null}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      index === localCrumbs.length - 1 &&
+                        "font-medium text-foreground"
+                    )}
+                    onClick={() => setLocalPath(crumb.path)}
+                  >
+                    {crumb.name}
+                  </Button>
+                </span>
+              ))
+            )}
+          </div>
+          <InputGroup className="w-40 shrink-0 sm:w-56">
+            <InputGroupAddon>
+              <SearchIcon />
+            </InputGroupAddon>
+            <InputGroupInput
+              placeholder={t("files.filterPlaceholder")}
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              aria-label={t("files.filterPlaceholder")}
             />
-          </CardContent>
-        </Card>
-      )}
+          </InputGroup>
+        </div>
+        <Separator />
+        {loading && items.length === 0 ? (
+          <div className="flex items-center justify-center gap-2 px-4 py-16 text-sm text-muted-foreground">
+            <Spinner />
+            {t("files.loading")}
+          </div>
+        ) : visibleItems.length === 0 ? (
+          <p className="px-4 py-16 text-center text-sm text-pretty text-muted-foreground">
+            {items.length === 0 ? t("files.empty") : t("files.noMatches")}
+          </p>
+        ) : (
+          <FileTable
+            items={visibleItems}
+            sortKey={sortKey}
+            sortDir={sortDir}
+            onToggleSort={toggleSort}
+            onEnterDir={enterDir}
+            onDownload={(item) => void downloadItem(item)}
+            onRename={(item) => setRename({ item, name: itemName(item) })}
+            onCopy={(item) =>
+              setTransfer({
+                kind: "copy",
+                item,
+                target: fsKind === "remote" ? remoteName : "",
+              })
+            }
+            onMove={(item) =>
+              setTransfer({
+                kind: "move",
+                item,
+                target: fsKind === "remote" ? "" : remotePath,
+              })
+            }
+            onDelete={(item) => setDeleteTarget(item)}
+          />
+        )}
+      </Card>
 
       <MkdirDialog
         open={mkdirOpen}

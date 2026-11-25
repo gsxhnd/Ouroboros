@@ -71,7 +71,7 @@ export function EndpointSidebar({
                       variant={
                         endpoint.id === selectedId ? "secondary" : "ghost"
                       }
-                      className="h-auto w-full justify-start py-2"
+                      className="h-auto w-full min-w-0 justify-start py-2"
                       title={t(endpoint.descriptionKey)}
                       onClick={() => onSelect(endpoint)}
                     >
@@ -81,7 +81,7 @@ export function EndpointSidebar({
                       >
                         {endpoint.method}
                       </Badge>
-                      <span className="truncate">{endpoint.name}</span>
+                      <span className="min-w-0 truncate">{endpoint.name}</span>
                     </Button>
                   ))}
               </div>

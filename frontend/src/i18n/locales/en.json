@@ -158,6 +158,8 @@
     "newDir": "New folder",
     "root": "Root",
     "empty": "This directory is empty, or rclone is not running.",
+    "loading": "Loading…",
+    "noMatches": "No matching names",
     "columnSize": "Size",
     "columnModified": "Modified",
     "mkdirPlaceholder": "Directory name",

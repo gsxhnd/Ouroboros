@@ -4,7 +4,13 @@ import { PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { ConfirmNameDialog } from "@/components/common/confirm-name-dialog"
-import { PageContainer, PageHeader } from "@/components/common/page-header"
+import { EmptyHint, LoadingBlock, WarningNote } from "@/components/common/notes"
+import { Button } from "@/components/ui/button"
+import {
+  PageContainer,
+  PageHeader,
+  SectionHeading,
+} from "@/components/common/page-header"
 import { TaskDialog } from "@/features/sync/components/task-dialog"
 import {
   ResyncConfirmDialog,
@@ -13,8 +19,6 @@ import {
 import { ActiveJobRow } from "@/features/sync/components/job-rows"
 import { TaskCard } from "@/features/sync/components/task-card"
 import { bisyncNeedsResync } from "@/features/sync/labels"
-import { EmptyHint, WarningNote } from "@/components/common/notes"
-import { Button } from "@/components/ui/button"
 import { call } from "@/lib/http/client"
 import type { RemoteInfo, SyncTask } from "@/lib/types"
 import { useRcloneStore } from "@/stores/rclone-store"
@@ -122,7 +126,7 @@ export function SyncPage() {
               setDialogOpen(true)
             }}
           >
-            <PlusIcon />
+            <PlusIcon data-icon="inline-start" />
             {t("sync.newTask")}
           </Button>
         }
@@ -133,10 +137,8 @@ export function SyncPage() {
       ) : null}
 
       {activeJobs.length > 0 ? (
-        <section className="flex flex-col gap-2">
-          <h2 className="text-xs font-medium text-muted-foreground">
-            {t("sync.activeJobs")}
-          </h2>
+        <section className="flex flex-col gap-3">
+          <SectionHeading title={t("sync.activeJobs")} />
           {activeJobs.map((job) => (
             <ActiveJobRow
               key={job.id}
@@ -147,14 +149,10 @@ export function SyncPage() {
         </section>
       ) : null}
 
-      <section className="flex flex-col gap-2">
-        <h2 className="text-xs font-medium text-muted-foreground">
-          {t("sync.taskList")}
-        </h2>
+      <section className="flex flex-col gap-3">
+        <SectionHeading title={t("sync.taskList")} />
         {!loaded ? (
-          <p className="rounded-lg border border-dashed px-4 py-8 text-center text-sm text-muted-foreground">
-            {t("sync.loading")}
-          </p>
+          <LoadingBlock>{t("sync.loading")}</LoadingBlock>
         ) : tasks.length === 0 ? (
           <EmptyHint>{t("sync.empty")}</EmptyHint>
         ) : (
