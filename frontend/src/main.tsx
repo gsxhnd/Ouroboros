@@ -8,8 +8,8 @@ import "@wailsio/runtime"
 import "./index.css"
 // i18n 初始化必须在渲染之前完成（语言探测 + 资源注册）。
 import "./i18n"
-import App from "./App.tsx"
-import { ThemeProvider } from "@/components/theme-provider.tsx"
+import { App } from "@/app/app"
+import { ThemeProvider } from "@/app/providers/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 
 createRoot(document.getElementById("root")!).render(

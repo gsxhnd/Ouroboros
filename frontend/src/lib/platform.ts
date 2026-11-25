@@ -39,7 +39,7 @@ function readStoredPlatform(): string | null {
 }
 
 /** 桌面壳的 GOOS（darwin / windows / linux…），浏览器为 null。 */
-export const desktopPlatform = paramPlatform ?? readStoredPlatform()
+const desktopPlatform = paramPlatform ?? readStoredPlatform()
 export const isDesktop = desktopPlatform !== null
 
 /** Go 的 GOOS 名称 → 应用侧的操作系统枚举。 */
@@ -87,13 +87,9 @@ export const os: Os = isDesktop
 
 /** 操作系统判定（含浏览器访问），用于快捷键提示等与壳形态无关的差异。 */
 export const isMacOs = os === "macos"
-export const isWindowsOs = os === "windows"
-export const isLinuxOs = os === "linux"
 
 /** 桌面壳 + 操作系统的组合判定，用于窗口形态相关的布局差异。 */
 export const isMacDesktop = isDesktop && isMacOs
-export const isWindowsDesktop = isDesktop && isWindowsOs
-export const isLinuxDesktop = isDesktop && isLinuxOs
 
 /** 系统托盘弹出的小面板：同一套前端，通过 ?view=tray 切换到精简视图。 */
 export const isTrayView =

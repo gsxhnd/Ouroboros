@@ -106,15 +106,10 @@ export type NodeKind = "local" | "remote"
 
 export type RemoteRef = { name: string; path?: string }
 
-export type Position = { x: number; y: number }
-
-export type Viewport = Position & { zoom: number }
-
 export type StorageNode = {
   id: string
   kind: NodeKind
   label: string
-  position: Position
   local_path?: string
   remote?: RemoteRef
 }
@@ -163,7 +158,6 @@ export type WorkspaceDocument = {
   revision: number
   nodes: StorageNode[]
   edges: ConnectionEdge[]
-  viewport: Viewport
   updated_at: string
 }
 

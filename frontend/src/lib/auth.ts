@@ -10,13 +10,11 @@ type AuthState = {
   /** 服务端要求鉴权（收到过 401）时为 true，由 TokenGate 读取。 */
   required: boolean
   markUnauthorized: () => void
-  reset: () => void
 }
 
 export const useAuthStore = create<AuthState>()((set) => ({
   required: false,
   markUnauthorized: () => set({ required: true }),
-  reset: () => set({ required: false }),
 }))
 
 export function getAuthToken(): string | null {

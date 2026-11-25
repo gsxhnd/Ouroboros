@@ -4,9 +4,9 @@ import { initReactI18next } from "react-i18next"
 import en from "./locales/en.json"
 import zh from "./locales/zh.json"
 
-export const LOCALES = ["zh", "en"] as const
+const LOCALES = ["zh", "en"] as const
 export type Locale = (typeof LOCALES)[number]
-export const DEFAULT_LOCALE: Locale = "zh"
+const DEFAULT_LOCALE: Locale = "zh"
 
 const STORAGE_KEY = "ourboros.lang"
 

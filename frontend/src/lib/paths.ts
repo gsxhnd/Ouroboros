@@ -3,6 +3,22 @@ function isWindowsPath(path: string): boolean {
   return /^[A-Za-z]:/.test(path) || (!path.includes("/") && path.includes("\\"))
 }
 
+/**
+ * 判断是否为本地路径写法：POSIX 绝对路径、`~` 开头、反斜杠开头或盘符前缀，
+ * 与后端 `paths.LooksLikeLocal` 保持一致。
+ */
+export function isLocalPath(path: string): boolean {
+  const value = path.trim()
+  return (
+    value.startsWith("/") ||
+    value.startsWith("\\") ||
+    value === "~" ||
+    value.startsWith("~/") ||
+    value.startsWith("~\\") ||
+    /^[A-Za-z]:/.test(value)
+  )
+}
+
 /** Windows 路径用反斜杠拼接，其余按 POSIX 处理。 */
 function separatorOf(path: string): string {
   return isWindowsPath(path) ? "\\" : "/"

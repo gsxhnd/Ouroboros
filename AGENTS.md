@@ -4,12 +4,12 @@ Ourboros is a Web UI for rclone. A Go HTTP service manages a loopback rclone RC 
 
 ## Commands
 
-Go is 1.26 and Node is 24 per `mise.toml`. CI uses Node 22, so use the local toolchain from mise when they disagree.
+Go is 1.26 and Node is 24 per `mise.toml`. CI uses Node 22.18 (the first 22.x that runs `.ts` files without a flag, which `npm test` needs), so use the local toolchain from mise when they disagree.
 
 - Go tests (the CI scope): `go test ./internal/... ./cmd/ourboros`
 - Single Go test: `go test ./internal/rclone -run TestName`
-- Web checks, in this order: `cd frontend && npm run typecheck && npm run lint && npm run build`
-- Web build runs `tsc -b` then `vite build`, so it also type-checks. `frontend/` has no test runner.
+- Web checks, in this order: `cd frontend && npm run typecheck && npm run lint && npm run format:check && npm test && npm run build` (or just `npm run check`)
+- Web build runs `tsc -b` then `vite build`, so it also type-checks. `npm test` runs `*.test.ts` files with Node's built-in runner (Node >= 22.18, no framework); it covers pure logic only, with the `@/` alias and `@/i18n` resolved by `frontend/scripts/alias-loader.mjs`. Keep test-covered modules free of React and DOM imports.
 - Desktop dev (GUI mode): `task dev` (wails3 dev, Vite HMR + Go rebuild).
 - Browser dev: `task dev:server` (Go API on 8080 + Vite on 1420 in parallel).
 - Server mode in Docker (dev): `docker compose -f docker-compose.dev.yml up` — binds 0.0.0.0 with `OURBOROS_TOKEN` (default `ourboros-dev-token`).
@@ -25,7 +25,12 @@ Go is 1.26 and Node is 24 per `mise.toml`. CI uses Node 22, so use the local too
 - `cmd/ourboros`: service entrypoint. `cmd/desktop`: Wails entrypoint plus tray code.
 - `internal/serve`: startup wiring. `Run` validates the bind host, resolves the web dir, starts app state and rclone, then starts the HTTP server.
 - `internal/httpapi`: handlers and error mapping. `internal/rclone`: process supervision, RC client, download/discovery. `internal/workspace`: versioned JSON documents (sync tasks live on sync edges), sync-task CRUD in `tasks.go`, and validation. `internal/mounts`, `internal/scheduler`, `internal/jobs`, `internal/settings`, `internal/persist`: supporting state.
-- `frontend/src`: React app with react-router. `App.tsx` defines the routes; the shell (`components/app-shell.tsx`) is the layout route rendering `components/shell/app-header.tsx` + `components/shell/sidebar.tsx` around an `<Outlet />`. Sidebar and command palette share the nav registry in `lib/nav.ts` (grouped workspace/system, paths = routes). Routes: `/tasks` → `pages/sync.tsx` (home, backed by `stores/sync-store.ts` and `components/sync/`), `/files` → `pages/files.tsx` (+ `components/files/`), `/storages` → `pages/storages.tsx`, `/overview` → `pages/overview.tsx`, `/settings` → `pages/settings.tsx` (sub-routes connection/shortcuts/runtime via `components/settings/sections.tsx`), `/api` → `pages/api-playground.tsx` (+ `components/api/`). Dialogs are reserved for forms (task dialog, remote form) and dangerous-operation confirmations (`components/confirm-name-dialog.tsx`); server-mode token entry lives in `components/token-gate.tsx`. The i18n locale files are `frontend/src/i18n/locales/{en,zh}.json`.
+- `frontend/src`: React app with react-router, organised by feature.
+  - `app/`: `app.tsx` defines the routes; `shell/` holds the layout route (`app-shell.tsx`) with `app-header.tsx` + `sidebar.tsx` around an `<Outlet />`, plus `command-palette.tsx` and `token-gate.tsx` (server-mode token entry); `nav.ts` is the nav registry shared by the sidebar and command palette (grouped workspace/system, paths = routes); `providers/theme-provider.tsx`.
+  - `features/<name>/`: one folder per route, each with its `*-page.tsx`. `sync/` (route `/tasks`, 同步任务: `sync-page.tsx`, `sync-store.ts`, `task-form-model.ts`, `labels.ts`, `components/`), `files/` (`/files`, `file-paths.ts`), `storages/` (`/storages`, `storage-store.ts`, `remote-form/`), `overview/` (`/overview`), `settings/` (`/settings`, sub-routes connection/shortcuts/runtime in `sections.tsx`), `api-playground/` (`/api`, `endpoints.ts`), `tray/` (the tray panel webview, not a route).
+  - `components/common/`: shared building blocks (`select-field`, `switch-field`, `notes`, `status-chip`, `page-header`, `confirm-name-dialog`); `components/ui/` is shadcn-generated. Dialogs are reserved for forms (task dialog, remote form) and dangerous-operation confirmations (`confirm-name-dialog.tsx`).
+  - `lib/`: `http/` (`transport.ts` raw fetch + auth header, `sse.ts` EventSource, `client.ts` `call`/`callQuiet` with toasts and error mapping), `format.ts`, `paths.ts`, `platform.ts`, `auth.ts`, `types.ts`. `stores/` keeps only the app-wide `rclone-store.ts`.
+  - The i18n locale files are `frontend/src/i18n/locales/{en,zh}.json`.
 - `Taskfile.yml` + `build/`: wails3 orchestration. `build/config.yml` drives `wails3 dev` (fixed task names `build`, `run`, `common:dev:frontend` in the root Taskfile); Ourboros uses no Wails bindings, so the template's `generate:bindings` / `go mod tidy` steps are intentionally dropped.
 - `docs/dev/` holds the design docs, written in Chinese. `10-设计决策与注意事项.md` lists the rules below in full, and `11-打包和发布指南.md` covers release.
 

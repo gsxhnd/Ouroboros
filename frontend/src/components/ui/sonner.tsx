@@ -8,7 +8,7 @@ import {
   Loader2Icon,
 } from "lucide-react"
 
-import { useTheme } from "@/components/theme-provider"
+import { useTheme } from "@/app/providers/theme-provider"
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme } = useTheme()

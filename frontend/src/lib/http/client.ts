@@ -1,0 +1,113 @@
+import { toast } from "sonner"
+
+import { sendApiRequest, type HttpMethod } from "@/lib/http/transport"
+import { useAuthStore } from "@/lib/auth"
+import i18n from "@/i18n"
+import { translateOr } from "@/i18n/lookup"
+import type { ApiErrorBody } from "@/lib/types"
+
+/** 收到 401 时通知 TokenGate 并返回 true，调用方不再弹常规错误提示。 */
+function handleUnauthorized(status: number): boolean {
+  if (status !== 401) {
+    return false
+  }
+  useAuthStore.getState().markUnauthorized()
+  return true
+}
+
+/** 执行一次 API 调用，成功时返回解析后的 JSON，失败时弹 toast 并抛出错误。 */
+export async function call<T = unknown>(
+  path: string,
+  options: { method?: HttpMethod; body?: unknown } = {}
+): Promise<T> {
+  const method = options.method ?? "GET"
+  const body = options.body === undefined ? "" : JSON.stringify(options.body)
+  const response = await sendApiRequest({ method, path, body })
+  if (response.status === 0) {
+    toast.error(i18n.t("errors.network"))
+    throw new Error(i18n.t("errors.network"))
+  }
+  if (!response.ok) {
+    if (handleUnauthorized(response.status)) {
+      throw new Error("unauthorized")
+    }
+    const message = errorMessage(response.json)
+    toast.error(message)
+    throw new Error(message)
+  }
+  return response.json as T
+}
+
+/** 执行调用但不弹错误 toast，让调用方自己决定如何展示。 */
+export async function callQuiet<T = unknown>(
+  path: string,
+  options: { method?: HttpMethod; body?: unknown } = {}
+): Promise<T> {
+  const method = options.method ?? "GET"
+  const body = options.body === undefined ? "" : JSON.stringify(options.body)
+  const response = await sendApiRequest({ method, path, body })
+  if (!response.ok || response.status === 0) {
+    if (response.status !== 0) {
+      handleUnauthorized(response.status)
+    }
+    throw new Error(
+      response.status === 0 ? response.statusText : errorMessage(response.json)
+    )
+  }
+  return response.json as T
+}
+
+/**
+ * 后端错误码到本地化提示的映射（errors.codes.*）；
+ * 未收录的错误码沿用后端返回的 message。
+ */
+function codeMessage(code: string): string {
+  const key = `errors.codes.${code}`
+  return translateOr(i18n, key, "")
+}
+
+export function errorMessage(json: unknown): string {
+  const error = (json as ApiErrorBody | null)?.error
+  if (!error) {
+    return i18n.t("errors.requestFailed")
+  }
+  // 结构化的 details.kind 优先（与后端错误文本解耦）；
+  // 兼容旧后端时才退回匹配英文原文。
+  const kind = error.details?.kind
+  if (error.code === "rclone_unavailable") {
+    if (
+      kind === "rclone_not_running" ||
+      error.message === "rclone is not running"
+    ) {
+      return i18n.t("errors.rcloneNotRunning")
+    }
+    return i18n.t("errors.rcloneUnavailable", { message: error.message ?? "" })
+  }
+  if (error.code === "conflict") {
+    if (
+      kind === "cli_override" ||
+      error.message?.includes("overridden by CLI")
+    ) {
+      return i18n.t("errors.cliOverride")
+    }
+    if (kind === "bisync_resync_required") {
+      return i18n.t("errors.bisyncResyncRequired")
+    }
+    if (kind === "remote_in_use") {
+      return i18n.t("errors.remoteInUse")
+    }
+    if (kind === "node_in_use") {
+      return i18n.t("errors.nodeInUse")
+    }
+    if (kind === "workspace_revision") {
+      return i18n.t("errors.workspaceConflict")
+    }
+  }
+  if (error.code) {
+    const translated = codeMessage(error.code)
+    if (translated) {
+      return translated
+    }
+  }
+  return error.message ?? i18n.t("errors.requestFailed")
+}

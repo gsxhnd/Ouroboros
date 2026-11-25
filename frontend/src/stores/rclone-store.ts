@@ -1,6 +1,6 @@
 import { create } from "zustand"
 
-import { call, callQuiet } from "@/lib/client"
+import { call, callQuiet } from "@/lib/http/client"
 import type { RcloneStatus } from "@/lib/types"
 
 type RcloneState = {
