@@ -2,7 +2,6 @@ package rclone
 
 import (
 	"encoding/json"
-	"net/url"
 	"strconv"
 	"strings"
 )
@@ -208,23 +207,4 @@ func isCredential(option ProviderOption) bool {
 		}
 	}
 	return false
-}
-
-// PublicEndpoint is an RC address with userinfo removed.
-func PublicEndpoint(raw string) string {
-	raw = strings.TrimSpace(raw)
-	if raw == "" {
-		return ""
-	}
-	parsed, err := url.Parse(raw)
-	if err != nil || parsed.Host == "" {
-		return ""
-	}
-	if parsed.Scheme != "http" && parsed.Scheme != "https" {
-		return ""
-	}
-	parsed.User = nil
-	parsed.RawQuery = ""
-	parsed.Fragment = ""
-	return strings.TrimRight(parsed.String(), "/")
 }

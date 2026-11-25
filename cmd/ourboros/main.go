@@ -34,6 +34,9 @@ func main() {
 			slog.Error("server exited", "err", err)
 			os.Exit(1)
 		}
+	case "desktop":
+		fmt.Fprintln(os.Stderr, "the desktop window is a separate binary: run ./cmd/desktop (or `task dev`)")
+		os.Exit(2)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command %q\n", command.Name)
 		os.Exit(2)

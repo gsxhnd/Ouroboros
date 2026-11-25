@@ -6,6 +6,26 @@ import (
 	"testing"
 )
 
+func TestEmptyJobsAndMissingRclone(t *testing.T) {
+	state, _ := testState(t)
+	handler := Handler(state, "")
+	status, body := send(handler, http.MethodGet, "/api/sync/jobs", "")
+	jobs, _ := body["jobs"].([]any)
+	if status != http.StatusOK || len(jobs) != 0 {
+		t.Fatal(status, body)
+	}
+	status, body = send(handler, http.MethodGet, "/api/mounts", "")
+	mounts, _ := body["mounts"].([]any)
+	if status != http.StatusOK || len(mounts) != 0 {
+		t.Fatal(status, body)
+	}
+	status, body = send(handler, http.MethodPost, "/api/rclone/start", "")
+	errBody, _ := body["error"].(map[string]any)
+	if status != http.StatusServiceUnavailable || errBody["code"] != "rclone_unavailable" {
+		t.Fatal(status, body)
+	}
+}
+
 func createTask(t *testing.T, handler http.Handler, local string, revision int, mutate func(map[string]any)) (int, map[string]any) {
 	t.Helper()
 	body := map[string]any{

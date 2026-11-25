@@ -7,13 +7,6 @@ import (
 	"github.com/gsxhnd/ourboros/internal/core"
 )
 
-func Resolve(explicit string) (string, error) {
-	if explicit != "" {
-		return Require(explicit)
-	}
-	return discover(), nil
-}
-
 func Require(path string) (string, error) {
 	canonical, err := filepath.Abs(path)
 	if err != nil {
@@ -33,7 +26,9 @@ func Require(path string) (string, error) {
 	return canonical, nil
 }
 
-func discover() string {
+// Discover looks for a bundled web UI next to the executable and returns ""
+// when there is none, which leaves the server in API-only mode.
+func Discover() string {
 	exe, err := os.Executable()
 	if err != nil {
 		return ""

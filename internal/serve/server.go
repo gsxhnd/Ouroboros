@@ -10,7 +10,6 @@ import (
 
 	"github.com/gsxhnd/ourboros/internal/app"
 	"github.com/gsxhnd/ourboros/internal/httpapi"
-	"github.com/gsxhnd/ourboros/internal/scheduler"
 )
 
 type Running struct {
@@ -40,7 +39,6 @@ func start(ctx context.Context, state *app.State, host string, port int, webDir 
 			slog.Error("http server stopped", "err", err)
 		}
 	}()
-	go scheduler.Run(ctx, state.Workspace, state.Jobs, state.Rclone)
 
 	done := make(chan struct{})
 	go func() {

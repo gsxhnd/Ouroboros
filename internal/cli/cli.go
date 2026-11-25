@@ -6,8 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gsxhnd/ourboros/internal/app"
-	"github.com/gsxhnd/ourboros/internal/rclone"
+	"github.com/gsxhnd/ourboros/internal/netutil"
 )
 
 type Command struct {
@@ -28,21 +27,6 @@ type ServerArgs struct {
 	RclonePass     string
 	RcloneConfig   string
 	NoAutoRclone   bool
-}
-
-func (a ServerArgs) Runtime() app.Config {
-	return app.Config{
-		DataDir:      a.DataDir,
-		BindHost:     a.Host,
-		BindPort:     a.Port,
-		AuthToken:    a.AuthToken,
-		RcloneBin:    a.RcloneBin,
-		RcloneURL:    a.RcloneURL,
-		RcloneConfig: a.RcloneConfig,
-		RcloneUser:   a.RcloneUser,
-		RclonePass:   a.RclonePass,
-		NoAutoRclone: a.NoAutoRclone,
-	}
 }
 
 func Parse(args []string) (Command, error) {
@@ -78,6 +62,34 @@ func Parse(args []string) (Command, error) {
 	}
 }
 
+// valueFlags lists every flag that takes a value. Each accepts "--flag value"
+// and "--flag=value"; set stores the value into the parsed arguments.
+var valueFlags = []struct {
+	names []string
+	set   func(*ServerArgs, string) error
+}{
+	{[]string{"--host"}, func(a *ServerArgs, v string) error { a.Host = v; return nil }},
+	{[]string{"--port", "-p"}, func(a *ServerArgs, v string) error {
+		port, err := strconv.Atoi(v)
+		if err != nil || port < 0 || port > 65535 {
+			return fmt.Errorf("invalid port %q", v)
+		}
+		a.Port = port
+		return nil
+	}},
+	{[]string{"--webui", "--web-dir"}, func(a *ServerArgs, v string) error {
+		a.WebDir, a.WebDirExplicit = v, true
+		return nil
+	}},
+	{[]string{"--data-dir"}, func(a *ServerArgs, v string) error { a.DataDir = v; return nil }},
+	{[]string{"--auth-token"}, func(a *ServerArgs, v string) error { a.AuthToken = v; return nil }},
+	{[]string{"--rclone-bin"}, func(a *ServerArgs, v string) error { a.RcloneBin = v; return nil }},
+	{[]string{"--rclone-url"}, func(a *ServerArgs, v string) error { a.RcloneURL = v; return nil }},
+	{[]string{"--rclone-user"}, func(a *ServerArgs, v string) error { a.RcloneUser = v; return nil }},
+	{[]string{"--rclone-pass"}, func(a *ServerArgs, v string) error { a.RclonePass = v; return nil }},
+	{[]string{"--rclone-config"}, func(a *ServerArgs, v string) error { a.RcloneConfig = v; return nil }},
+}
+
 func ParseServerArgs(args []string) (ServerArgs, error) {
 	parsed := ServerArgs{
 		Host:         "127.0.0.1",
@@ -96,102 +108,44 @@ func ParseServerArgs(args []string) (ServerArgs, error) {
 	}
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
-		switch {
-		case arg == "--help" || arg == "-h":
+		switch arg {
+		case "--help", "-h":
 			return ServerArgs{}, errHelp
-		case arg == "--host":
-			value, err := takeValue(args, &i, arg)
-			if err != nil {
-				return ServerArgs{}, err
-			}
-			parsed.Host = value
-		case strings.HasPrefix(arg, "--host="):
-			parsed.Host = strings.TrimPrefix(arg, "--host=")
-		case arg == "--port" || arg == "-p":
-			value, err := takeValue(args, &i, arg)
-			if err != nil {
-				return ServerArgs{}, err
-			}
-			port, err := strconv.Atoi(value)
-			if err != nil || port < 0 || port > 65535 {
-				return ServerArgs{}, fmt.Errorf("invalid port %q", value)
-			}
-			parsed.Port = port
-		case strings.HasPrefix(arg, "--port="):
-			port, err := strconv.Atoi(strings.TrimPrefix(arg, "--port="))
-			if err != nil || port < 0 || port > 65535 {
-				return ServerArgs{}, fmt.Errorf("invalid port %q", strings.TrimPrefix(arg, "--port="))
-			}
-			parsed.Port = port
-		case arg == "--webui" || arg == "--web-dir":
-			value, err := takeValue(args, &i, arg)
-			if err != nil {
-				return ServerArgs{}, err
-			}
-			parsed.WebDir = value
-			parsed.WebDirExplicit = true
-		case strings.HasPrefix(arg, "--webui=") || strings.HasPrefix(arg, "--web-dir="):
-			parsed.WebDir = strings.SplitN(arg, "=", 2)[1]
-			parsed.WebDirExplicit = true
-		case arg == "--data-dir":
-			value, err := takeValue(args, &i, arg)
-			if err != nil {
-				return ServerArgs{}, err
-			}
-			parsed.DataDir = value
-		case strings.HasPrefix(arg, "--data-dir="):
-			parsed.DataDir = strings.TrimPrefix(arg, "--data-dir=")
-		case arg == "--auth-token":
-			value, err := takeValue(args, &i, arg)
-			if err != nil {
-				return ServerArgs{}, err
-			}
-			parsed.AuthToken = value
-		case strings.HasPrefix(arg, "--auth-token="):
-			parsed.AuthToken = strings.SplitN(arg, "=", 2)[1]
-		case arg == "--rclone-bin":
-			value, err := takeValue(args, &i, arg)
-			if err != nil {
-				return ServerArgs{}, err
-			}
-			parsed.RcloneBin = value
-		case strings.HasPrefix(arg, "--rclone-bin="):
-			parsed.RcloneBin = strings.TrimPrefix(arg, "--rclone-bin=")
-		case arg == "--rclone-url":
-			value, err := takeValue(args, &i, arg)
-			if err != nil {
-				return ServerArgs{}, err
-			}
-			parsed.RcloneURL = value
-		case strings.HasPrefix(arg, "--rclone-url="):
-			parsed.RcloneURL = strings.TrimPrefix(arg, "--rclone-url=")
-		case arg == "--rclone-user":
-			value, err := takeValue(args, &i, arg)
-			if err != nil {
-				return ServerArgs{}, err
-			}
-			parsed.RcloneUser = value
-		case arg == "--rclone-pass":
-			value, err := takeValue(args, &i, arg)
-			if err != nil {
-				return ServerArgs{}, err
-			}
-			parsed.RclonePass = value
-		case arg == "--rclone-config":
-			value, err := takeValue(args, &i, arg)
-			if err != nil {
-				return ServerArgs{}, err
-			}
-			parsed.RcloneConfig = value
-		case strings.HasPrefix(arg, "--rclone-config="):
-			parsed.RcloneConfig = strings.TrimPrefix(arg, "--rclone-config=")
-		case arg == "--no-auto-rclone":
+		case "--no-auto-rclone":
 			parsed.NoAutoRclone = true
-		default:
+			continue
+		}
+		name, inline, hasInline := strings.Cut(arg, "=")
+		flag := findValueFlag(name)
+		if flag == nil {
 			return ServerArgs{}, fmt.Errorf("unknown flag %q", arg)
+		}
+		value := inline
+		if !hasInline {
+			var err error
+			if value, err = takeValue(args, &i, name); err != nil {
+				return ServerArgs{}, err
+			}
+		}
+		if err := flag.set(&parsed, value); err != nil {
+			return ServerArgs{}, err
 		}
 	}
 	return parsed, nil
+}
+
+func findValueFlag(name string) *struct {
+	names []string
+	set   func(*ServerArgs, string) error
+} {
+	for i := range valueFlags {
+		for _, candidate := range valueFlags[i].names {
+			if candidate == name {
+				return &valueFlags[i]
+			}
+		}
+	}
+	return nil
 }
 
 var errHelp = fmt.Errorf("help")
@@ -211,7 +165,7 @@ func takeValue(args []string, i *int, flag string) (string, error) {
 // so every /api request must present it. TLS and full-origin hardening remain
 // prerequisites for multi-user exposure.
 func AssertBindHost(host, authToken string) error {
-	if rclone.IsLoopbackHost(host) {
+	if netutil.IsLoopbackHost(host) {
 		return nil
 	}
 	if authToken == "" {

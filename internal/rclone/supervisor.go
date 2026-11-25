@@ -2,24 +2,16 @@ package rclone
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
-	"net/http"
 	"sync"
 	"time"
 
 	"github.com/gsxhnd/ourboros/internal/core"
-	"github.com/gsxhnd/ourboros/internal/version"
 )
 
 // gracefulStopTimeout bounds how long a managed rclone rcd gets to exit after
 // core/quit or SIGINT before it is force-killed.
 const gracefulStopTimeout = 3 * time.Second
-
-// serveClient streams file bodies between the browser and the RC file server.
-// It has no overall timeout so large downloads can finish; cancellation comes
-// from the caller's request context instead.
-var serveClient = &http.Client{}
 
 type session struct {
 	mode   Mode
@@ -192,56 +184,6 @@ func (s *Supervisor) CallInternal(ctx context.Context, command string, body any)
 	return s.client.Call(ctx, rcURL, auth, command, body)
 }
 
-// OpenServe performs an authenticated GET against the RC file server (enabled
-// by --rc-serve on spawned daemons) and returns the raw response so the caller
-// can stream the body to the browser. Credentials are only ever sent to the
-// loopback RC process and never appear in returned URLs, logs or error text.
-func (s *Supervisor) OpenServe(ctx context.Context, urlPath string) (*http.Response, error) {
-	s.reap()
-	rcURL, auth, err := s.endpoint()
-	if err != nil {
-		return nil, err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, JoinRCURL(rcURL, urlPath), nil)
-	if err != nil {
-		return nil, core.Transport(redactAuth(err.Error(), auth))
-	}
-	req.Header.Set("User-Agent", "ourboros/"+version.Version)
-	if auth != nil {
-		req.SetBasicAuth(auth.User, auth.Pass)
-	}
-	res, err := serveClient.Do(req)
-	if err != nil {
-		return nil, core.Transport(redactAuth(err.Error(), auth))
-	}
-	if res.StatusCode != http.StatusOK {
-		res.Body.Close()
-		return nil, core.Transport(fmt.Sprintf("rclone file server returned status %d", res.StatusCode))
-	}
-	return res, nil
-}
-
-func (s *Supervisor) ListRemotes(ctx context.Context) ([]string, error) {
-	res, err := s.CallInternal(ctx, "config/listremotes", map[string]any{})
-	if err != nil {
-		return nil, err
-	}
-	if !res.OK() {
-		return nil, core.Transport(upstreamMessage(res.Body))
-	}
-	raw, ok := res.Body["remotes"].([]any)
-	if !ok {
-		return []string{}, nil
-	}
-	names := make([]string, 0, len(raw))
-	for _, item := range raw {
-		if name, ok := item.(string); ok {
-			names = append(names, name)
-		}
-	}
-	return names, nil
-}
-
 func (s *Supervisor) Status() Status {
 	s.reap()
 	s.mu.Lock()
@@ -320,4 +262,38 @@ func (s *Supervisor) reap() {
 		slog.Warn("rclone process exited unexpectedly")
 		s.inner.session = nil
 	}
+}
+
+type Mode string
+
+const (
+	ModeSpawned  Mode = "spawned"
+	ModeAttached Mode = "attached"
+)
+
+type Status struct {
+	Running   bool    `json:"running"`
+	Mode      *Mode   `json:"mode"`
+	Version   *string `json:"version"`
+	Binary    string  `json:"binary"`
+	Endpoint  *string `json:"endpoint,omitempty"`
+	Config    *string `json:"config,omitempty"`
+	OS        *string `json:"os,omitempty"`
+	Arch      *string `json:"arch,omitempty"`
+	OSVersion *string `json:"os_version,omitempty"`
+	GoVersion *string `json:"go_version,omitempty"`
+	Linking   *string `json:"linking,omitempty"`
+	Beta      *bool   `json:"beta,omitempty"`
+}
+
+type Settings struct {
+	Bin    string
+	RCURL  string
+	RCUser string
+	RCPass string
+	Config string
+}
+
+func DefaultSettings() Settings {
+	return Settings{Bin: "rclone"}
 }

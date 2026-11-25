@@ -63,13 +63,3 @@ func ValidateProxyCommand(command string) error {
 	}
 	return nil
 }
-
-func redactSecrets(input string, secrets ...string) string {
-	redacted := input
-	for _, secret := range secrets {
-		if len(secret) >= 4 {
-			redacted = strings.ReplaceAll(redacted, secret, "***")
-		}
-	}
-	return redacted
-}

@@ -4,25 +4,34 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/gsxhnd/ourboros/internal/core"
 	"github.com/gsxhnd/ourboros/internal/persist"
-	"github.com/gsxhnd/ourboros/internal/rclone"
 )
 
 const SchemaVersion = 1
 
+// SourceKind records where the user chose the rclone binary from.
+type SourceKind string
+
+const (
+	SourceCustom  SourceKind = "custom"
+	SourceManaged SourceKind = "managed"
+	SourceSystem  SourceKind = "system"
+)
+
 type Document struct {
-	SchemaVersion uint32            `json:"schema_version"`
-	RcloneSource  rclone.SourceKind `json:"rclone_source"`
-	RcloneBin     *string           `json:"rclone_bin"`
-	RcloneConfig  *string           `json:"rclone_config"`
-	RcloneRCURL   *string           `json:"rclone_rc_url"`
-	AutoStart     bool              `json:"auto_start"`
-	WorkspacePath *string           `json:"workspace_path"`
+	SchemaVersion uint32     `json:"schema_version"`
+	RcloneSource  SourceKind `json:"rclone_source"`
+	RcloneBin     *string    `json:"rclone_bin"`
+	RcloneConfig  *string    `json:"rclone_config"`
+	RcloneRCURL   *string    `json:"rclone_rc_url"`
+	AutoStart     bool       `json:"auto_start"`
+	WorkspacePath *string    `json:"workspace_path"`
 	// Shortcuts maps an action ID (see ShortcutActions) to an accelerator such
 	// as "CmdOrCtrl+Shift+O". Missing actions use DefaultShortcuts.
 	Shortcuts map[string]string `json:"shortcuts"`
@@ -40,10 +49,22 @@ var DefaultShortcuts = map[string]string{
 	"quit":          "CmdOrCtrl+Q",
 }
 
+// ResolveWorkspacePath returns where the workspace file lives: the configured
+// path (relative ones are taken from dataDir), or workspace.json in dataDir.
+func (d Document) ResolveWorkspacePath(dataDir string) string {
+	if d.WorkspacePath == nil || *d.WorkspacePath == "" {
+		return filepath.Join(dataDir, "workspace.json")
+	}
+	if filepath.IsAbs(*d.WorkspacePath) {
+		return *d.WorkspacePath
+	}
+	return filepath.Join(dataDir, *d.WorkspacePath)
+}
+
 func DefaultDocument() Document {
 	return Document{
 		SchemaVersion: SchemaVersion,
-		RcloneSource:  rclone.SourceSystem,
+		RcloneSource:  SourceSystem,
 		Shortcuts:     map[string]string{},
 		UpdatedAt:     time.Now().UTC(),
 	}
@@ -82,12 +103,12 @@ func (n *Nullable[T]) UnmarshalJSON(data []byte) error {
 }
 
 type Patch struct {
-	RcloneSource  *rclone.SourceKind `json:"rclone_source"`
-	RcloneBin     Nullable[string]   `json:"rclone_bin"`
-	RcloneConfig  Nullable[string]   `json:"rclone_config"`
-	RcloneRCURL   Nullable[string]   `json:"rclone_rc_url"`
-	AutoStart     *bool              `json:"auto_start"`
-	WorkspacePath Nullable[string]   `json:"workspace_path"`
+	RcloneSource  *SourceKind      `json:"rclone_source"`
+	RcloneBin     Nullable[string] `json:"rclone_bin"`
+	RcloneConfig  Nullable[string] `json:"rclone_config"`
+	RcloneRCURL   Nullable[string] `json:"rclone_rc_url"`
+	AutoStart     *bool            `json:"auto_start"`
+	WorkspacePath Nullable[string] `json:"workspace_path"`
 	// Shortcuts merges per-action accelerators. An empty value resets that
 	// action to its default.
 	Shortcuts map[string]string `json:"shortcuts"`
@@ -198,36 +219,24 @@ func (s *Store) Patch(patch Patch) (Document, error) {
 	return s.doc, nil
 }
 
-func ApplyToRclone(doc Document, settings *rclone.Settings) {
-	if doc.RcloneBin != nil && *doc.RcloneBin != "" {
-		settings.Bin = *doc.RcloneBin
-	}
-	if settings.Config == "" && doc.RcloneConfig != nil {
-		settings.Config = *doc.RcloneConfig
-	}
-	if settings.RCURL == "" && doc.RcloneRCURL != nil {
-		settings.RCURL = *doc.RcloneRCURL
-	}
-}
-
 func load(path string) (Document, error) {
-	data, err := persist.ReadJSONBytes(path)
+	doc, err := persist.LoadVersioned[Document](path, "settings", migrate)
 	if err != nil {
 		return Document{}, err
 	}
-	var value map[string]any
-	if err := json.Unmarshal(data, &value); err != nil {
-		return Document{}, core.CorruptStore(path + ": " + err.Error())
+	if doc.RcloneSource == "" {
+		doc.RcloneSource = SourceSystem
 	}
-	version := uint32(0)
-	if raw, ok := value["schema_version"].(float64); ok {
-		version = uint32(raw)
-	}
+	return doc, nil
+}
+
+// migrate upgrades a raw settings object to the current schema in place.
+func migrate(value map[string]any, version uint32) error {
 	switch version {
 	case 0:
 		value["schema_version"] = SchemaVersion
 		if _, ok := value["rclone_source"]; !ok {
-			value["rclone_source"] = rclone.SourceSystem
+			value["rclone_source"] = SourceSystem
 		}
 		if _, ok := value["auto_start"]; !ok {
 			value["auto_start"] = false
@@ -240,18 +249,7 @@ func load(path string) (Document, error) {
 		}
 	case SchemaVersion:
 	default:
-		return Document{}, core.UnsupportedSchema("settings", version)
+		return core.UnsupportedSchema("settings", version)
 	}
-	raw, err := json.Marshal(value)
-	if err != nil {
-		return Document{}, core.CorruptStore("settings: " + err.Error())
-	}
-	var doc Document
-	if err := json.Unmarshal(raw, &doc); err != nil {
-		return Document{}, core.CorruptStore("settings: " + err.Error())
-	}
-	if doc.RcloneSource == "" {
-		doc.RcloneSource = rclone.SourceSystem
-	}
-	return doc, nil
+	return nil
 }

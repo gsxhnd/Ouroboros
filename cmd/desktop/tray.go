@@ -9,8 +9,6 @@ import (
 	"time"
 
 	"github.com/gsxhnd/ourboros/internal/app"
-	"github.com/gsxhnd/ourboros/internal/events"
-	"github.com/gsxhnd/ourboros/internal/settings"
 	"github.com/gsxhnd/ourboros/internal/tray"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	wailsevents "github.com/wailsapp/wails/v3/pkg/events"
@@ -25,7 +23,7 @@ const (
 	trayPanelWidth      = 340
 	trayPanelHeight     = 420
 	trayPanelOffset     = 6
-	// Events emitted by the tray panel webview (see web/src/components/tray-panel.tsx).
+	// Events emitted by the tray panel webview (see frontend/src/features/tray/tray-panel.tsx).
 	trayOpenMainEvent = "ourboros:tray:open-main"
 	trayQuitEvent     = "ourboros:tray:quit"
 	trayAutostartEvt  = "ourboros:tray:autostart"
@@ -44,7 +42,6 @@ type trayShell struct {
 
 	mu         sync.Mutex
 	rcloneBusy bool
-	lastError  string
 	bindings   []string
 }
 
@@ -106,10 +103,9 @@ func (t *trayShell) run() {
 	defer ticker.Stop()
 	var shown string
 	for {
-		model := tray.Build(t.input())
-		if model.Tooltip != shown {
-			shown = model.Tooltip
-			t.tray.SetTooltip(model.Tooltip)
+		if tooltip := tray.Tooltip(t.input()); tooltip != shown {
+			shown = tooltip
+			t.tray.SetTooltip(tooltip)
 		}
 		select {
 		case <-t.ctx.Done():
@@ -119,76 +115,16 @@ func (t *trayShell) run() {
 	}
 }
 
-// watchSettings re-registers shortcuts whenever the settings change.
-func (t *trayShell) watchSettings(bus *events.Bus) {
-	ch, cancel := bus.Subscribe()
-	defer cancel()
-	t.registerShortcuts(t.svc.Settings.Get())
-	for {
-		select {
-		case <-t.ctx.Done():
-			return
-		case ev, ok := <-ch:
-			if !ok {
-				return
-			}
-			if ev.Name != "settings" {
-				continue
-			}
-			if doc, ok := ev.Payload.(settings.Document); ok {
-				t.registerShortcuts(doc)
-			}
-		}
-	}
-}
-
-// registerShortcuts replaces the previously registered accelerators with the
-// ones from doc. Each action runs on the Go side, the same as the panel buttons.
-func (t *trayShell) registerShortcuts(doc settings.Document) {
-	t.mu.Lock()
-	for _, accel := range t.bindings {
-		t.app.KeyBinding.Remove(accel)
-	}
-	t.bindings = nil
-	t.mu.Unlock()
-
-	actions := map[string]func(){
-		"show_main":     t.showWindow,
-		"toggle_panel":  t.togglePanel,
-		"toggle_rclone": t.rcloneToggleAction,
-		"quit":          func() { t.app.Quit() },
-	}
-	resolved := doc.ResolvedShortcuts()
-	for _, action := range settings.ShortcutActions {
-		accel := resolved[action]
-		run := actions[action]
-		if accel == "" || run == nil {
-			continue
-		}
-		t.app.KeyBinding.Add(accel, func(application.Window) { run() })
-		t.mu.Lock()
-		t.bindings = append(t.bindings, accel)
-		t.mu.Unlock()
-	}
-}
-
 func (t *trayShell) input() tray.Input {
 	t.mu.Lock()
-	busy, lastErr := t.rcloneBusy, t.lastError
+	busy := t.rcloneBusy
 	t.mu.Unlock()
-
-	in := tray.Input{
-		Workspace:  t.svc.Workspace.Get(),
+	return tray.Input{
 		Rclone:     t.svc.Rclone.Status(),
 		RcloneBusy: busy,
-		Mounts:     t.svc.Mounts.List(t.svc.Workspace),
+		Mounts:     t.svc.Mounts.List(),
 		Jobs:       t.svc.Jobs.List(),
-		LastError:  lastErr,
 	}
-	if enabled, err := t.app.Autostart.IsEnabled(); err == nil {
-		in.Autostart = &enabled
-	}
-	return in
 }
 
 func (t *trayShell) showWindow() {
@@ -224,7 +160,7 @@ func (t *trayShell) toggleRclone(running bool) {
 			_, err = t.svc.Rclone.EnsureRunning(ctx)
 		}
 		t.setRcloneBusy(false)
-		t.setResult(err)
+		t.logResult(err)
 	}()
 }
 
@@ -245,17 +181,14 @@ func (t *trayShell) setAutostart(enable bool) {
 		if err != nil {
 			slog.Warn("update launch-at-login failed", "enable", enable, "err", err)
 		}
-		t.setResult(err)
+		t.logResult(err)
 	}()
 }
 
-// setResult records the outcome of a tray action (nil clears the previous error).
-func (t *trayShell) setResult(err error) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	t.lastError = ""
+// logResult logs the outcome of a tray action; failures are not surfaced
+// anywhere else because the tray has no native menu to show them in.
+func (t *trayShell) logResult(err error) {
 	if err != nil {
 		slog.Warn("tray action failed", "err", err)
-		t.lastError = err.Error()
 	}
 }

@@ -10,11 +10,10 @@ import (
 	"github.com/gsxhnd/ourboros/internal/core"
 	"github.com/gsxhnd/ourboros/internal/jobs"
 	"github.com/gsxhnd/ourboros/internal/paths"
-	"github.com/gsxhnd/ourboros/internal/rclone"
 	"github.com/gsxhnd/ourboros/internal/workspace"
 )
 
-func Run(ctx context.Context, ws *workspace.Store, jobStore *jobs.Store, rc *rclone.Supervisor) {
+func Run(ctx context.Context, ws *workspace.Store, jobStore *jobs.Store) {
 	ticker := time.NewTicker(15 * time.Second)
 	defer ticker.Stop()
 	for {
@@ -22,14 +21,14 @@ func Run(ctx context.Context, ws *workspace.Store, jobStore *jobs.Store, rc *rcl
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			if err := tick(ws, jobStore, rc); err != nil {
+			if err := tick(ws, jobStore); err != nil {
 				slog.Warn("sync scheduler tick failed", "err", err)
 			}
 		}
 	}
 }
 
-func tick(ws *workspace.Store, jobStore *jobs.Store, rc *rclone.Supervisor) error {
+func tick(ws *workspace.Store, jobStore *jobs.Store) error {
 	doc := ws.Get()
 	var errs []error
 	for _, edge := range doc.Edges {
@@ -60,7 +59,7 @@ func tick(ws *workspace.Store, jobStore *jobs.Store, rc *rclone.Supervisor) erro
 				return source, target, err
 			},
 		}
-		if err := runDue(ws, jobStore, rc, unit); err != nil {
+		if err := runDue(ws, jobStore, unit); err != nil {
 			// 一个坏掉的单元（例如无效的 cron 表达式）不应阻塞同一轮里其他单元的求值。
 			errs = append(errs, fmt.Errorf("edge %s: %w", edge.ID, err))
 		}
@@ -79,7 +78,7 @@ type runUnit struct {
 	endpoints func() (paths.Locator, paths.Locator, error)
 }
 
-func runDue(ws *workspace.Store, jobStore *jobs.Store, rc *rclone.Supervisor, unit runUnit) error {
+func runDue(ws *workspace.Store, jobStore *jobs.Store, unit runUnit) error {
 	now := time.Now().UTC()
 	if !unit.enabled || !unit.schedule.Enabled {
 		return nil
@@ -104,7 +103,7 @@ func runDue(ws *workspace.Store, jobStore *jobs.Store, rc *rclone.Supervisor, un
 	if err != nil {
 		return err
 	}
-	if _, err := jobStore.Start(rc, ws, unit.id, unit.operation, source, target, unit.options); err != nil {
+	if _, err := jobStore.Start(unit.id, unit.operation, source, target, unit.options); err != nil {
 		slog.Warn("scheduled run failed to start", "id", unit.id, "err", err)
 		return nil
 	}
@@ -117,35 +116,11 @@ func runDue(ws *workspace.Store, jobStore *jobs.Store, rc *rclone.Supervisor, un
 	return ws.SetNextRun(unit.id, computed)
 }
 
-func CronExpression(schedule workspace.Schedule) (string, error) {
-	switch schedule.Mode {
-	case workspace.ModePreset:
-		if schedule.Preset == nil {
-			return "", core.InvalidRequest("preset schedule requires a preset")
-		}
-		switch *schedule.Preset {
-		case workspace.PresetHourly:
-			return "0 * * * *", nil
-		case workspace.PresetWeekly:
-			return "0 0 * * 0", nil
-		default:
-			return "0 0 * * *", nil
-		}
-	case workspace.ModeCron:
-		if schedule.Cron == nil || *schedule.Cron == "" {
-			return "", core.InvalidRequest("cron schedule requires a cron expression")
-		}
-		return *schedule.Cron, nil
-	default:
-		return "", core.InvalidRequest("invalid schedule mode")
-	}
-}
-
 func NextRunAt(schedule workspace.Schedule, from time.Time) (*time.Time, error) {
 	if !schedule.Enabled {
 		return nil, nil
 	}
-	expression, err := CronExpression(schedule)
+	expression, err := schedule.CronExpression()
 	if err != nil {
 		return nil, err
 	}

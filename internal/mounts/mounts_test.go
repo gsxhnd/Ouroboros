@@ -1,6 +1,7 @@
 package mounts
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -33,11 +34,9 @@ func workspaceWithMountEdge(t *testing.T, localTarget string) *workspace.Store {
 	if err := os.MkdirAll(localTarget, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	ws, err := workspace.LoadOrCreate(filepath.Join(t.TempDir(), "workspace.json"), t.TempDir())
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = ws.Replace(workspace.PutRequest{
+	path := filepath.Join(t.TempDir(), "workspace.json")
+	raw, err := json.Marshal(workspace.Document{
+		SchemaVersion: workspace.SchemaVersion,
 		Nodes: []workspace.Node{
 			{ID: "src", Kind: workspace.NodeRemote, Label: "src", Remote: &workspace.Remote{Name: "testsuite"}},
 			{ID: "dst", Kind: workspace.NodeLocal, Label: "dst", LocalPath: &localTarget},
@@ -45,11 +44,28 @@ func workspaceWithMountEdge(t *testing.T, localTarget string) *workspace.Store {
 		Edges: []workspace.Edge{
 			{ID: "m1", Source: "src", Target: "dst", Kind: workspace.EdgeMount, Mount: &workspace.MountConfig{Enabled: true}},
 		},
-	}, []string{"testsuite"}, true)
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, raw, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	ws, err := workspace.LoadOrCreate(path, t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
 	return ws
+}
+
+// widenStartGrace lets a script that is meant to exit have as long as it needs
+// to start and die: Start returns as soon as the process exits, so the wider
+// window only matters when the machine is too busy to launch it in 400ms.
+func widenStartGrace(t *testing.T) {
+	t.Helper()
+	previous := mountStartGrace
+	mountStartGrace = 30 * time.Second
+	t.Cleanup(func() { mountStartGrace = previous })
 }
 
 // 挂起的进程在宽限窗内就退出的，应当快速判失败并带出 stderr。
@@ -60,7 +76,9 @@ func TestWaitRunningDetectsFastExit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if waitRunning(spawned, 2*time.Second, 25*time.Millisecond) {
+	// waitRunning returns the moment the process exits, so a generous window
+	// costs nothing here and keeps the test stable when the machine is busy.
+	if waitRunning(spawned, 30*time.Second, 25*time.Millisecond) {
 		t.Fatal("expected the exiting process to be detected")
 	}
 	if code := spawned.ExitCode(); code == nil || *code != 3 {
@@ -84,12 +102,13 @@ func TestWaitRunningKeepsAliveProcess(t *testing.T) {
 
 // Start 在替身进程秒退时应当失败并暴露 stderr ……（此为行为锁）
 func TestStartReportsFailedSpawn(t *testing.T) {
+	widenStartGrace(t)
 	target := filepath.Join(t.TempDir(), "mnt")
 	ws := workspaceWithMountEdge(t, target)
-	store := New(events.New())
 	rc := rclone.NewSupervisor(rclone.Settings{Bin: writeScript(t, "echo faux mount failure >&2\nexit 9")})
+	store := New(events.New(), rc, ws)
 
-	snapshot, err := store.Start(rc, ws, "m1")
+	snapshot, err := store.Start("m1")
 	if err != nil {
 		t.Fatalf("failed spawn should surface as snapshot, got error %v", err)
 	}
@@ -105,10 +124,10 @@ func TestStartReportsFailedSpawn(t *testing.T) {
 func TestStartStopLifecycle(t *testing.T) {
 	target := filepath.Join(t.TempDir(), "mnt")
 	ws := workspaceWithMountEdge(t, target)
-	store := New(events.New())
 	rc := rclone.NewSupervisor(rclone.Settings{Bin: writeScript(t, "exec sleep 30")})
+	store := New(events.New(), rc, ws)
 
-	snapshot, err := store.Start(rc, ws, "m1")
+	snapshot, err := store.Start("m1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -118,7 +137,7 @@ func TestStartStopLifecycle(t *testing.T) {
 	if !store.IsActive("m1") {
 		t.Fatal("mounted edge must be active")
 	}
-	if _, err := store.Start(rc, ws, "m1"); err == nil {
+	if _, err := store.Start("m1"); err == nil {
 		t.Fatal("second start on a mounted edge must conflict")
 	}
 
@@ -139,16 +158,15 @@ func TestStartStopLifecycle(t *testing.T) {
 func TestWatchReportsUnexpectedExit(t *testing.T) {
 	target := filepath.Join(t.TempDir(), "mnt")
 	ws := workspaceWithMountEdge(t, target)
-	store := New(events.New())
-
 	rc := rclone.NewSupervisor(rclone.Settings{Bin: writeScript(t, "sleep 0.7\nexit 7")})
-	if _, err := store.Start(rc, ws, "m1"); err != nil {
+	store := New(events.New(), rc, ws)
+	if _, err := store.Start("m1"); err != nil {
 		t.Fatal(err)
 	}
 
 	deadline := time.Now().Add(5 * time.Second)
 	for {
-		snapshot := store.List(ws)[0]
+		snapshot := store.List()[0]
 		if snapshot.Status == StatusFailed {
 			if snapshot.ExitCode == nil || *snapshot.ExitCode != 7 {
 				t.Fatalf("exit code %v", snapshot.ExitCode)

@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"strconv"
 	"time"
 
 	"github.com/gsxhnd/ourboros/internal/events"
@@ -16,29 +15,6 @@ import (
 	"github.com/gsxhnd/ourboros/internal/version"
 	"github.com/gsxhnd/ourboros/internal/workspace"
 )
-
-type Config struct {
-	DataDir      string
-	BindHost     string
-	BindPort     int
-	AuthToken    string
-	RcloneBin    string
-	RcloneURL    string
-	RcloneConfig string
-	RcloneUser   string
-	RclonePass   string
-	NoAutoRclone bool
-}
-
-func (c Config) withDefaults() Config {
-	if c.BindHost == "" {
-		c.BindHost = "127.0.0.1"
-	}
-	if c.BindPort == 0 {
-		c.BindPort = 8080
-	}
-	return c
-}
 
 type State struct {
 	Version string
@@ -78,40 +54,18 @@ func New(ctx context.Context, cfg Config) (*State, error) {
 		return nil, err
 	}
 	doc := settingsStore.Get()
-	workspacePath := filepath.Join(dataDir, "workspace.json")
-	if doc.WorkspacePath != nil && *doc.WorkspacePath != "" {
-		if filepath.IsAbs(*doc.WorkspacePath) {
-			workspacePath = *doc.WorkspacePath
-		} else {
-			workspacePath = filepath.Join(dataDir, *doc.WorkspacePath)
-		}
-	}
+	workspacePath := doc.ResolveWorkspacePath(dataDir)
 	home, _ := os.UserHomeDir()
 	workspaceStore, err := workspace.LoadOrCreate(workspacePath, home)
 	if err != nil {
 		return nil, err
 	}
 
-	rcloneSettings := rclone.DefaultSettings()
-	settings.ApplyToRclone(doc, &rcloneSettings)
-	if cfg.RcloneURL != "" {
-		rcloneSettings.RCURL = cfg.RcloneURL
-	}
-	if cfg.RcloneUser != "" {
-		rcloneSettings.RCUser = cfg.RcloneUser
-	}
-	if cfg.RclonePass != "" {
-		rcloneSettings.RCPass = cfg.RclonePass
-	}
-	if cfg.RcloneBin != "" {
-		rcloneSettings.Bin = cfg.RcloneBin
-	}
-	if cfg.RcloneConfig != "" {
-		rcloneSettings.Config = cfg.RcloneConfig
-	}
+	rcloneSettings := rcloneSettingsFrom(doc, cfg)
 
 	bus := events.New()
 	supervisor := rclone.NewSupervisor(rcloneSettings)
+	jobStore := jobs.New(ctx, bus, supervisor, recordJobResult(workspaceStore))
 	return &State{
 		Version:           version.Version,
 		HomeDir:           home,
@@ -121,8 +75,8 @@ func New(ctx context.Context, cfg Config) (*State, error) {
 		Rclone:            supervisor,
 		Workspace:         workspaceStore,
 		Settings:          settingsStore,
-		Jobs:              jobs.New(ctx, bus),
-		Mounts:            mounts.New(bus),
+		Jobs:              jobStore,
+		Mounts:            mounts.New(bus, supervisor, workspaceStore),
 		Downloads:         rclone.NewDownloadManager(supervisor.Client()),
 		Events:            bus,
 		CLIBinOverride:    cfg.RcloneBin != "",
@@ -151,21 +105,4 @@ func (s *State) Close() {
 		defer cancel()
 		_, _ = s.Rclone.Stop(ctx)
 	}
-}
-
-func CORSOrigins(host string, port int) []string {
-	origins := []string{
-		"http://127.0.0.1:1420",
-		"http://localhost:1420",
-		origin("127.0.0.1", port),
-		origin("localhost", port),
-	}
-	if host != "127.0.0.1" && host != "localhost" && host != "::1" {
-		origins = append(origins, origin(host, port))
-	}
-	return origins
-}
-
-func origin(host string, port int) string {
-	return "http://" + host + ":" + strconv.Itoa(port)
 }

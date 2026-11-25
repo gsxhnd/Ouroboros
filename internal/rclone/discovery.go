@@ -146,3 +146,20 @@ func findSystemBinaries() []string {
 	}
 	return found
 }
+
+type SourceKind string
+
+const (
+	SourceCustom  SourceKind = "custom"
+	SourceManaged SourceKind = "managed"
+	SourceSystem  SourceKind = "system"
+)
+
+type Candidate struct {
+	Source  SourceKind `json:"source"`
+	Path    string     `json:"path"`
+	Version *string    `json:"version"`
+	Valid   bool       `json:"valid"`
+	Managed bool       `json:"managed"`
+	Error   *string    `json:"error"`
+}

@@ -1,17 +1,12 @@
 package rclone
 
 import (
-	"archive/zip"
 	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"runtime"
-	"strings"
 	"sync"
 	"time"
 
@@ -22,8 +17,11 @@ const downloadsBase = "https://downloads.rclone.org"
 
 type DownloadManager struct {
 	client *Client
-	mu     sync.Mutex
-	tasks  []*downloadTask
+	// base is the download site's root URL. It is a field only so tests can
+	// point the manager at a local server.
+	base  string
+	mu    sync.Mutex
+	tasks []*downloadTask
 }
 
 type downloadTask struct {
@@ -35,7 +33,7 @@ func NewDownloadManager(client *Client) *DownloadManager {
 	if client == nil {
 		client = NewClient()
 	}
-	return &DownloadManager{client: client}
+	return &DownloadManager{client: client, base: downloadsBase}
 }
 
 func (m *DownloadManager) Snapshot(id string) (DownloadSnapshot, error) {
@@ -108,17 +106,58 @@ func (m *DownloadManager) update(id string, mutate func(*DownloadSnapshot)) {
 	}
 }
 
+// run downloads, verifies and installs one rclone release. Each stage reports
+// its status through emit so the UI can show where a download is.
 func (m *DownloadManager) run(ctx context.Context, id, version, versionsDir string, onProgress func(DownloadSnapshot)) error {
-	release, err := ReleaseForPlatform(version)
+	release, err := m.releaseFor(version)
 	if err != nil {
 		return err
 	}
 	m.emit(id, onProgress, func(snapshot *DownloadSnapshot) {
 		snapshot.Status = DownloadDownloading
 	})
-	res, err := m.client.GetStream(ctx, release.URL)
+	archive, err := m.fetchArchive(ctx, id, release, onProgress)
 	if err != nil {
 		return err
+	}
+
+	m.emit(id, onProgress, func(snapshot *DownloadSnapshot) {
+		snapshot.Status = DownloadVerifying
+	})
+	if err := m.verifyArchive(ctx, release, archive); err != nil {
+		return err
+	}
+
+	m.emit(id, onProgress, func(snapshot *DownloadSnapshot) {
+		snapshot.Status = DownloadExtracting
+	})
+	if err := m.install(ctx, archive, version, versionsDir); err != nil {
+		return err
+	}
+	m.emit(id, onProgress, func(snapshot *DownloadSnapshot) {
+		snapshot.Status = DownloadCompleted
+		snapshot.Error = nil
+	})
+	return nil
+}
+
+// releaseFor resolves version to this platform's archive, rooted at the
+// manager's download base.
+func (m *DownloadManager) releaseFor(version string) (Release, error) {
+	release, err := ReleaseForPlatform(version)
+	if err != nil {
+		return Release{}, err
+	}
+	release.URL = m.base + "/" + release.Version + "/" + release.Filename
+	return release, nil
+}
+
+// fetchArchive streams the release archive into memory, reporting byte
+// progress, and stops promptly when ctx is cancelled.
+func (m *DownloadManager) fetchArchive(ctx context.Context, id string, release Release, onProgress func(DownloadSnapshot)) ([]byte, error) {
+	res, err := m.client.GetStream(ctx, release.URL)
+	if err != nil {
+		return nil, err
 	}
 	defer res.Body.Close()
 	if res.ContentLength > 0 {
@@ -131,7 +170,7 @@ func (m *DownloadManager) run(ctx context.Context, id, version, versionsDir stri
 	chunk := make([]byte, 32*1024)
 	for {
 		if ctx.Err() != nil {
-			return core.InvalidRequest("download cancelled")
+			return nil, core.InvalidRequest("download cancelled")
 		}
 		n, readErr := res.Body.Read(chunk)
 		if n > 0 {
@@ -143,17 +182,17 @@ func (m *DownloadManager) run(ctx context.Context, id, version, versionsDir stri
 			})
 		}
 		if readErr == io.EOF {
-			break
+			return buf.Bytes(), nil
 		}
 		if readErr != nil {
-			return core.Transport(readErr.Error())
+			return nil, core.Transport(readErr.Error())
 		}
 	}
+}
 
-	m.emit(id, onProgress, func(snapshot *DownloadSnapshot) {
-		snapshot.Status = DownloadVerifying
-	})
-	manifest, err := m.client.GetText(ctx, downloadsBase+"/"+version+"/SHA256SUMS")
+// verifyArchive checks the archive against the official SHA-256 manifest.
+func (m *DownloadManager) verifyArchive(ctx context.Context, release Release, archive []byte) error {
+	manifest, err := m.client.GetText(ctx, m.base+"/"+release.Version+"/SHA256SUMS")
 	if err != nil {
 		return err
 	}
@@ -161,19 +200,20 @@ func (m *DownloadManager) run(ctx context.Context, id, version, versionsDir stri
 	if err != nil {
 		return err
 	}
-	actual := sha256Hex(buf.Bytes())
-	if actual != expected {
+	if sha256Hex(archive) != expected {
 		return core.InvalidRequest("SHA-256 mismatch for " + release.Filename)
 	}
+	return nil
+}
 
-	m.emit(id, onProgress, func(snapshot *DownloadSnapshot) {
-		snapshot.Status = DownloadExtracting
-	})
+// install unpacks the binary into versionsDir and confirms it runs; a binary
+// that fails its version check is removed rather than left behind.
+func (m *DownloadManager) install(ctx context.Context, archive []byte, version, versionsDir string) error {
 	if err := os.MkdirAll(filepath.Join(versionsDir, version), 0o755); err != nil {
 		return core.IO(err)
 	}
 	dest := ManagedBinaryPath(versionsDir, version)
-	if err := extractRcloneBinary(buf.Bytes(), dest); err != nil {
+	if err := extractRcloneBinary(archive, dest); err != nil {
 		return err
 	}
 	candidate := inspect(ctx, dest, SourceManaged, true)
@@ -185,10 +225,6 @@ func (m *DownloadManager) run(ctx context.Context, id, version, versionsDir stri
 		}
 		return core.InvalidRequest(message)
 	}
-	m.emit(id, onProgress, func(snapshot *DownloadSnapshot) {
-		snapshot.Status = DownloadCompleted
-		snapshot.Error = nil
-	})
 	return nil
 }
 
@@ -202,136 +238,29 @@ func (m *DownloadManager) emit(id string, onProgress func(DownloadSnapshot), mut
 	}
 }
 
-func CurrentRelease(ctx context.Context, client *Client) (Release, error) {
-	text, err := client.GetText(ctx, downloadsBase+"/version.txt")
-	if err != nil {
-		return Release{}, err
-	}
-	version, ok := ParseVersionOutput(text)
-	if !ok {
-		return Release{}, core.Transport("could not parse rclone version.txt")
-	}
-	return ReleaseForPlatform(version)
+type Release struct {
+	Version  string `json:"version"`
+	Filename string `json:"filename"`
+	URL      string `json:"url"`
 }
 
-func ReleaseForPlatform(version string) (Release, error) {
-	version = NormalizeVersion(version)
-	filename, err := archiveName(version)
-	if err != nil {
-		return Release{}, err
-	}
-	return Release{
-		Version:  version,
-		Filename: filename,
-		URL:      downloadsBase + "/" + version + "/" + filename,
-	}, nil
-}
+type DownloadStatus string
 
-func ParseSHA256Sums(manifest, filename string) (string, error) {
-	for _, line := range strings.Split(manifest, "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-		parts := strings.Fields(line)
-		if len(parts) < 2 {
-			continue
-		}
-		name := strings.TrimPrefix(parts[1], "*")
-		if name == filename {
-			return strings.ToLower(parts[0]), nil
-		}
-	}
-	return "", core.NotFound("SHA-256 entry for " + filename)
-}
+const (
+	DownloadQueued      DownloadStatus = "queued"
+	DownloadDownloading DownloadStatus = "downloading"
+	DownloadVerifying   DownloadStatus = "verifying"
+	DownloadExtracting  DownloadStatus = "extracting"
+	DownloadCompleted   DownloadStatus = "completed"
+	DownloadFailed      DownloadStatus = "failed"
+	DownloadCancelled   DownloadStatus = "cancelled"
+)
 
-func extractRcloneBinary(zipBytes []byte, dest string) error {
-	reader, err := zip.NewReader(bytes.NewReader(zipBytes), int64(len(zipBytes)))
-	if err != nil {
-		return core.InvalidRequest("invalid rclone zip: " + err.Error())
-	}
-	for _, file := range reader.File {
-		name := strings.ReplaceAll(file.Name, `\`, "/")
-		if strings.Contains(name, "__MACOSX") {
-			continue
-		}
-		base := name
-		if slash := strings.LastIndex(name, "/"); slash >= 0 {
-			base = name[slash+1:]
-		}
-		if base != "rclone" && base != "rclone.exe" {
-			continue
-		}
-		if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
-			return core.IO(err)
-		}
-		src, err := file.Open()
-		if err != nil {
-			return core.InvalidRequest("invalid rclone zip: " + err.Error())
-		}
-		out, err := os.OpenFile(dest, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o755)
-		if err != nil {
-			src.Close()
-			return core.IO(err)
-		}
-		_, copyErr := io.Copy(out, src)
-		src.Close()
-		closeErr := out.Close()
-		if copyErr != nil {
-			return core.IO(copyErr)
-		}
-		if closeErr != nil {
-			return core.IO(closeErr)
-		}
-		if runtime.GOOS != "windows" {
-			if err := os.Chmod(dest, 0o755); err != nil {
-				return core.IO(err)
-			}
-		}
-		return nil
-	}
-	return core.NotFound("rclone binary inside downloaded archive")
-}
-
-func archiveName(version string) (string, error) {
-	var osArch string
-	switch runtime.GOOS + "/" + runtime.GOARCH {
-	case "darwin/arm64":
-		osArch = "osx-arm64"
-	case "darwin/amd64":
-		osArch = "osx-amd64"
-	case "linux/arm64":
-		osArch = "linux-arm64"
-	case "linux/amd64":
-		osArch = "linux-amd64"
-	case "windows/arm64":
-		osArch = "windows-arm64"
-	case "windows/amd64":
-		osArch = "windows-amd64"
-	default:
-		return "", core.InvalidRequest("unsupported platform " + runtime.GOOS + "/" + runtime.GOARCH)
-	}
-	return fmt.Sprintf("rclone-%s-%s.zip", version, osArch), nil
-}
-
-func NormalizeVersion(version string) string {
-	trimmed := strings.TrimSpace(version)
-	trimmed = strings.TrimSpace(strings.TrimPrefix(trimmed, "rclone"))
-	if strings.HasPrefix(trimmed, "v") {
-		return trimmed
-	}
-	return "v" + trimmed
-}
-
-func SafeVersion(version string) (string, error) {
-	version = NormalizeVersion(version)
-	if version == "v" || strings.ContainsAny(version, `/\`) || strings.Contains(version, "..") {
-		return "", core.InvalidRequest("invalid rclone version")
-	}
-	return version, nil
-}
-
-func sha256Hex(data []byte) string {
-	sum := sha256.Sum256(data)
-	return hex.EncodeToString(sum[:])
+type DownloadSnapshot struct {
+	ID         string         `json:"id"`
+	Version    string         `json:"version"`
+	Status     DownloadStatus `json:"status"`
+	Bytes      uint64         `json:"bytes"`
+	TotalBytes *uint64        `json:"total_bytes"`
+	Error      *string        `json:"error,omitempty"`
 }

@@ -30,23 +30,24 @@ type Snapshot struct {
 }
 
 type mountInstance struct {
-	snapshot  Snapshot
-	spawn     *rclone.SpawnedMount
-	localPath string
+	snapshot Snapshot
+	spawn    *rclone.SpawnedMount
 }
 
 type Supervisor struct {
 	mu     sync.Mutex
 	items  map[string]*mountInstance
 	events *events.Bus
+	rc     *rclone.Supervisor
+	ws     *workspace.Store
 }
 
-func New(bus *events.Bus) *Supervisor {
-	return &Supervisor{items: map[string]*mountInstance{}, events: bus}
+func New(bus *events.Bus, rc *rclone.Supervisor, ws *workspace.Store) *Supervisor {
+	return &Supervisor{items: map[string]*mountInstance{}, events: bus, rc: rc, ws: ws}
 }
 
-func (s *Supervisor) List(ws *workspace.Store) []Snapshot {
-	doc := ws.Get()
+func (s *Supervisor) List() []Snapshot {
+	doc := s.ws.Get()
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	mounts := []Snapshot{}
@@ -83,8 +84,8 @@ func (s *Supervisor) IsActive(edgeID string) bool {
 	}
 }
 
-func (s *Supervisor) Start(rc *rclone.Supervisor, ws *workspace.Store, edgeID string) (Snapshot, error) {
-	doc := ws.Get()
+func (s *Supervisor) Start(edgeID string) (Snapshot, error) {
+	doc := s.ws.Get()
 	edge := doc.Edge(edgeID)
 	if edge == nil {
 		return Snapshot{}, core.NotFound("edge " + edgeID)
@@ -103,7 +104,7 @@ func (s *Supervisor) Start(rc *rclone.Supervisor, ws *workspace.Store, edgeID st
 	if sourceNode.Kind != workspace.NodeRemote || targetNode.Kind != workspace.NodeLocal {
 		return Snapshot{}, core.InvalidRequest("mount edges must go from a remote source to a local target")
 	}
-	home := ws.Home()
+	home := s.ws.Home()
 	source, err := sourceNode.Locator(home)
 	if err != nil {
 		return Snapshot{}, err
@@ -123,17 +124,17 @@ func (s *Supervisor) Start(rc *rclone.Supervisor, ws *workspace.Store, edgeID st
 		Source: source.Display(),
 		Target: target.Display(),
 	}
-	s.items[edgeID] = &mountInstance{snapshot: snapshot, localPath: target.FS}
+	s.items[edgeID] = &mountInstance{snapshot: snapshot}
 	s.mu.Unlock()
 	s.emit(snapshot)
 
-	spawned, err := rclone.SpawnMount(rc.Settings(), source, target.FS, nil)
+	spawned, err := rclone.SpawnMount(s.rc.Settings(), source, target.FS, nil)
 	if err != nil {
 		failed := snapshot
 		failed.Status = StatusFailed
 		message := err.Error()
 		failed.Error = &message
-		s.store(edgeID, failed, nil, target.FS)
+		s.store(edgeID, failed, nil)
 		s.emit(failed)
 		return Snapshot{}, err
 	}
@@ -146,26 +147,25 @@ func (s *Supervisor) Start(rc *rclone.Supervisor, ws *workspace.Store, edgeID st
 		failed.Status = StatusFailed
 		failed.ExitCode = spawned.ExitCode()
 		failed.Error = &message
-		s.store(edgeID, failed, nil, target.FS)
+		s.store(edgeID, failed, nil)
 		s.emit(failed)
 		return failed, nil
 	}
 	mounted := snapshot
 	mounted.Status = StatusMounted
-	s.store(edgeID, mounted, spawned, target.FS)
+	s.store(edgeID, mounted, spawned)
 	s.emit(mounted)
 	go s.watch(edgeID)
 	return mounted, nil
 }
 
-const (
-	// mountStartGrace is the settle window a mount process gets before we
-	// declare it mounted. One that exits inside the window is reported as
-	// failed with its buffered stderr; one that survives is treated healthy
-	// and handed to watch.
-	mountStartGrace = 400 * time.Millisecond
-	mountStartStep  = 25 * time.Millisecond
-)
+// mountStartGrace is the settle window a mount process gets before we
+// declare it mounted. One that exits inside the window is reported as failed
+// with its buffered stderr; one that survives is treated healthy and handed to
+// watch. It is a variable only so tests can widen it on loaded machines.
+var mountStartGrace = 400 * time.Millisecond
+
+const mountStartStep = 25 * time.Millisecond
 
 // waitRunning reports whether the mount process is still alive after the
 // settle window. It returns as soon as the process exits, so a mount that
@@ -268,14 +268,14 @@ func (s *Supervisor) watch(edgeID string) {
 	}
 }
 
-func (s *Supervisor) store(edgeID string, snapshot Snapshot, spawn *rclone.SpawnedMount, localPath string) {
+func (s *Supervisor) store(edgeID string, snapshot Snapshot, spawn *rclone.SpawnedMount) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.items[edgeID] = &mountInstance{snapshot: snapshot, spawn: spawn, localPath: localPath}
+	s.items[edgeID] = &mountInstance{snapshot: snapshot, spawn: spawn}
 }
 
 func (s *Supervisor) emit(snapshot Snapshot) {
 	if s.events != nil {
-		s.events.Publish("mount", snapshot)
+		s.events.Publish(events.NameMount, snapshot)
 	}
 }

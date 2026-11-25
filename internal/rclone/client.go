@@ -117,19 +117,46 @@ func (c *Client) GetStream(ctx context.Context, rawURL string) (*http.Response, 
 	return res, nil
 }
 
-func redactAuth(message string, auth *Auth) string {
-	if auth == nil {
+// ErrorMessage returns the "error" text rclone put in the response body, or
+// fallback when the body carries none.
+func (r Response) ErrorMessage(fallback string) string {
+	if message, ok := r.Body["error"].(string); ok && message != "" {
 		return message
 	}
-	return redactSecrets(message, auth.User, auth.Pass)
+	return fallback
+}
+
+// Err converts a non-2xx response into a core.Upstream error, and returns nil
+// for a successful one.
+func (r Response) Err(fallback string) error {
+	if r.OK() {
+		return nil
+	}
+	return core.Upstream(r.ErrorMessage(fallback))
 }
 
 func upstreamMessage(body map[string]any) string {
-	if body == nil {
-		return "rclone rc returned an error"
-	}
-	if message, ok := body["error"].(string); ok && message != "" {
-		return message
-	}
-	return "rclone rc returned an error"
+	return Response{Body: body}.ErrorMessage("rclone rc returned an error")
+}
+
+type Response struct {
+	Status int
+	Body   map[string]any
+}
+
+func (r Response) OK() bool { return r.Status >= 200 && r.Status < 300 }
+
+type Auth struct {
+	User string
+	Pass string
+}
+
+type VersionInfo struct {
+	Version   string `json:"version"`
+	OS        string `json:"os"`
+	Arch      string `json:"arch"`
+	OSVersion string `json:"osVersion"`
+	GoVersion string `json:"goVersion"`
+	Linking   string `json:"linking"`
+	IsBeta    bool   `json:"isBeta"`
 }

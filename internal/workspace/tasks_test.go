@@ -1,70 +1,8 @@
 package workspace
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 )
-
-func tempLocalDir(t *testing.T) string {
-	t.Helper()
-	dir := filepath.Join(t.TempDir(), "data")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	return dir
-}
-
-func newTaskStore(t *testing.T) *Store {
-	t.Helper()
-	path := filepath.Join(t.TempDir(), "workspace.json")
-	store, err := LoadOrCreate(path, "")
-	if err != nil {
-		t.Fatal(err)
-	}
-	return store
-}
-
-func TestParseSize(t *testing.T) {
-	cases := []struct {
-		value string
-		want  int64
-	}{
-		{"100", 100},
-		{"1.5K", 1536},
-		{"10MiB", 10 << 20},
-		{"2gib", 2 << 30},
-		{"1B", 1},
-	}
-	for _, c := range cases {
-		got, err := ParseSize(c.value)
-		if err != nil {
-			t.Fatalf("%q: %v", c.value, err)
-		}
-		if got != c.want {
-			t.Fatalf("%q = %d, want %d", c.value, got, c.want)
-		}
-	}
-	for _, value := range []string{"", "abc", "1X", "10M:00:00", "-5M"} {
-		if _, err := ParseSize(value); err == nil {
-			t.Fatalf("%q should fail", value)
-		}
-	}
-}
-
-func TestValidateLimits(t *testing.T) {
-	for _, value := range []string{"", "off", "OFF", "10MiB"} {
-		if err := ValidateBWLimit(value); err != nil {
-			t.Fatalf("bwlimit %q: %v", value, err)
-		}
-		if err := ValidateMaxTransfer(value); err != nil {
-			t.Fatalf("max_transfer %q: %v", value, err)
-		}
-	}
-	if err := ValidateBWLimit("bogus"); err == nil {
-		t.Fatal("bogus bwlimit should fail")
-	}
-}
 
 func TestCreateSyncTaskReusesNodes(t *testing.T) {
 	store := newTaskStore(t)
@@ -210,27 +148,3 @@ func TestPatchAndDeleteSyncTask(t *testing.T) {
 		t.Fatal("expected deleting missing task to fail")
 	}
 }
-
-func TestOperationSemantics(t *testing.T) {
-	if OpBisync.RcloneCommand() != "sync/bisync" {
-		t.Fatalf("bisync command %s", OpBisync.RcloneCommand())
-	}
-	if OpCopy.Destructive() {
-		t.Fatal("copy should not be destructive")
-	}
-	for _, op := range []Operation{OpMove, OpSync, OpBisync} {
-		if !op.Destructive() {
-			t.Fatalf("%s should be destructive", op)
-		}
-	}
-	if _, err := ParseOperation("bisync"); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := ParseOperation("nope"); err == nil {
-		t.Fatal("unknown operation should fail")
-	}
-}
-
-func ptrOperation(op Operation) *Operation     { return &op }
-func ptrString(s string) *string               { return &s }
-func ptrEndpoint(e TaskEndpoint) *TaskEndpoint { return &e }

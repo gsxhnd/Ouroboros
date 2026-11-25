@@ -57,8 +57,8 @@ func TestTickContinuesPastBrokenUnit(t *testing.T) {
 	  "schema_version": 1,
 	  "revision": 1,
 	  "nodes": [
-	    {"id": "a", "kind": "local", "label": "a", "position": {"x":0,"y":0}, "local_path": "%s"},
-	    {"id": "b", "kind": "local", "label": "b", "position": {"x":1,"y":0}, "local_path": "%s"}
+	    {"id": "a", "kind": "local", "label": "a", "local_path": "%s"},
+	    {"id": "b", "kind": "local", "label": "b", "local_path": "%s"}
 	  ],
 	  "edges": [
 	    {"id": "bad", "source": "a", "target": "b", "kind": "sync",
@@ -82,7 +82,7 @@ func TestTickContinuesPastBrokenUnit(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = tick(ws, jobs.New(context.Background(), events.New()), nil)
+	err = tick(ws, jobs.New(context.Background(), events.New(), nil, nil))
 	if err == nil {
 		t.Fatal("expected error about edge bad")
 	}

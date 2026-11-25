@@ -21,9 +21,6 @@ func TestParseAttachURL(t *testing.T) {
 	if _, _, err := ParseAttachURL("http://192.168.1.10:5572"); err == nil {
 		t.Fatal("expected non-loopback to fail")
 	}
-	if !IsLoopbackHost("localhost") {
-		t.Fatal("localhost")
-	}
 }
 
 func TestRandomTokenUsesAlphabetAndLength(t *testing.T) {

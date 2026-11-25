@@ -1,13 +1,10 @@
 package workspace
 
 import (
-	"encoding/json"
 	"os"
-	"time"
 
 	"github.com/gsxhnd/ourboros/internal/core"
 	"github.com/gsxhnd/ourboros/internal/paths"
-	"github.com/gsxhnd/ourboros/internal/persist"
 )
 
 func Validate(doc *Document, remotes []string, remotesKnown bool, home string) error {
@@ -120,72 +117,4 @@ func validateNode(node *Node, remotes []string, remotesKnown bool, home string) 
 		return core.InvalidRequest("unknown node kind")
 	}
 	return nil
-}
-
-func load(path string) (Document, error) {
-	data, err := persist.ReadJSONBytes(path)
-	if err != nil {
-		return Document{}, err
-	}
-	var value map[string]any
-	if err := json.Unmarshal(data, &value); err != nil {
-		return Document{}, core.CorruptStore(path + ": " + err.Error())
-	}
-	return migrate(value)
-}
-
-func migrate(value map[string]any) (Document, error) {
-	if value == nil {
-		return Document{}, core.CorruptStore("workspace document is not an object")
-	}
-	version := uint32(0)
-	if raw, ok := value["schema_version"].(float64); ok {
-		version = uint32(raw)
-	}
-	switch version {
-	case 0:
-		value["schema_version"] = SchemaVersion
-		if _, ok := value["revision"]; !ok {
-			value["revision"] = 0
-		}
-		if _, ok := value["nodes"]; !ok {
-			value["nodes"] = []any{}
-		}
-		if _, ok := value["edges"]; !ok {
-			value["edges"] = []any{}
-		}
-		if _, ok := value["viewport"]; !ok {
-			value["viewport"] = map[string]any{"x": 0, "y": 0, "zoom": 1}
-		}
-		if _, ok := value["updated_at"]; !ok {
-			value["updated_at"] = time.Now().UTC()
-		}
-	case SchemaVersion:
-	default:
-		return Document{}, core.UnsupportedSchema("workspace", version)
-	}
-	raw, err := json.Marshal(value)
-	if err != nil {
-		return Document{}, core.CorruptStore("workspace: " + err.Error())
-	}
-	var doc Document
-	if err := json.Unmarshal(raw, &doc); err != nil {
-		return Document{}, core.CorruptStore("workspace: " + err.Error())
-	}
-	// 画布功能已移除：清理历史文档里遗留的 action 节点和 flow 边。
-	nodes := doc.Nodes[:0]
-	for _, node := range doc.Nodes {
-		if node.Kind == NodeLocal || node.Kind == NodeRemote {
-			nodes = append(nodes, node)
-		}
-	}
-	doc.Nodes = nodes
-	edges := doc.Edges[:0]
-	for _, edge := range doc.Edges {
-		if edge.Kind == EdgeSync || edge.Kind == EdgeMount {
-			edges = append(edges, edge)
-		}
-	}
-	doc.Edges = edges
-	return doc, nil
 }

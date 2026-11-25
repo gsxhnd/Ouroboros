@@ -7,7 +7,6 @@ import (
 	"io"
 	"log/slog"
 	"net"
-	"net/url"
 	"os"
 	"os/exec"
 	"strings"
@@ -15,74 +14,6 @@ import (
 
 	"github.com/gsxhnd/ourboros/internal/core"
 )
-
-type childProc struct {
-	cmd  *exec.Cmd
-	done chan struct{}
-}
-
-func startCommand(cmd *exec.Cmd) (*childProc, error) {
-	if err := cmd.Start(); err != nil {
-		return nil, err
-	}
-	proc := &childProc{cmd: cmd, done: make(chan struct{})}
-	go func() {
-		_ = cmd.Wait()
-		close(proc.done)
-	}()
-	return proc, nil
-}
-
-func (p *childProc) exited() bool {
-	if p == nil {
-		return true
-	}
-	select {
-	case <-p.done:
-		return true
-	default:
-		return false
-	}
-}
-
-func (p *childProc) kill() {
-	if p == nil || p.cmd.Process == nil {
-		return
-	}
-	_ = p.cmd.Process.Kill()
-	select {
-	case <-p.done:
-	case <-time.After(3 * time.Second):
-	}
-}
-
-// stop asks the process to exit with SIGINT so rclone can clean up (rclone
-// mount unmounts its volume on interrupt), and force-kills it if it is still
-// alive after timeout. On platforms without signal support (Windows) the
-// interrupt fails immediately and the process is killed right away.
-func (p *childProc) stop(timeout time.Duration) {
-	if p == nil || p.cmd.Process == nil {
-		return
-	}
-	if err := p.cmd.Process.Signal(os.Interrupt); err != nil {
-		p.kill()
-		return
-	}
-	select {
-	case <-p.done:
-		return
-	case <-time.After(timeout):
-	}
-	p.kill()
-}
-
-func (p *childProc) exitCode() *int {
-	if p == nil || p.cmd.ProcessState == nil {
-		return nil
-	}
-	code := p.cmd.ProcessState.ExitCode()
-	return &code
-}
 
 type spawnedDaemon struct {
 	child *childProc
@@ -100,39 +31,6 @@ func generateAuth() (Auth, error) {
 		return Auth{}, err
 	}
 	return Auth{User: user, Pass: pass}, nil
-}
-
-func ParseAttachURL(raw string) (string, *Auth, error) {
-	parsed, err := url.Parse(raw)
-	if err != nil {
-		return "", nil, core.InvalidRequest("invalid rclone RC URL")
-	}
-	if parsed.Scheme != "http" && parsed.Scheme != "https" {
-		return "", nil, core.InvalidRequest("rclone RC URL must be http or https")
-	}
-	host := parsed.Hostname()
-	if host == "" {
-		return "", nil, core.InvalidRequest("rclone RC URL is missing a host")
-	}
-	if !IsLoopbackHost(host) {
-		return "", nil, core.InvalidRequest("rclone RC must listen on a loopback address")
-	}
-	var auth *Auth
-	if parsed.User != nil && parsed.User.Username() != "" {
-		pass, _ := parsed.User.Password()
-		auth = &Auth{User: parsed.User.Username(), Pass: pass}
-	}
-	parsed.User = nil
-	return strings.TrimRight(parsed.String(), "/"), auth, nil
-}
-
-func IsLoopbackHost(host string) bool {
-	switch host {
-	case "127.0.0.1", "localhost", "::1", "[::1]":
-		return true
-	default:
-		return false
-	}
 }
 
 func spawnDaemon(ctx context.Context, settings Settings, client *Client) (*spawnedDaemon, error) {

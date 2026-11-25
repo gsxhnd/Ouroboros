@@ -70,14 +70,39 @@ func main() {
 	appMenu.AddRole(application.WindowMenu)
 	app.Menu.Set(appMenu)
 
-	// wails3 dev 会注入 FRONTEND_DEVSERVER_URL 指向 Vite dev server（其已把 /api
-	// 与 /health 代理到本机服务），窗口直接加载它即可获得前端热更新；
-	// 未注入时加载 Ourboros 自托管的前端（--webui / OURBOROS_WEB_DIR）。
-	pageURL := running.URL + "/?platform=" + runtime.GOOS
-	if devServer := os.Getenv("FRONTEND_DEVSERVER_URL"); devServer != "" {
-		pageURL = devServer + "/?platform=" + runtime.GOOS
-	}
+	pageURL := desktopPageURL(running.URL)
+	win := newMainWindow(app, pageURL)
+	installSignalQuit(app)
 
+	shell := newTrayShell(ctx, app, win, running.State, pageURL)
+	app.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(*application.ApplicationEvent) {
+		go shell.run()
+		go shell.watchSettings(running.State.Events)
+	})
+
+	if err := app.Run(); err != nil {
+		slog.Error("desktop exited", "err", err)
+		shutdown()
+		os.Exit(1)
+	}
+	shutdown()
+}
+
+// desktopPageURL is the page the window loads. wails3 dev 会注入
+// FRONTEND_DEVSERVER_URL 指向 Vite dev server（其已把 /api 与 /health 代理到
+// 本机服务），窗口直接加载它即可获得前端热更新；未注入时加载 Ourboros
+// 自托管的前端（--webui / OURBOROS_WEB_DIR）。
+func desktopPageURL(servedURL string) string {
+	base := servedURL
+	if devServer := os.Getenv("FRONTEND_DEVSERVER_URL"); devServer != "" {
+		base = devServer
+	}
+	return base + "/?platform=" + runtime.GOOS
+}
+
+// newMainWindow creates the main window, restoring its last size and position,
+// and wires the hooks that keep it alive in the tray and remember its frame.
+func newMainWindow(app *application.App, pageURL string) *application.WebviewWindow {
 	windowOptions := application.WebviewWindowOptions{
 		Name:             "main",
 		Title:            "Ourboros",
@@ -115,25 +140,16 @@ func main() {
 	saveFrame := func(*application.WindowEvent) { saveWindowState(win) }
 	win.RegisterHook(events.Common.WindowDidMove, saveFrame)
 	win.RegisterHook(events.Common.WindowDidResize, saveFrame)
+	return win
+}
 
-	// Ctrl+C / SIGTERM 与托盘“退出”走同一条路径，保证 rclone 与挂载被正常清理。
+// installSignalQuit routes Ctrl+C / SIGTERM through the same quit path as the
+// tray's "Quit", so rclone and mounts are cleaned up.
+func installSignalQuit(app *application.App) {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-signals
 		app.Quit()
 	}()
-
-	shell := newTrayShell(ctx, app, win, running.State, pageURL)
-	app.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(*application.ApplicationEvent) {
-		go shell.run()
-		go shell.watchSettings(running.State.Events)
-	})
-
-	if err := app.Run(); err != nil {
-		slog.Error("desktop exited", "err", err)
-		shutdown()
-		os.Exit(1)
-	}
-	shutdown()
 }

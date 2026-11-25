@@ -71,16 +71,11 @@ DELETE /api/rclone/versions/{version}
 
 ```text
 GET    /api/workspace
-PUT    /api/workspace
 POST   /api/workspace/nodes
-PATCH  /api/workspace/nodes/{id}
 DELETE /api/workspace/nodes/{id}
-POST   /api/workspace/edges
-PATCH  /api/workspace/edges/{id}
-DELETE /api/workspace/edges/{id}
 ```
 
-Workspace API 是同步任务的存储层：节点表示端点，sync 边表示同步规则，mount 边表示挂载规则。浏览器 UI 不直接使用节点/边写接口，而是使用下面的同步任务 API；`PUT /api/workspace` 保留给整体替换、导入和恢复，必须提交期望的 `revision`。
+Workspace API 是同步任务的存储层：节点表示端点，sync 边表示同步规则，mount 边表示挂载规则。浏览器 UI 只用上面三个接口管理本地存储节点（存储页），同步规则的增删改使用下面的同步任务 API。整体替换（`PUT /api/workspace`）以及边和节点的 PATCH 接口已随画布一起移除；目前没有创建 mount 边的接口，挂载只作用于已存在于 workspace 文件中的 mount 边。
 
 ### WorkspaceDocument
 
@@ -93,14 +88,12 @@ Workspace API 是同步任务的存储层：节点表示端点，sync 边表示�
       "id": "node-local-1",
       "kind": "local",
       "label": "备份目录",
-      "position": { "x": 120, "y": 160 },
       "local_path": "/Users/example/Backups"
     },
     {
       "id": "node-remote-1",
       "kind": "remote",
       "label": "S3 归档",
-      "position": { "x": 520, "y": 160 },
       "remote": { "name": "archive", "path": "ourboros" }
     }
   ],
@@ -119,12 +112,11 @@ Workspace API 是同步任务的存储层：节点表示端点，sync 边表示�
         "enabled": true
       }
     }
-  ],
-  "viewport": { "x": 0, "y": 0, "zoom": 1 }
+  ]
 }
 ```
 
-`viewport` 是历史画布遗留字段，加载新文档时会清理旧的画布专用数据（action 节点、flow 边）。服务端拒绝孤儿边、重复挂载、非法路径、不存在 remote、路径穿越以及非法挂载方向。
+历史文档中的 `position`、`viewport` 字段加载时会被忽略，旧的画布专用数据（action 节点、flow 边）会被清理。服务端拒绝孤儿边、重复挂载、非法路径、不存在 remote、路径穿越以及非法挂载方向。
 
 ## Remote 与文件 API
 

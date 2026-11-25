@@ -53,17 +53,7 @@ func saveWindowState(win *application.WebviewWindow) {
 	if err != nil {
 		return
 	}
-	path := windowStatePath()
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		slog.Warn("failed to save window state", "err", err)
-		return
-	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, raw, 0o644); err != nil {
-		slog.Warn("failed to save window state", "err", err)
-		return
-	}
-	if err := os.Rename(tmp, path); err != nil {
+	if err := persist.AtomicWrite(windowStatePath(), raw); err != nil {
 		slog.Warn("failed to save window state", "err", err)
 	}
 }

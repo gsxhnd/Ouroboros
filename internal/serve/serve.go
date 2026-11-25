@@ -6,6 +6,7 @@ import (
 
 	"github.com/gsxhnd/ourboros/internal/app"
 	"github.com/gsxhnd/ourboros/internal/cli"
+	"github.com/gsxhnd/ourboros/internal/scheduler"
 	"github.com/gsxhnd/ourboros/internal/webui"
 )
 
@@ -17,7 +18,7 @@ func Run(ctx context.Context, args cli.ServerArgs) (*Running, error) {
 	if err != nil {
 		return nil, err
 	}
-	state, err := app.New(ctx, args.Runtime())
+	state, err := app.New(ctx, appConfig(args))
 	if err != nil {
 		return nil, err
 	}
@@ -34,6 +35,7 @@ func Run(ctx context.Context, args cli.ServerArgs) (*Running, error) {
 	} else {
 		slog.Info("API-only mode. Pass --webui / --web-dir or set OURBOROS_WEB_DIR to serve the UI.")
 	}
+	go scheduler.Run(ctx, state.Workspace, state.Jobs)
 	return start(ctx, state, args.Host, args.Port, webDir)
 }
 
@@ -41,5 +43,19 @@ func resolveWeb(args cli.ServerArgs) (string, error) {
 	if args.WebDirExplicit {
 		return webui.Require(args.WebDir)
 	}
-	return webui.Resolve("")
+	return webui.Discover(), nil
+}
+
+func appConfig(args cli.ServerArgs) app.Config {
+	return app.Config{
+		DataDir:      args.DataDir,
+		BindHost:     args.Host,
+		BindPort:     args.Port,
+		AuthToken:    args.AuthToken,
+		RcloneBin:    args.RcloneBin,
+		RcloneURL:    args.RcloneURL,
+		RcloneConfig: args.RcloneConfig,
+		RcloneUser:   args.RcloneUser,
+		RclonePass:   args.RclonePass,
+	}
 }

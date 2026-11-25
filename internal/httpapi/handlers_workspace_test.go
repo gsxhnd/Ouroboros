@@ -5,6 +5,55 @@ import (
 	"testing"
 )
 
+func TestWorkspaceRevision(t *testing.T) {
+	state, local := testState(t)
+	handler := Handler(state, "")
+	status, body := send(handler, http.MethodGet, "/api/workspace", "")
+	if status != http.StatusOK || body["revision"].(float64) != 0 || body["schema_version"].(float64) != 1 {
+		t.Fatal(status, body)
+	}
+	status, body = send(handler, http.MethodPost, "/api/workspace/nodes", `{
+		"revision": 0,
+		"kind": "local",
+		"label": "Backups",
+		"local_path": "`+local+`"
+	}`)
+	if status != http.StatusCreated || body["revision"].(float64) != 1 {
+		t.Fatal(status, body)
+	}
+	status, body = send(handler, http.MethodPost, "/api/workspace/nodes", `{
+		"revision": 0,
+		"kind": "local",
+		"label": "stale",
+		"local_path": "`+local+`"
+	}`)
+	if status != http.StatusConflict {
+		t.Fatal(status, body)
+	}
+	errBody, _ := body["error"].(map[string]any)
+	if errBody["code"] != "workspace_conflict" {
+		t.Fatal(body)
+	}
+}
+
+func TestWorkspaceRejectsTraversal(t *testing.T) {
+	state, _ := testState(t)
+	handler := Handler(state, "")
+	status, body := send(handler, http.MethodPost, "/api/workspace/nodes", `{
+		"revision": 0,
+		"kind": "local",
+		"label": "bad",
+		"local_path": "../etc/passwd"
+	}`)
+	if status != http.StatusBadRequest {
+		t.Fatal(status, body)
+	}
+	errBody, _ := body["error"].(map[string]any)
+	if errBody["code"] != "invalid_path" {
+		t.Fatal(body)
+	}
+}
+
 // TestStorageDeleteProtection 验证仍被同步任务引用的存储端点不能被删除：
 // 本地节点删除返回 node_in_use，remote 删除返回 remote_in_use。
 func TestStorageDeleteProtection(t *testing.T) {
@@ -16,7 +65,6 @@ func TestStorageDeleteProtection(t *testing.T) {
 		"revision": 0,
 		"kind": "local",
 		"label": "Backups",
-		"position": {"x": 0, "y": 0},
 		"local_path": "`+local+`"
 	}`)
 	if status != http.StatusCreated {
@@ -51,7 +99,6 @@ func TestStorageDeleteProtection(t *testing.T) {
 		"revision": 2,
 		"kind": "remote",
 		"label": "Archive",
-		"position": {"x": 0, "y": 0},
 		"remote": {"name": "archive", "path": ""}
 	}`)
 	if status != http.StatusCreated {
