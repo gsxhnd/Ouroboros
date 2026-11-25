@@ -23,11 +23,9 @@ const (
 )
 
 type Error struct {
-	Kind     Kind
-	Message  string
-	Document string
-	Version  uint32
-	Err      error
+	Kind    Kind
+	Message string
+	Err     error
 	// Details carries structured, transport-mappable information (for example a
 	// conflict kind plus expected/found revisions) so API layer does not have to
 	// parse the message text.
@@ -115,6 +113,12 @@ func Transport(message string) *Error {
 	return &Error{Kind: KindTransport, Message: "failed to contact rclone: " + message}
 }
 
+// Upstream reports a failure rclone itself returned, as opposed to Transport,
+// where rclone could not be reached at all.
+func Upstream(message string) *Error {
+	return &Error{Kind: KindTransport, Message: message}
+}
+
 func InvalidPath(message string) *Error {
 	return &Error{Kind: KindInvalidPath, Message: "invalid path: " + message}
 }
@@ -149,10 +153,8 @@ func IO(err error) *Error {
 
 func UnsupportedSchema(document string, version uint32) *Error {
 	return &Error{
-		Kind:     KindUnsupportedSchema,
-		Document: document,
-		Version:  version,
-		Message:  fmt.Sprintf("unsupported schema version %d for %s", version, document),
+		Kind:    KindUnsupportedSchema,
+		Message: fmt.Sprintf("unsupported schema version %d for %s", version, document),
 	}
 }
 

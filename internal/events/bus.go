@@ -2,6 +2,15 @@ package events
 
 import "sync"
 
+// Names of the events published on the Bus. The web UI subscribes to the
+// matching SSE streams, so renaming one is an API change.
+const (
+	NameJob      = "job"
+	NameMount    = "mount"
+	NameDownload = "download"
+	NameSettings = "settings"
+)
+
 type Event struct {
 	Name    string
 	Payload any
