@@ -141,9 +141,16 @@ func TestSyncTaskRunGuards(t *testing.T) {
 	if status != http.StatusConflict {
 		t.Fatalf("first bisync run should 409, got %d %v", status, body)
 	}
-	details, _ := body["error"].(map[string]any)
-	if details == nil || details["code"] != "conflict" {
+	errorBody, _ := body["error"].(map[string]any)
+	if errorBody == nil || errorBody["code"] != "conflict" {
 		t.Fatalf("unexpected error %v", body)
+	}
+	conflictDetails, _ := errorBody["details"].(map[string]any)
+	if conflictDetails["kind"] != "bisync_resync_required" {
+		t.Fatalf("unexpected conflict details %v", conflictDetails)
+	}
+	if _, exists := conflictDetails["message"]; exists {
+		t.Fatalf("bisync details gained a duplicate message: %v", conflictDetails)
 	}
 
 	// resync 请求进入启动流程，因 rclone 未运行返回 503
@@ -162,9 +169,14 @@ func TestSyncTaskRunGuards(t *testing.T) {
 	if _, body = send(handler, http.MethodPatch, "/api/sync/tasks/"+taskID, `{"revision": 2, "enabled": false}`); len(body) == 0 {
 		t.Fatal("patch disabled failed")
 	}
-	status, _ = send(handler, http.MethodPost, "/api/sync/tasks/"+taskID+"/run", "")
+	status, body = send(handler, http.MethodPost, "/api/sync/tasks/"+taskID+"/run", "")
 	if status != http.StatusConflict {
 		t.Fatalf("disabled task should 409, got %d", status)
+	}
+	errorBody, _ = body["error"].(map[string]any)
+	conflictDetails, _ = errorBody["details"].(map[string]any)
+	if len(conflictDetails) != 0 {
+		t.Fatalf("disabled task details changed: %v", conflictDetails)
 	}
 }
 

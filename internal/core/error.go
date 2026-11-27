@@ -30,6 +30,9 @@ type Error struct {
 	// conflict kind plus expected/found revisions) so API layer does not have to
 	// parse the message text.
 	Details map[string]any
+	// OmitConflictMessage keeps Details exact for conflict contracts that do not
+	// duplicate the top-level message inside details.
+	OmitConflictMessage bool
 }
 
 func (e *Error) Detail(key string) any {
@@ -145,6 +148,12 @@ func Unauthorized() *Error {
 // layer maps into the response body instead of parsing the message.
 func ConflictDetail(message string, details map[string]any) *Error {
 	return &Error{Kind: KindConflict, Message: message, Details: details}
+}
+
+// ConflictDetailExact builds a conflict whose details must not be enriched
+// with a duplicate of the top-level message by a transport bridge.
+func ConflictDetailExact(message string, details map[string]any) *Error {
+	return &Error{Kind: KindConflict, Message: message, Details: details, OmitConflictMessage: true}
 }
 
 func IO(err error) *Error {

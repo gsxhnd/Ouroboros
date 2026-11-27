@@ -43,3 +43,20 @@ func TestExistingRemoteNamesStayAddressable(t *testing.T) {
 		t.Fatalf("status %d: a name with ':' must still be rejected", status)
 	}
 }
+
+func TestReferencedRemoteConflictKeepsExactDetails(t *testing.T) {
+	state, local := testState(t)
+	handler := newTestHandler(state)
+	if status, body := createTask(t, handler, local, 0, nil); status != http.StatusCreated {
+		t.Fatalf("create task: status %d body %v", status, body)
+	}
+	status, body := send(handler, http.MethodDelete, "/api/remotes/archive", "")
+	if status != http.StatusConflict {
+		t.Fatalf("status %d body %v", status, body)
+	}
+	errorBody, _ := body["error"].(map[string]any)
+	details, _ := errorBody["details"].(map[string]any)
+	if len(details) != 1 || details["kind"] != "remote_in_use" {
+		t.Fatalf("remote conflict details changed: %v", details)
+	}
+}

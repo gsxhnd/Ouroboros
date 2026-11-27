@@ -130,7 +130,7 @@ func (s *Remotes) Delete(ctx context.Context, name string) error {
 	for i := range doc.Nodes {
 		node := &doc.Nodes[i]
 		if node.Kind == workspace.NodeRemote && node.Remote != nil && node.Remote.Name == name {
-			return core.ConflictDetail(
+			return core.ConflictDetailExact(
 				"remote is referenced by sync tasks or mounts; delete those first",
 				map[string]any{"kind": "remote_in_use"},
 			)

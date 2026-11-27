@@ -52,10 +52,10 @@ func (s *SyncTasks) Run(_ context.Context, taskID string, resync bool) (jobs.Sna
 		return jobs.Snapshot{}, invalidRequest("sync task is missing configuration")
 	}
 	if !edge.Sync.Enabled {
-		return jobs.Snapshot{}, core.ConflictDetail("sync task is disabled", map[string]any{})
+		return jobs.Snapshot{}, core.ConflictDetailExact("sync task is disabled", map[string]any{})
 	}
 	if edge.Sync.Operation.TwoWay() && edge.Sync.LastResult == nil && !resync {
-		return jobs.Snapshot{}, core.ConflictDetail("two-way sync requires an initial resync run", map[string]any{"kind": "bisync_resync_required"})
+		return jobs.Snapshot{}, core.ConflictDetailExact("two-way sync requires an initial resync run", map[string]any{"kind": "bisync_resync_required"})
 	}
 	source, err := doc.NodeLocator(edge.Source, s.state.HomeDir)
 	if err != nil {

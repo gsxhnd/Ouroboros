@@ -58,7 +58,7 @@ func mapCore(err *core.Error) (int, string, any) {
 			"expected": err.Detail("expected"),
 			"found":    err.Detail("found"),
 		}
-	} else if err.Kind == core.KindConflict {
+	} else if err.Kind == core.KindConflict && !err.OmitConflictMessage {
 		details["message"] = err.Message
 	}
 	switch err.Kind {
