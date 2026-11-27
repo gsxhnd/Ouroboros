@@ -14,8 +14,7 @@ import (
 )
 
 // stateWithMountEdge boots a state whose workspace already holds a remote →
-// local mount edge. There is no HTTP route that creates one, so the document
-// is written the way an older version of the app would have left it.
+// local mount edge, including the unnamed edges older documents still have.
 func stateWithMountEdge(t *testing.T, edge workspace.Edge, nodes ...workspace.Node) *app.State {
 	t.Helper()
 	dir := t.TempDir()
@@ -156,4 +155,63 @@ func TestNodeReferencedByAMountEdgeCannotBeDeleted(t *testing.T) {
 		t.Fatalf("start: %d %v", status, body)
 	}
 	check("while mounted")
+}
+
+func TestMountTaskCreateListDelete(t *testing.T) {
+	state, local := testState(t)
+	t.Cleanup(state.Close)
+	handler := newTestHandler(state)
+	payload, err := json.Marshal(map[string]any{
+		"revision": 0,
+		"name":     "photos",
+		"source":   map[string]string{"kind": "remote", "remote": "drive", "path": "photos"},
+		"target":   map[string]string{"kind": "local", "path": local},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	status, body := send(handler, http.MethodPost, "/api/mounts/tasks", string(payload))
+	if status != http.StatusCreated {
+		t.Fatalf("create: status %d body %v", status, body)
+	}
+	created, _ := body["task"].(map[string]any)
+	id, _ := created["id"].(string)
+	if created["name"] != "photos" || id == "" {
+		t.Fatalf("created = %v", created)
+	}
+
+	status, listed := send(handler, http.MethodGet, "/api/mounts/tasks", "")
+	tasks, _ := listed["tasks"].([]any)
+	if status != http.StatusOK || len(tasks) != 1 {
+		t.Fatalf("list tasks: status %d body %v", status, listed)
+	}
+	status, snaps := send(handler, http.MethodGet, "/api/mounts", "")
+	mounts, _ := snaps["mounts"].([]any)
+	if status != http.StatusOK || len(mounts) != 1 || mounts[0].(map[string]any)["status"] != "stopped" {
+		t.Fatalf("status list: status %d body %v", status, snaps)
+	}
+
+	bad, err := json.Marshal(map[string]any{
+		"revision": body["revision"],
+		"name":     "sideways",
+		"source":   map[string]string{"kind": "local", "path": local},
+		"target":   map[string]string{"kind": "remote", "remote": "drive"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	status, rejected := send(handler, http.MethodPost, "/api/mounts/tasks", string(bad))
+	if status != http.StatusBadRequest || errorCode(rejected) != "invalid_request" {
+		t.Fatalf("bad direction: status %d body %v", status, rejected)
+	}
+
+	revision := strconv.FormatUint(uint64(body["revision"].(float64)), 10)
+	status, deleted := send(handler, http.MethodDelete, "/api/mounts/tasks/"+id+"?revision="+revision, "")
+	if status != http.StatusOK {
+		t.Fatalf("delete: status %d body %v", status, deleted)
+	}
+	_, left := send(handler, http.MethodGet, "/api/mounts/tasks", "")
+	if tasks, _ := left["tasks"].([]any); len(tasks) != 0 {
+		t.Fatalf("tasks after delete: %v", left)
+	}
 }

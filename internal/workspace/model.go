@@ -114,7 +114,9 @@ type LastResult struct {
 }
 
 type MountConfig struct {
-	Enabled bool `json:"enabled"`
+	// Name 是挂载在界面上的名称。旧文档没有该字段时为空，界面回退为端点路径。
+	Name    string `json:"name,omitempty"`
+	Enabled bool   `json:"enabled"`
 }
 
 func RelatedEdgeIDs(doc Document, nodeID string) []string {

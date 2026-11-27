@@ -75,7 +75,7 @@ POST   /api/workspace/nodes
 DELETE /api/workspace/nodes/{id}
 ```
 
-Workspace API 是同步任务的存储层：节点表示端点，sync 边表示同步规则，mount 边表示挂载规则。浏览器 UI 只用上面三个接口管理本地存储节点（存储页），同步规则的增删改使用下面的同步任务 API。整体替换（`PUT /api/workspace`）以及边和节点的 PATCH 接口已随画布一起移除；目前没有创建 mount 边的接口，挂载只作用于已存在于 workspace 文件中的 mount 边。
+Workspace API 是同步任务的存储层：节点表示端点，sync 边表示同步规则，mount 边表示挂载规则。浏览器 UI 只用上面三个接口管理本地存储节点（存储页）。同步规则的增删改使用同步任务 API，挂载规则的增删改使用挂载任务 API。整体替换（`PUT /api/workspace`）以及边和节点的 PATCH 接口已随画布一起移除。
 
 ### WorkspaceDocument
 
@@ -188,11 +188,16 @@ POST   /api/sync/jobs/{job_id}/stop
 ## 挂载 API
 
 ```text
+GET    /api/mounts/tasks
+POST   /api/mounts/tasks
+DELETE /api/mounts/tasks/{id}?revision=N
 GET    /api/mounts
 GET    /api/mounts/events
 POST   /api/mounts/{edge_id}/start
 POST   /api/mounts/{edge_id}/stop
 ```
+
+`POST /api/mounts/tasks` 创建一条挂载：源必须是 remote（名称 + 可选子路径），目标必须是本地绝对目录。端点节点由服务端复用或创建。同一本地目录不能挂载两次，活动中的挂载拒绝删除（409）。
 
 只有 `remote -> local` 的 mount 边可以启动。状态至少包含 `starting`、`mounted`、`stopping`、`stopped`、`failed`、退出码和可复制的错误详情；不返回内部命令中的敏感参数。
 
