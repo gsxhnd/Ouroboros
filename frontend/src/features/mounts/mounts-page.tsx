@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Stagger } from "@/components/motion/reveal"
 import { MountCard, mountTitle } from "@/features/mounts/components/mount-card"
 import { MountDialog } from "@/features/mounts/components/mount-dialog"
 import { subscribeMounts, useMountStore } from "@/features/mounts/mount-store"
@@ -127,17 +128,19 @@ export function MountsPage() {
       ) : mounts.length === 0 ? (
         <EmptyHint>{t("mounts.empty")}</EmptyHint>
       ) : (
-        mounts.map((mount) => (
-          <MountCard
-            key={mount.id}
-            mount={mount}
-            snapshot={snapshots.find((item) => item.edge_id === mount.id)}
-            pending={pending.has(mount.id)}
-            onStart={() => setStartConfirm(mount)}
-            onStop={() => void stop(mount)}
-            onDelete={() => setDeleteConfirm(mount)}
-          />
-        ))
+        <Stagger>
+          {mounts.map((mount) => (
+            <MountCard
+              key={mount.id}
+              mount={mount}
+              snapshot={snapshots.find((item) => item.edge_id === mount.id)}
+              pending={pending.has(mount.id)}
+              onStart={() => setStartConfirm(mount)}
+              onStop={() => void stop(mount)}
+              onDelete={() => setDeleteConfirm(mount)}
+            />
+          ))}
+        </Stagger>
       )}
 
       <MountDialog

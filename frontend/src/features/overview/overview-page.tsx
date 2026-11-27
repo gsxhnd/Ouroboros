@@ -15,6 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
+import { ActivityCard } from "@/features/overview/activity-card"
 import { translateOr } from "@/i18n/lookup"
 import { useRcloneStore } from "@/stores/rclone-store"
 import type { RcloneStatus } from "@/lib/types"
@@ -104,6 +105,8 @@ export function OverviewPage() {
           </p>
         </CardContent>
       </Card>
+
+      <ActivityCard />
     </PageContainer>
   )
 }

@@ -169,3 +169,21 @@
     background: color-mix(in oklab, var(--foreground) 32%, transparent);
   }
 }
+
+/* d3 坐标轴画在 SVG 属性上，文字和网格用这里盖掉默认的黑色。 */
+.chart .tick text {
+  fill: var(--muted-foreground);
+  font-family: inherit;
+  font-size: 10px;
+}
+.chart .tick line {
+  stroke: var(--border);
+}
+.chart .domain {
+  stroke: none;
+}
+.chart .cursor {
+  stroke: var(--foreground);
+  stroke-opacity: 0.35;
+  stroke-dasharray: 3 3;
+}

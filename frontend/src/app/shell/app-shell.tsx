@@ -5,6 +5,7 @@ import type { Layout } from "react-resizable-panels"
 import { AppHeader } from "@/app/shell/app-header"
 import { MobileSidebar } from "@/app/shell/mobile-sidebar"
 import { Sidebar } from "@/app/shell/sidebar"
+import { PageTransition } from "@/components/motion/reveal"
 import {
   ResizableHandle,
   ResizablePanel,
@@ -75,7 +76,9 @@ export function AppShell() {
         mobile={isMobile}
       />
       <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-muted/40 select-text">
-        <Outlet />
+        <PageTransition>
+          <Outlet />
+        </PageTransition>
       </main>
     </div>
   )

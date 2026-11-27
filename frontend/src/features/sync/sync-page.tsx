@@ -17,7 +17,9 @@ import {
   RunConfirmDialog,
 } from "@/features/sync/components/confirm-dialogs"
 import { ActiveJobRow } from "@/features/sync/components/job-rows"
+import { SyncCharts } from "@/features/sync/components/sync-charts"
 import { TaskCard } from "@/features/sync/components/task-card"
+import { Stagger } from "@/components/motion/reveal"
 import { bisyncNeedsResync } from "@/features/sync/labels"
 import { call } from "@/lib/http/client"
 import type { RemoteInfo, SyncTask } from "@/lib/types"
@@ -136,6 +138,10 @@ export function SyncPage() {
         <WarningNote>{t("sync.rcloneOffline")}</WarningNote>
       ) : null}
 
+      {loaded && tasks.length > 0 ? (
+        <SyncCharts tasks={tasks} jobs={jobs} />
+      ) : null}
+
       {activeJobs.length > 0 ? (
         <section className="flex flex-col gap-3">
           <SectionHeading title={t("sync.activeJobs")} />
@@ -156,24 +162,26 @@ export function SyncPage() {
         ) : tasks.length === 0 ? (
           <EmptyHint>{t("sync.empty")}</EmptyHint>
         ) : (
-          tasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              jobs={jobs}
-              onRun={() => requestRun(task)}
-              onEdit={() => {
-                setEditing(task)
-                setDialogOpen(true)
-              }}
-              onDelete={() => setDeleteConfirm(task)}
-              onToggleEnabled={(enabled) =>
-                void patchTask(task.id, { enabled })
-              }
-              onResync={() => requestResync(task)}
-              onStop={() => stopTask(task)}
-            />
-          ))
+          <Stagger>
+            {tasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                jobs={jobs}
+                onRun={() => requestRun(task)}
+                onEdit={() => {
+                  setEditing(task)
+                  setDialogOpen(true)
+                }}
+                onDelete={() => setDeleteConfirm(task)}
+                onToggleEnabled={(enabled) =>
+                  void patchTask(task.id, { enabled })
+                }
+                onResync={() => requestResync(task)}
+                onStop={() => stopTask(task)}
+              />
+            ))}
+          </Stagger>
         )}
       </section>
 

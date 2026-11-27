@@ -21,8 +21,10 @@
     "class-variance-authority": "^0.7.1",
     "cmdk": "^1.1.1",
     "cn": "^0.2.6",
+    "d3": "^7.9.2",
     "i18next": "^26.4.2",
     "lucide-react": "^1.43.0",
+    "motion": "^14.14.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-i18next": "^17.0.13",
@@ -34,6 +36,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4",
+    "@types/d3": "^7.4.3",
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",

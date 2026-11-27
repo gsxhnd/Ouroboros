@@ -134,7 +134,18 @@
     "factSystem": "System",
     "factGo": "Go",
     "factLinking": "Linking",
-    "afterConnect": "Shown after connecting"
+    "afterConnect": "Shown after connecting",
+    "pulseTitle": "Workspace",
+    "pulseDescription": "Tasks, running transfers, and mounts.",
+    "statTasks": "Tasks",
+    "statRunning": "Running",
+    "statMounted": "Mounted",
+    "outcomesTitle": "Last results",
+    "outcomesEmpty": "No sync tasks yet. Results show up here after the first run.",
+    "sliceSucceeded": "Succeeded",
+    "sliceFailed": "Failed",
+    "sliceOther": "Other",
+    "sliceNever": "Not run yet"
   },
   "files": {
     "locationTitle": "Browse location",
@@ -235,7 +246,13 @@
     "resyncAction": "Resync",
     "deleteTitle": "Delete sync task",
     "deleteWarning": "This removes the sync task \"{{name}}\". Scheduled runs stop and the task cannot be recovered. Type the task name to confirm.",
-    "deleteDone": "Deleted {{name}}"
+    "deleteDone": "Deleted {{name}}",
+    "mixTitle": "Operations",
+    "mixDescription": "How the task list is split.",
+    "speedTitle": "Transfer speed",
+    "speedDescription": "Live throughput of running tasks.",
+    "speedWaiting": "Speed appears here once a task is running.",
+    "speedAria": "Transfer speed over the last few minutes"
   },
   "mounts": {
     "new": "New mount",

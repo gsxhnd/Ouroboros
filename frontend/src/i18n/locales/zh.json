@@ -131,7 +131,18 @@
     "factSystem": "系统",
     "factGo": "Go",
     "factLinking": "链接方式",
-    "afterConnect": "连接后显示"
+    "afterConnect": "连接后显示",
+    "pulseTitle": "工作区",
+    "pulseDescription": "任务、正在传输和挂载。",
+    "statTasks": "任务",
+    "statRunning": "运行中",
+    "statMounted": "已挂载",
+    "outcomesTitle": "最近结果",
+    "outcomesEmpty": "还没有同步任务。第一次运行之后，结果会显示在这里。",
+    "sliceSucceeded": "成功",
+    "sliceFailed": "失败",
+    "sliceOther": "其他",
+    "sliceNever": "尚未运行"
   },
   "files": {
     "locationTitle": "浏览位置",
@@ -231,7 +242,13 @@
     "resyncAction": "重新初始化 (resync)",
     "deleteTitle": "删除同步任务",
     "deleteWarning": "将删除同步任务“{{name}}”，计划执行同时停止，且无法恢复。输入任务名称以确认。",
-    "deleteDone": "已删除 {{name}}"
+    "deleteDone": "已删除 {{name}}",
+    "mixTitle": "操作分布",
+    "mixDescription": "任务列表里各种操作的占比。",
+    "speedTitle": "传输速度",
+    "speedDescription": "运行中任务的实时吞吐。",
+    "speedWaiting": "任务开始运行后，速度会画在这里。",
+    "speedAria": "最近几分钟的传输速度"
   },
   "mounts": {
     "new": "新建挂载",

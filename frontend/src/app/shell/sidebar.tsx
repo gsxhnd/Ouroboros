@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
-import { NavLink } from "react-router"
+import { NavLink, useLocation } from "react-router"
+import { motion, useReducedMotion } from "motion/react"
 
 import { buttonVariants } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -146,26 +147,47 @@ function SidebarItem({
   icon: ReactNode
   collapsed: boolean
 }) {
+  const { pathname } = useLocation()
+  const reduced = useReducedMotion()
+  const active = pathname === path || pathname.startsWith(`${path}/`)
   return (
     <NavLink
       to={path}
       title={collapsed ? label : undefined}
-      className={({ isActive }) =>
-        cn(
-          buttonVariants({
-            variant: "ghost",
-            size: "sm",
-          }),
-          "w-full",
-          collapsed ? "justify-center px-0" : "justify-start px-2.5",
-          isActive
-            ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            : "text-muted-foreground"
-        )
-      }
+      className={cn(
+        buttonVariants({
+          variant: "ghost",
+          size: "sm",
+        }),
+        "relative w-full",
+        collapsed ? "justify-center px-0" : "justify-start px-2.5",
+        active
+          ? "font-medium text-sidebar-accent-foreground hover:bg-transparent hover:text-sidebar-accent-foreground"
+          : "text-muted-foreground"
+      )}
     >
-      {icon}
-      {!collapsed && <span className="truncate">{label}</span>}
+      {active ? (
+        <motion.span
+          layoutId="sidebar-active"
+          aria-hidden
+          initial={false}
+          className="absolute inset-0 rounded-lg bg-sidebar-accent"
+          transition={
+            reduced
+              ? { duration: 0 }
+              : { type: "spring", bounce: 0.16, duration: 0.45 }
+          }
+        />
+      ) : null}
+      <span
+        className={cn(
+          "relative z-10 flex min-w-0 items-center gap-1.5",
+          collapsed && "justify-center"
+        )}
+      >
+        {icon}
+        {collapsed ? null : <span className="truncate">{label}</span>}
+      </span>
     </NavLink>
   )
 }
