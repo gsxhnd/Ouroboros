@@ -7,7 +7,7 @@ import (
 )
 
 func (a *api) workspaceGet(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, a.state.Workspace.Get())
+	writeJSON(w, http.StatusOK, a.svc.Workspace.Get())
 }
 
 func (a *api) workspaceCreateNode(w http.ResponseWriter, r *http.Request) {
@@ -16,12 +16,7 @@ func (a *api) workspaceCreateNode(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	remotes, known, err := a.remotesIfReady(r.Context())
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	doc, err := a.state.Workspace.CreateNode(body, remotes, known)
+	doc, err := a.svc.Workspace.CreateNode(r.Context(), body)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -35,12 +30,7 @@ func (a *api) workspaceDeleteNode(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	remotes, known, err := a.remotesIfReady(r.Context())
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	updated, err := a.state.Workspace.DeleteNode(r.PathValue("id"), revision, remotes, known)
+	updated, err := a.svc.Workspace.DeleteNode(r.Context(), r.PathValue("id"), revision)
 	if err != nil {
 		writeError(w, err)
 		return

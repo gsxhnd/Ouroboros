@@ -10,7 +10,7 @@ import (
 // error code, never as the 503 a well-formed request gets when rclone is down.
 func TestFileWritesRejectBadInputBeforeReachingRclone(t *testing.T) {
 	state, local := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 
 	cases := []struct {
 		name   string
@@ -43,7 +43,7 @@ func TestFileWritesRejectBadInputBeforeReachingRclone(t *testing.T) {
 
 func TestFileWritesReachRcloneOnlyWhenInputIsValid(t *testing.T) {
 	state, local := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 
 	for _, tc := range []struct {
 		name, method, target, body string

@@ -15,7 +15,7 @@ import (
 
 func TestFilesDownloadValidationWithoutRclone(t *testing.T) {
 	state, local := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	status, body := send(handler, http.MethodGet, "/api/files/download?fs="+local+"&remote=", "")
 	errBody, _ := body["error"].(map[string]any)
 	if status != http.StatusBadRequest || errBody["code"] != "invalid_request" {
@@ -58,7 +58,7 @@ func TestFilesDownload(t *testing.T) {
 	if _, err := state.Rclone.EnsureRunning(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/files/download?fs="+local+"&remote=hello.txt", nil)
 	res := httptest.NewRecorder()

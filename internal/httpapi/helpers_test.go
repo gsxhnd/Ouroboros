@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/gsxhnd/ourboros/internal/app"
+	"github.com/gsxhnd/ourboros/internal/service"
 )
 
 func testState(t *testing.T) (*app.State, string) {
@@ -28,6 +29,14 @@ func testState(t *testing.T) (*app.State, string) {
 		t.Fatal(err)
 	}
 	return state, local
+}
+
+func newTestHandler(state *app.State, webDir ...string) http.Handler {
+	dir := ""
+	if len(webDir) > 0 {
+		dir = webDir[0]
+	}
+	return Handler(service.New(state), dir)
 }
 
 func send(handler http.Handler, method, target, body string) (int, map[string]any) {

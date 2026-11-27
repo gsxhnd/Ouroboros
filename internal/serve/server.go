@@ -10,17 +10,18 @@ import (
 
 	"github.com/gsxhnd/ourboros/internal/app"
 	"github.com/gsxhnd/ourboros/internal/httpapi"
+	"github.com/gsxhnd/ourboros/internal/service"
 )
 
 type Running struct {
 	URL  string
 	Done <-chan struct{}
-	// State exposes the live services so the desktop shell can drive them
-	// directly (for example from the system tray) instead of going over HTTP.
-	State *app.State
+	// Services exposes the application use cases so the desktop shell can drive
+	// them directly (for example from the system tray) instead of going over HTTP.
+	Services *service.Services
 }
 
-func start(ctx context.Context, state *app.State, host string, port int, webDir string) (*Running, error) {
+func start(ctx context.Context, state *app.State, svcs *service.Services, host string, port int, webDir string) (*Running, error) {
 	if host == "" {
 		host = "127.0.0.1"
 	}
@@ -31,7 +32,7 @@ func start(ctx context.Context, state *app.State, host string, port int, webDir 
 	// SSE streams never finish on their own. Tying every request context to ctx
 	// lets shutdown end them immediately instead of waiting out the timeout.
 	server := &http.Server{
-		Handler:     httpapi.Handler(state, webDir),
+		Handler:     httpapi.Handler(svcs, webDir),
 		BaseContext: func(net.Listener) context.Context { return ctx },
 	}
 	go func() {
@@ -49,5 +50,5 @@ func start(ctx context.Context, state *app.State, host string, port int, webDir 
 		_ = server.Shutdown(shutdownCtx)
 		state.Close()
 	}()
-	return &Running{URL: "http://" + listener.Addr().String(), Done: done, State: state}, nil
+	return &Running{URL: "http://" + listener.Addr().String(), Done: done, Services: svcs}, nil
 }

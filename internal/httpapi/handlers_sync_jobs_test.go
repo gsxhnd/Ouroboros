@@ -111,7 +111,7 @@ func startRunningJob(t *testing.T, handler http.Handler, f *fakeRC, local string
 func TestRunningTaskCannotBeDeletedOrRunTwice(t *testing.T) {
 	f := newFakeRC(t)
 	state, local := attachedState(t, f)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	taskID, _ := startRunningJob(t, handler, f, local)
 
 	status, body := send(handler, http.MethodDelete, "/api/sync/tasks/"+taskID+"?revision=1", "")
@@ -131,7 +131,7 @@ func TestRunningTaskCannotBeDeletedOrRunTwice(t *testing.T) {
 func TestStoppingAJobEndsItAndFreesTheTask(t *testing.T) {
 	f := newFakeRC(t)
 	state, local := attachedState(t, f)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	taskID, jobID := startRunningJob(t, handler, f, local)
 
 	// rclone confirms the stop on its next status report.
@@ -164,7 +164,7 @@ func TestStoppingAJobEndsItAndFreesTheTask(t *testing.T) {
 
 func TestStoppingAnUnknownJobIsNotFound(t *testing.T) {
 	state, _ := testState(t)
-	status, body := send(Handler(state, ""), http.MethodPost, "/api/sync/jobs/nope/stop", "")
+	status, body := send(newTestHandler(state), http.MethodPost, "/api/sync/jobs/nope/stop", "")
 	if status != http.StatusNotFound || errorCode(body) != "not_found" {
 		t.Fatalf("status %d body %v", status, body)
 	}
@@ -173,7 +173,7 @@ func TestStoppingAnUnknownJobIsNotFound(t *testing.T) {
 func TestRunningTaskBlocksDeletingItsStorageNode(t *testing.T) {
 	f := newFakeRC(t)
 	state, local := attachedState(t, f)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	taskID, _ := startRunningJob(t, handler, f, local)
 
 	tasks, _ := state.Workspace.SyncTasks()

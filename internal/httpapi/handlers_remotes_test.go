@@ -5,26 +5,13 @@ import (
 	"testing"
 )
 
-func TestValidRemoteName(t *testing.T) {
-	for _, good := range []string{"gdrive", "my-drive", "drive_1", "UPPER", "a.b"} {
-		if !validRemoteName(good) {
-			t.Errorf("validRemoteName(%q) = false", good)
-		}
-	}
-	for _, bad := range []string{"drive:", "d:rive", " drive", "drive ", "a b", "", "a/b", "a\\b", "a\v b"} {
-		if validRemoteName(bad) {
-			t.Errorf("validRemoteName(%q) = true", bad)
-		}
-	}
-}
-
 // New remotes follow the strict workspace naming rule, so a name created here
 // can always be used as a sync/mount endpoint later. Validation runs before
 // rclone is contacted: a rejected name is a 400, an accepted one gets past it
 // and fails later with 503 because the test state has no rclone.
 func TestCreateRemoteUsesStrictNameRule(t *testing.T) {
 	state, _ := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	create := func(name string) int {
 		status, _ := send(handler, http.MethodPost, "/api/remotes",
 			`{"name":"`+name+`","type":"alias","parameters":{}}`)
@@ -46,7 +33,7 @@ func TestCreateRemoteUsesStrictNameRule(t *testing.T) {
 // Ourboros can still be viewed and deleted.
 func TestExistingRemoteNamesStayAddressable(t *testing.T) {
 	state, _ := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	status, _ := send(handler, http.MethodDelete, "/api/remotes/_legacy-name", "")
 	if status == http.StatusBadRequest {
 		t.Fatalf("status %d: a lenient-valid legacy name was rejected", status)

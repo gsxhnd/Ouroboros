@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gsxhnd/ourboros/internal/app"
+	"github.com/gsxhnd/ourboros/internal/service"
 )
 
-func Handler(state *app.State, webDir string) http.Handler {
-	api := &api{state: state}
+func Handler(svcs *service.Services, webDir string) http.Handler {
+	api := &api{svc: svcs}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", api.health)
 	mux.HandleFunc("GET /api/system/info", api.systemInfo)
@@ -60,8 +60,8 @@ func Handler(state *app.State, webDir string) http.Handler {
 
 	// /health 与静态 UI 不做鉴权：探针需要 /health，浏览器需要先拿到页面才能
 	// 输入 token。所有 /api 请求在配置了 token 时必须携带凭证。
-	apiRoutes := withAuth(state.AuthToken, state.Origins, mux)
-	return withCORS(state.Origins, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	apiRoutes := withAuth(svcs.AuthToken(), svcs.Origins(), mux)
+	return withCORS(svcs.Origins(), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/health" {
 			mux.ServeHTTP(w, r)
 			return
@@ -74,7 +74,7 @@ func Handler(state *app.State, webDir string) http.Handler {
 	}))
 }
 
-type api struct{ state *app.State }
+type api struct{ svc *service.Services }
 
 func serveUI(w http.ResponseWriter, r *http.Request, webDir string) {
 	if webDir == "" {

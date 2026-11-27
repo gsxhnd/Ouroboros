@@ -7,7 +7,7 @@ import (
 
 func TestHealthAndSystemInfoHideRCURL(t *testing.T) {
 	state, _ := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	status, _ := send(handler, http.MethodGet, "/health", "")
 	if status != http.StatusOK {
 		t.Fatal(status)

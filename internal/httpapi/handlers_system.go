@@ -11,15 +11,5 @@ func (a *api) health(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (a *api) systemInfo(w http.ResponseWriter, _ *http.Request) {
-	var home *string
-	if a.state.HomeDir != "" {
-		value := a.state.HomeDir
-		home = &value
-	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"name":     "ourboros",
-		"version":  a.state.Version,
-		"home_dir": home,
-		"rclone":   a.state.Rclone.Status(),
-	})
+	writeJSON(w, http.StatusOK, a.svc.System.Info())
 }

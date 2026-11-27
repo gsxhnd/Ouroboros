@@ -54,7 +54,7 @@ func mountFixture(t *testing.T, binary string) *app.State {
 
 func TestMountsListShowsStoppedMountEdges(t *testing.T) {
 	state := mountFixture(t, "")
-	status, body := send(Handler(state, ""), http.MethodGet, "/api/mounts", "")
+	status, body := send(newTestHandler(state), http.MethodGet, "/api/mounts", "")
 	mounts, _ := body["mounts"].([]any)
 	if status != http.StatusOK || len(mounts) != 1 {
 		t.Fatalf("status %d body %v", status, body)
@@ -67,7 +67,7 @@ func TestMountsListShowsStoppedMountEdges(t *testing.T) {
 
 func TestMountStartAndStopUnknownEdge(t *testing.T) {
 	state := mountFixture(t, "")
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	for _, action := range []string{"start", "stop"} {
 		status, body := send(handler, http.MethodPost, "/api/mounts/nope/"+action, "")
 		if status != http.StatusNotFound || errorCode(body) != "not_found" {
@@ -78,7 +78,7 @@ func TestMountStartAndStopUnknownEdge(t *testing.T) {
 
 func TestMountStartReportsMissingBinary(t *testing.T) {
 	state := mountFixture(t, "")
-	status, body := send(Handler(state, ""), http.MethodPost, "/api/mounts/m1/start", "")
+	status, body := send(newTestHandler(state), http.MethodPost, "/api/mounts/m1/start", "")
 	if status != http.StatusServiceUnavailable || errorCode(body) != "rclone_unavailable" {
 		t.Fatalf("status %d body %v", status, body)
 	}
@@ -90,7 +90,7 @@ func TestMountStartRejectsASyncEdge(t *testing.T) {
 		workspace.Node{ID: "src", Kind: workspace.NodeRemote, Label: "src", Remote: &workspace.Remote{Name: "testsuite"}},
 		workspace.Node{ID: "dst", Kind: workspace.NodeLocal, Label: "dst", LocalPath: ptr(t.TempDir())},
 	)
-	status, body := send(Handler(state, ""), http.MethodPost, "/api/mounts/s1/start", "")
+	status, body := send(newTestHandler(state), http.MethodPost, "/api/mounts/s1/start", "")
 	if status != http.StatusBadRequest || errorCode(body) != "invalid_request" {
 		t.Fatalf("status %d body %v", status, body)
 	}
@@ -102,7 +102,7 @@ func TestMountLifecycleOverHTTP(t *testing.T) {
 		t.Fatal(err)
 	}
 	state := mountFixture(t, script)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 
 	status, body := send(handler, http.MethodPost, "/api/mounts/m1/start", "")
 	if status != http.StatusOK || body["status"] != "mounted" {
@@ -134,7 +134,7 @@ func TestNodeReferencedByAMountEdgeCannotBeDeleted(t *testing.T) {
 		t.Fatal(err)
 	}
 	state := mountFixture(t, script)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 
 	check := func(when string) {
 		t.Helper()

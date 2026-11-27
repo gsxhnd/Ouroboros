@@ -7,6 +7,7 @@ import (
 	"github.com/gsxhnd/ourboros/internal/app"
 	"github.com/gsxhnd/ourboros/internal/cli"
 	"github.com/gsxhnd/ourboros/internal/scheduler"
+	"github.com/gsxhnd/ourboros/internal/service"
 	"github.com/gsxhnd/ourboros/internal/webui"
 )
 
@@ -36,7 +37,7 @@ func Run(ctx context.Context, args cli.ServerArgs) (*Running, error) {
 		slog.Info("API-only mode. Pass --webui / --web-dir or set OURBOROS_WEB_DIR to serve the UI.")
 	}
 	go scheduler.Run(ctx, state.Workspace, state.Jobs)
-	return start(ctx, state, args.Host, args.Port, webDir)
+	return start(ctx, state, service.New(state), args.Host, args.Port, webDir)
 }
 
 func resolveWeb(args cli.ServerArgs) (string, error) {

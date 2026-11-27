@@ -7,7 +7,7 @@ import (
 
 func TestWorkspaceRevision(t *testing.T) {
 	state, local := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	status, body := send(handler, http.MethodGet, "/api/workspace", "")
 	if status != http.StatusOK || body["revision"].(float64) != 0 || body["schema_version"].(float64) != 1 {
 		t.Fatal(status, body)
@@ -38,7 +38,7 @@ func TestWorkspaceRevision(t *testing.T) {
 
 func TestWorkspaceRejectsTraversal(t *testing.T) {
 	state, _ := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	status, body := send(handler, http.MethodPost, "/api/workspace/nodes", `{
 		"revision": 0,
 		"kind": "local",
@@ -58,7 +58,7 @@ func TestWorkspaceRejectsTraversal(t *testing.T) {
 // 本地节点删除返回 node_in_use，remote 删除返回 remote_in_use。
 func TestStorageDeleteProtection(t *testing.T) {
 	state, local := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 
 	// 建一个本地节点，再建一个使用它的同步任务
 	status, body := send(handler, http.MethodPost, "/api/workspace/nodes", `{

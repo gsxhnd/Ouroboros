@@ -32,7 +32,7 @@ func errorCode(body map[string]any) any {
 
 func TestSelectManagedVersionRecordsTheChoice(t *testing.T) {
 	state, _ := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	path := installManaged(t, state, "v1.70.0")
 
 	status, body := send(handler, http.MethodPost, "/api/rclone/select", `{"source":"managed","version":"v1.70.0"}`)
@@ -50,7 +50,7 @@ func TestSelectManagedVersionRecordsTheChoice(t *testing.T) {
 
 func TestSelectCustomPath(t *testing.T) {
 	state, local := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	custom := filepath.Join(local, "my-rclone")
 	if err := os.WriteFile(custom, []byte("#!/bin/sh\n"), 0o755); err != nil {
 		t.Fatal(err)
@@ -63,7 +63,7 @@ func TestSelectCustomPath(t *testing.T) {
 
 func TestSelectRejectsBadRequests(t *testing.T) {
 	state, local := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	before := state.Rclone.SelectedBin()
 	cases := []struct {
 		name, body string
@@ -90,7 +90,7 @@ func TestSelectRejectsBadRequests(t *testing.T) {
 
 func TestActivateInstalledVersion(t *testing.T) {
 	state, _ := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	path := installManaged(t, state, "v1.71.0")
 
 	status, body := send(handler, http.MethodPost, "/api/rclone/versions/v1.71.0/activate", "")
@@ -104,7 +104,7 @@ func TestActivateInstalledVersion(t *testing.T) {
 
 func TestActivateRejectsMissingAndUnsafeVersions(t *testing.T) {
 	state, _ := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	before := state.Rclone.SelectedBin()
 
 	status, body := send(handler, http.MethodPost, "/api/rclone/versions/v9.9.9/activate", "")
@@ -131,7 +131,7 @@ func TestActivateRejectsMissingAndUnsafeVersions(t *testing.T) {
 
 func TestDeleteVersionRemovesItsDirectory(t *testing.T) {
 	state, _ := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	installManaged(t, state, "v1.73.0")
 	keep := installManaged(t, state, "v1.74.0")
 
@@ -152,7 +152,7 @@ func TestDeleteVersionRemovesItsDirectory(t *testing.T) {
 
 func TestDeletingTheActiveVersionFallsBackToSystemRclone(t *testing.T) {
 	state, _ := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	installManaged(t, state, "v1.75.0")
 	if status, body := send(handler, http.MethodPost, "/api/rclone/versions/v1.75.0/activate", ""); status != http.StatusOK {
 		t.Fatalf("activate: %d %v", status, body)
@@ -173,7 +173,7 @@ func TestDeletingTheActiveVersionFallsBackToSystemRclone(t *testing.T) {
 
 func TestDeletingAnInactiveVersionKeepsTheActiveBinary(t *testing.T) {
 	state, _ := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	installManaged(t, state, "v1.76.0")
 	active := installManaged(t, state, "v1.77.0")
 	if status, _ := send(handler, http.MethodPost, "/api/rclone/versions/v1.77.0/activate", ""); status != http.StatusOK {
@@ -189,7 +189,7 @@ func TestDeletingAnInactiveVersionKeepsTheActiveBinary(t *testing.T) {
 
 func TestScanListsManagedInstalls(t *testing.T) {
 	state, _ := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	installManaged(t, state, "v1.78.0")
 
 	status, body := send(handler, http.MethodPost, "/api/rclone/scan", "")
@@ -211,7 +211,7 @@ func TestScanListsManagedInstalls(t *testing.T) {
 
 func TestDownloadEndpointsRejectBadInput(t *testing.T) {
 	state, _ := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 
 	status, body := send(handler, http.MethodPost, "/api/rclone/downloads", `{"version":"../../x"}`)
 	if status != http.StatusBadRequest || errorCode(body) != "invalid_request" {

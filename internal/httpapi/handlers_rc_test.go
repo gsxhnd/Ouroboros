@@ -14,7 +14,7 @@ import (
 
 func TestRCProxyAndFilesRequireRclone(t *testing.T) {
 	state, _ := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	status, body := send(handler, http.MethodPost, "/api/rc/config/dump", "{}")
 	if status != http.StatusBadRequest {
 		t.Fatal(status, body)
@@ -56,7 +56,7 @@ func TestSpawnedRcloneAllowlist(t *testing.T) {
 	if _, err := state.Rclone.EnsureRunning(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	status, body := send(handler, http.MethodGet, "/api/rclone/status", "")
 	if status != http.StatusOK || body["running"] != true || body["mode"] != "spawned" {
 		t.Fatal(status, body)

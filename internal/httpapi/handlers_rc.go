@@ -35,7 +35,7 @@ func (a *api) proxyRC(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	response, err := a.state.Rclone.CallAllowed(r.Context(), command, payload)
+	response, err := a.svc.RC.Call(r.Context(), command, payload)
 	if err != nil {
 		writeError(w, err)
 		return

@@ -74,10 +74,10 @@ func main() {
 	win := newMainWindow(app, pageURL)
 	installSignalQuit(app)
 
-	shell := newTrayShell(ctx, app, win, running.State, pageURL)
+	shell := newTrayShell(ctx, app, win, running.Services, pageURL)
 	app.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(*application.ApplicationEvent) {
 		go shell.run()
-		go shell.watchSettings(running.State.Events)
+		go shell.watchSettings(running.Services.Events())
 	})
 
 	if err := app.Run(); err != nil {

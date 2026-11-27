@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gsxhnd/ourboros/internal/app"
+	"github.com/gsxhnd/ourboros/internal/service"
 	"github.com/gsxhnd/ourboros/internal/tray"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	wailsevents "github.com/wailsapp/wails/v3/pkg/events"
@@ -36,7 +36,7 @@ type trayShell struct {
 	app   *application.App
 	win   *application.WebviewWindow
 	panel *application.WebviewWindow
-	svc   *app.State
+	svc   *service.Services
 	tray  *application.SystemTray
 	ctx   context.Context
 
@@ -45,7 +45,7 @@ type trayShell struct {
 	bindings   []string
 }
 
-func newTrayShell(ctx context.Context, a *application.App, win *application.WebviewWindow, svc *app.State, pageURL string) *trayShell {
+func newTrayShell(ctx context.Context, a *application.App, win *application.WebviewWindow, svc *service.Services, pageURL string) *trayShell {
 	t := &trayShell{
 		app: a,
 		win: win,
@@ -123,7 +123,7 @@ func (t *trayShell) input() tray.Input {
 		Rclone:     t.svc.Rclone.Status(),
 		RcloneBusy: busy,
 		Mounts:     t.svc.Mounts.List(),
-		Jobs:       t.svc.Jobs.List(),
+		Jobs:       t.svc.SyncTasks.ListJobs(),
 	}
 }
 

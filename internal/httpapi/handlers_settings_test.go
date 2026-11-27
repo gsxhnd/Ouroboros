@@ -7,7 +7,7 @@ import (
 
 func TestSettingsSchema(t *testing.T) {
 	state, _ := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	status, body := send(handler, http.MethodGet, "/api/settings", "")
 	if status != http.StatusOK || body["schema_version"].(float64) != 1 || body["auto_start"] != false {
 		t.Fatal(status, body)

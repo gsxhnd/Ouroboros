@@ -18,7 +18,7 @@ func authState(t *testing.T, token string) *app.State {
 }
 
 func TestAuthDisabledOnLoopback(t *testing.T) {
-	handler := Handler(authState(t, ""), "")
+	handler := newTestHandler(authState(t, ""))
 	status, _ := send(handler, http.MethodGet, "/api/system/info", "")
 	if status != http.StatusOK {
 		t.Fatal(status)
@@ -26,7 +26,7 @@ func TestAuthDisabledOnLoopback(t *testing.T) {
 }
 
 func TestAuthRejectsMissingToken(t *testing.T) {
-	handler := Handler(authState(t, "secret"), "")
+	handler := newTestHandler(authState(t, "secret"))
 	status, body := send(handler, http.MethodGet, "/api/system/info", "")
 	if status != http.StatusUnauthorized {
 		t.Fatal(status, body)
@@ -37,7 +37,7 @@ func TestAuthRejectsMissingToken(t *testing.T) {
 }
 
 func TestAuthAcceptsBearerHeader(t *testing.T) {
-	handler := Handler(authState(t, "secret"), "")
+	handler := newTestHandler(authState(t, "secret"))
 	req := httptest.NewRequest(http.MethodGet, "/api/system/info", nil)
 	req.Header.Set("Authorization", "Bearer secret")
 	res := httptest.NewRecorder()
@@ -48,7 +48,7 @@ func TestAuthAcceptsBearerHeader(t *testing.T) {
 }
 
 func TestAuthRejectsWrongToken(t *testing.T) {
-	handler := Handler(authState(t, "secret"), "")
+	handler := newTestHandler(authState(t, "secret"))
 	req := httptest.NewRequest(http.MethodGet, "/api/system/info", nil)
 	req.Header.Set("Authorization", "Bearer nope")
 	res := httptest.NewRecorder()
@@ -59,7 +59,7 @@ func TestAuthRejectsWrongToken(t *testing.T) {
 }
 
 func TestAuthAcceptsQueryTokenForEventSource(t *testing.T) {
-	handler := Handler(authState(t, "secret"), "")
+	handler := newTestHandler(authState(t, "secret"))
 	// EventSource 无法设置请求头，SSE 通过 access_token 查询参数携带 token；
 	// 任意一个普通的 GET API 都能验证这条路径。
 	req := httptest.NewRequest(http.MethodGet, "/api/system/info?access_token=secret", nil)
@@ -71,7 +71,7 @@ func TestAuthAcceptsQueryTokenForEventSource(t *testing.T) {
 }
 
 func TestHealthStaysOpenWithAuth(t *testing.T) {
-	handler := Handler(authState(t, "secret"), "")
+	handler := newTestHandler(authState(t, "secret"))
 	status, _ := send(handler, http.MethodGet, "/health", "")
 	if status != http.StatusOK {
 		t.Fatal(status)
@@ -79,7 +79,7 @@ func TestHealthStaysOpenWithAuth(t *testing.T) {
 }
 
 func TestAuthRejectsForeignOrigin(t *testing.T) {
-	handler := Handler(authState(t, "secret"), "")
+	handler := newTestHandler(authState(t, "secret"))
 	req := httptest.NewRequest(http.MethodGet, "/api/system/info?access_token=secret", nil)
 	req.Header.Set("Origin", "https://evil.example")
 	res := httptest.NewRecorder()
@@ -90,7 +90,7 @@ func TestAuthRejectsForeignOrigin(t *testing.T) {
 }
 
 func TestAuthAllowsSameHostOrigin(t *testing.T) {
-	handler := Handler(authState(t, "secret"), "")
+	handler := newTestHandler(authState(t, "secret"))
 	req := httptest.NewRequest(http.MethodGet, "/api/system/info", nil)
 	req.Header.Set("Origin", "http://127.0.0.1:8080")
 	req.Header.Set("Authorization", "Bearer secret")
@@ -104,7 +104,7 @@ func TestAuthAllowsSameHostOrigin(t *testing.T) {
 func TestAuthAllowsConfiguredOrigin(t *testing.T) {
 	state := authState(t, "secret")
 	state.Origins = []string{"http://127.0.0.1:1420"}
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	req := httptest.NewRequest(http.MethodGet, "/api/system/info", nil)
 	req.Header.Set("Origin", "http://127.0.0.1:1420")
 	req.Header.Set("Authorization", "Bearer secret")
@@ -120,7 +120,7 @@ func TestServesUIWithoutToken(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "index.html"), []byte("<html></html>"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	handler := Handler(authState(t, "secret"), dir)
+	handler := newTestHandler(authState(t, "secret"), dir)
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	res := httptest.NewRecorder()
 	handler.ServeHTTP(res, req)

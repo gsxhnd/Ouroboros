@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gsxhnd/ourboros/internal/app"
+	"github.com/gsxhnd/ourboros/internal/service"
 )
 
 // An open SSE stream used to hold server.Shutdown for its full 5s timeout,
@@ -19,7 +20,7 @@ func TestShutdownDoesNotWaitForOpenEventStream(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	running, err := start(ctx, state, "127.0.0.1", 0, "")
+	running, err := start(ctx, state, service.New(state), "127.0.0.1", 0, "")
 	if err != nil {
 		t.Fatal(err)
 	}

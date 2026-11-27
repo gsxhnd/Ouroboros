@@ -8,7 +8,7 @@ import (
 
 func TestEmptyJobsAndMissingRclone(t *testing.T) {
 	state, _ := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	status, body := send(handler, http.MethodGet, "/api/sync/jobs", "")
 	jobs, _ := body["jobs"].([]any)
 	if status != http.StatusOK || len(jobs) != 0 {
@@ -48,7 +48,7 @@ func createTask(t *testing.T, handler http.Handler, local string, revision int, 
 
 func TestSyncTaskCRUD(t *testing.T) {
 	state, local := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 
 	status, body := createTask(t, handler, local, 0, nil)
 	if status != http.StatusCreated {
@@ -124,7 +124,7 @@ func TestSyncTaskCRUD(t *testing.T) {
 
 func TestSyncTaskRunGuards(t *testing.T) {
 	state, local := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 
 	_, body := createTask(t, handler, local, 0, nil)
 	taskID := body["task"].(map[string]any)["id"].(string)
@@ -170,7 +170,7 @@ func TestSyncTaskRunGuards(t *testing.T) {
 
 func TestLegacyEdgeRunRouteStillWorks(t *testing.T) {
 	state, local := testState(t)
-	handler := Handler(state, "")
+	handler := newTestHandler(state)
 	_, body := createTask(t, handler, local, 0, nil)
 	taskID := body["task"].(map[string]any)["id"].(string)
 	status, _ := send(handler, http.MethodPost, "/api/sync/"+taskID+"/run", "")
