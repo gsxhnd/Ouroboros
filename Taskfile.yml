@@ -69,7 +69,10 @@ tasks:
     cmds:
       - go build {{.BUILD_FLAGS}} -o {{.BIN_DIR}}/{{.APP_NAME}} ./cmd/desktop
     vars:
-      BUILD_FLAGS: '{{if eq .DEV "true"}}-buildvcs=false -gcflags=all="-l"{{else}}-tags production -trimpath -buildvcs=false -ldflags="-w -s"{{end}}'
+      # dev 构建带 private_mac_apis：wails 在 macOS 上打开 WebView 检查器
+      # （View → Open Developer Tools）依赖该标签下的私有实现，默认构建里是
+      # 空函数，菜单项会点了没反应。production 构建不带任何标签。
+      BUILD_FLAGS: '{{if eq .DEV "true"}}-tags private_mac_apis -buildvcs=false -gcflags=all="-l"{{else}}-tags production -trimpath -buildvcs=false -ldflags="-w -s"{{end}}'
     env:
       CGO_ENABLED: "1"
       GOARCH: '{{.ARCH | default ARCH}}'

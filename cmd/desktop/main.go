@@ -62,7 +62,9 @@ func main() {
 	// 应用菜单（macOS 顶部菜单栏，含 About/Edit/View/Window 标准角色）。
 	// View 菜单自带 Reload / 缩放 / 全屏；dev 构建（未打 -tags production）时
 	// 额外包含 "Open Developer Tools"（Alt+Cmd+I），用于打开 WebView 检查器。
-	// production 构建默认剥离该入口，需要排查线上问题时用 -tags devtools 保留。
+	// 注意 macOS 上打开检查器还依赖私有 API：dev 构建需带 -tags private_mac_apis
+	// （见 Taskfile.yml darwin:build），否则菜单项是空操作。production 构建
+	// 默认剥离该入口，需要排查线上问题时用 -tags devtools,private_mac_apis 保留。
 	appMenu := app.Menu.New()
 	appMenu.AddRole(application.AppMenu)
 	appMenu.AddRole(application.EditMenu)
