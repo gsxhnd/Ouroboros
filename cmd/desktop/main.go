@@ -62,9 +62,13 @@ func main() {
 	// 应用菜单（macOS 顶部菜单栏，含 About/Edit/View/Window 标准角色）。
 	// View 菜单自带 Reload / 缩放 / 全屏；dev 构建（未打 -tags production）时
 	// 额外包含 "Open Developer Tools"（Alt+Cmd+I），用于打开 WebView 检查器。
-	// 注意 macOS 上打开检查器还依赖私有 API：dev 构建需带 -tags private_mac_apis
-	// （见 Taskfile.yml darwin:build），否则菜单项是空操作。production 构建
-	// 默认剥离该入口，需要排查线上问题时用 -tags devtools,private_mac_apis 保留。
+	// 打开检查器依赖 wails 的私有 API：dev 构建需带 -tags private_mac_apis
+	// （见 Taskfile.yml darwin:build），否则菜单项是空操作。macOS 26 起
+	// WebKit 重构了检查器，该私有路径（_WKInspector show/connect/attach）整体
+	// 失效且上游未修复，此时改用 Safari「开发」菜单检查本窗口（dev 构建已在
+	// 窗口创建时设置 inspectable），或直接在浏览器打开 Vite dev server 调试。
+	// production 构建默认剥离该入口，需要排查线上问题时用
+	// -tags devtools,private_mac_apis 保留。
 	appMenu := app.Menu.New()
 	appMenu.AddRole(application.AppMenu)
 	appMenu.AddRole(application.EditMenu)
