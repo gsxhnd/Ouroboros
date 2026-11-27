@@ -1,5 +1,6 @@
 import {
   FolderOpenIcon,
+  FolderSymlinkIcon,
   FolderSyncIcon,
   GaugeIcon,
   HardDriveIcon,
@@ -50,6 +51,11 @@ export const NAV_GROUPS: NavGroup[] = [
         path: "/files",
         labelKey: "nav.files",
         icon: FolderOpenIcon,
+      },
+      {
+        path: "/mounts",
+        labelKey: "nav.mounts",
+        icon: FolderSymlinkIcon,
       },
       {
         path: "/storages",

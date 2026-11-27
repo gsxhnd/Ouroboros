@@ -237,8 +237,8 @@ export function TrayPanel() {
                 >
                   <div className="min-w-0">
                     <div className="truncate text-xs font-medium">
-                      {nodeLabel(nodes, edge.source)} →{" "}
-                      {nodeLabel(nodes, edge.target)}
+                      {edge.mount?.name?.trim() ||
+                        `${nodeLabel(nodes, edge.source)} → ${nodeLabel(nodes, edge.target)}`}
                     </div>
                     {snapshot?.status === "failed" ? (
                       <div className="truncate text-[11px] text-destructive">

@@ -174,7 +174,7 @@ export type SyncConfig = {
   last_result?: LastResult
 }
 
-export type MountConfig = { enabled: boolean }
+export type MountConfig = { name?: string; enabled: boolean }
 
 export type EdgeKind = "sync" | "mount"
 
@@ -281,6 +281,15 @@ export type MountSnapshot = {
   target: string
   exit_code?: number
   error?: string
+}
+
+/** 挂载规则：remote 源映射到本地目录。 */
+export type MountTask = {
+  id: string
+  name: string
+  source: TaskEndpoint
+  target: TaskEndpoint
+  enabled: boolean
 }
 
 export type ApiErrorBody = {

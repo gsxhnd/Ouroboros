@@ -12,6 +12,7 @@ import { BinarySection } from "@/features/settings/binary-section"
 import { isTrayView } from "@/lib/platform"
 import { ApiPlaygroundPage } from "@/features/api-playground/api-playground-page"
 import { FilesPage } from "@/features/files/files-page"
+import { MountsPage } from "@/features/mounts/mounts-page"
 import { OverviewPage } from "@/features/overview/overview-page"
 import { SettingsPage } from "@/features/settings/settings-page"
 import { StoragesPage } from "@/features/storages/storages-page"
@@ -35,6 +36,7 @@ export function App() {
             <Route index element={<Navigate to="/tasks" replace />} />
             <Route path="tasks" element={<SyncPage />} />
             <Route path="files" element={<FilesPage />} />
+            <Route path="mounts" element={<MountsPage />} />
             <Route path="storages" element={<StoragesPage />} />
             <Route path="overview" element={<OverviewPage />} />
             <Route path="settings" element={<SettingsPage />}>
