@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next"
 import { NavLink, Outlet } from "react-router"
-import { CableIcon, CommandIcon, ServerIcon } from "lucide-react"
+import { BinaryIcon, CableIcon, CommandIcon, ServerIcon } from "lucide-react"
 
 import { PageHeader } from "@/components/common/page-header"
 import { cn } from "cn"
@@ -11,6 +11,11 @@ const SECTIONS = [
     path: "connection",
     labelKey: "settings.sections.connection",
     icon: CableIcon,
+  },
+  {
+    path: "binary",
+    labelKey: "settings.sections.binary",
+    icon: BinaryIcon,
   },
   {
     path: "shortcuts",
@@ -26,7 +31,7 @@ const SECTIONS = [
 
 /**
  * 设置页布局：左侧分区导航（NavLink 指向子路由），
- * 右侧内容区由 <Outlet /> 渲染 connection / shortcuts / runtime。
+ * 右侧内容区由 <Outlet /> 渲染 connection / binary / shortcuts / runtime。
  */
 export function SettingsPage() {
   const { t } = useTranslation()

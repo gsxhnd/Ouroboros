@@ -24,6 +24,40 @@ export type SystemInfo = {
 
 export type RcloneSourceKind = "system" | "managed" | "custom"
 
+/** /api/rclone/scan 返回的候选可执行文件。 */
+export type RcloneCandidate = {
+  source: RcloneSourceKind
+  path: string
+  version: string | null
+  valid: boolean
+  managed: boolean
+  error: string | null
+}
+
+/** /api/rclone/releases 返回的平台匹配发行版列表。 */
+export type RcloneRelease = { version: string; filename: string; url: string }
+
+export type RcloneReleases = { current: string; releases: RcloneRelease[] }
+
+export type RcloneDownloadStatus =
+  | "queued"
+  | "downloading"
+  | "verifying"
+  | "extracting"
+  | "completed"
+  | "failed"
+  | "cancelled"
+
+/** 下载任务快照，SSE download 事件与下载接口共用。 */
+export type RcloneDownloadSnapshot = {
+  id: string
+  version: string
+  status: RcloneDownloadStatus
+  bytes: number
+  total_bytes: number | null
+  error?: string
+}
+
 export type ShortcutAction =
   | "show_main"
   | "toggle_panel"

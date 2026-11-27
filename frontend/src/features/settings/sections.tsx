@@ -33,8 +33,8 @@ const DEFAULT_SHORTCUTS: Record<ShortcutAction, string> = {
 
 const SHORTCUT_ACTIONS = Object.keys(DEFAULT_SHORTCUTS) as ShortcutAction[]
 
-/** 文档未就绪时的占位卡片，三个分区共用。 */
-function SettingsLoading() {
+/** 文档未就绪时的占位卡片，设置页各分区共用。 */
+export function SettingsLoading() {
   const { t } = useTranslation()
   return (
     <Card>
@@ -243,38 +243,17 @@ function ShortcutsForm({
 }
 
 export function RuntimeSection() {
-  const { document, patch } = useSettingsDocument()
+  const { document } = useSettingsDocument()
   if (!document) {
     return <SettingsLoading />
   }
-  return (
-    <RuntimeForm
-      key={document.updated_at}
-      document={document}
-      onPatch={patch}
-    />
-  )
+  return <RuntimeForm key={document.updated_at} document={document} />
 }
 
-function RuntimeForm({
-  document,
-  onPatch,
-}: {
-  document: SettingsDocument
-  onPatch: (body: SettingsPatchBody) => Promise<SettingsDocument>
-}) {
+function RuntimeForm({ document }: { document: SettingsDocument }) {
   const { t } = useTranslation()
-  const [bin, setBin] = useState(document.rclone_bin ?? "")
 
-  const saveBin = async () => {
-    try {
-      await onPatch({ rclone_bin: bin.trim() || null })
-    } catch {
-      return
-    }
-    toast.success(t("settings.binSaved"))
-  }
-
+  // rclone 可执行文件的选择与下载在「rclone 二进制」分区，这里只读展示。
   const cliFacts = (
     [
       ["rclone_bin", document.rclone_bin ?? t("settings.unset")],
@@ -285,54 +264,26 @@ function RuntimeForm({
   ).map(([label, value]) => ({ label, value }))
 
   return (
-    <>
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("settings.binaryTitle")}</CardTitle>
-          <CardDescription>
-            {t("settings.binaryDescription", {
-              source: document.rclone_source,
-            })}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-end gap-2">
-          <div className="flex min-w-64 flex-1 flex-col gap-1.5">
-            <Label htmlFor="settings-bin">{t("settings.binaryPath")}</Label>
-            <Input
-              id="settings-bin"
-              className="font-mono"
-              value={bin}
-              placeholder="rclone"
-              onChange={(event) => setBin(event.target.value)}
-            />
-          </div>
-          <Button size="sm" variant="outline" onClick={() => void saveBin()}>
-            {t("common.save")}
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("settings.cliTitle")}</CardTitle>
-          <CardDescription>{t("settings.cliDescription")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <dl className="grid gap-3 sm:grid-cols-2">
-            {cliFacts.map((fact) => (
-              <div
-                key={fact.label}
-                className="flex min-w-0 flex-col gap-1 rounded-lg bg-muted/50 px-3 py-2"
-              >
-                <dt className="text-xs text-muted-foreground">{fact.label}</dt>
-                <dd className="truncate font-mono text-sm" title={fact.value}>
-                  {fact.value}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </CardContent>
-      </Card>
-    </>
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("settings.cliTitle")}</CardTitle>
+        <CardDescription>{t("settings.cliDescription")}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <dl className="grid gap-3 sm:grid-cols-2">
+          {cliFacts.map((fact) => (
+            <div
+              key={fact.label}
+              className="flex min-w-0 flex-col gap-1 rounded-lg bg-muted/50 px-3 py-2"
+            >
+              <dt className="text-xs text-muted-foreground">{fact.label}</dt>
+              <dd className="truncate font-mono text-sm" title={fact.value}>
+                {fact.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </CardContent>
+    </Card>
   )
 }

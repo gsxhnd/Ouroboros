@@ -111,15 +111,7 @@
     "beta": "测试版",
     "connectionDescription": "默认不会自动拉起。连接成功后，这里会显示版本、系统和地址。",
     "startOrConnect": "启动 / 连接",
-    "binaryTitle": "rclone 二进制",
-    "binaryDescription": "选择本次使用哪个 rclone 可执行文件。",
-    "noBinary": "没有扫描到可用的 rclone，安装或下载后重试。",
-    "managedTitle": "托管版本",
-    "managedDescription": "下载官方 rclone 版本并在本地激活。",
-    "downloadVersion": "下载版本",
-    "noReleases": "无可用版本",
-    "download": "下载",
-    "noVersions": "没有可用的版本",
+    "binaryMovedHint": "rclone 二进制管理已移至",
     "mode": {
       "spawned": "本机托管",
       "attached": "外部 RC"
@@ -127,11 +119,6 @@
     "link": {
       "static": "静态链接",
       "dynamic": "动态链接"
-    },
-    "source": {
-      "system": "系统 PATH",
-      "managed": "托管下载",
-      "custom": "自定义路径"
     },
     "factBinary": "可执行文件",
     "factRcAddress": "RC 地址",
@@ -307,6 +294,7 @@
     "categories": "设置分类",
     "sections": {
       "connection": "连接",
+      "binary": "rclone 二进制",
       "shortcuts": "快捷键",
       "runtime": "运行环境"
     },
@@ -323,6 +311,30 @@
     "binaryDescription": "当前来源 {{source}}。留空时使用系统 PATH 中的 rclone。",
     "binaryPath": "可执行文件路径",
     "binSaved": "rclone 路径已保存",
+    "binarySwitchHint": "切换后，新启动的 rclone 进程会使用新路径。",
+    "scanTitle": "可用二进制",
+    "scanDescription": "扫描系统 PATH、托管目录与自定义路径中的 rclone；选择后，新启动的 rclone 进程将使用它。",
+    "noBinary": "没有扫描到可用的 rclone，安装或下载后重试。",
+    "source": {
+      "system": "系统 PATH",
+      "managed": "托管下载",
+      "custom": "自定义路径"
+    },
+    "binarySelected": "rclone 可执行文件已更新",
+    "activate": "激活",
+    "activated": "已切换到 {{version}}",
+    "deleteVersionTitle": "删除托管版本",
+    "deleteVersionWarning": "将从磁盘永久删除 rclone {{version}} 的本地副本；如果它正在使用，删除后会回退到系统 PATH 中的 rclone。",
+    "versionDeleted": "已删除 {{version}}",
+    "downloadTitle": "下载官方版本",
+    "downloadDescription": "下载当前平台的官方 rclone 发行版，进度实时更新；完成后可直接在下载条目上激活。",
+    "currentVersion": "运行版本",
+    "upgradeHint": "有新版本：{{version}}",
+    "downloadVersion": "下载版本",
+    "noReleases": "无可用版本",
+    "releasesUnavailable": "先启动 rclone 才能获取官方发行版列表。",
+    "download": "下载",
+    "noVersions": "没有可用的版本",
     "shortcutsTitle": "快捷键",
     "shortcutsDescription": "应用处于前台（任一 Ourboros 窗口获得焦点）时生效。格式如 CmdOrCtrl+Shift+O，留空恢复默认。",
     "shortcutActions": {

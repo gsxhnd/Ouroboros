@@ -1,10 +1,7 @@
-import { useCallback, useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { DownloadIcon, PlayIcon, SquareIcon } from "lucide-react"
-import { toast } from "sonner"
+import { Link } from "react-router"
+import { PlayIcon, SquareIcon } from "lucide-react"
 
-import { EmptyHint } from "@/components/common/notes"
-import { SelectField } from "@/components/common/select-field"
 import { StatusChip } from "@/components/common/status-chip"
 import { PageContainer, PageHeader } from "@/components/common/page-header"
 import { Badge } from "@/components/ui/badge"
@@ -18,118 +15,20 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
-import { formatBytes } from "@/lib/format"
 import { translateOr } from "@/i18n/lookup"
-import { call } from "@/lib/http/client"
-import type { HttpMethod } from "@/lib/http/transport"
 import { useRcloneStore } from "@/stores/rclone-store"
-import type { RcloneStatus, SettingsDocument } from "@/lib/types"
-import { cn } from "cn"
+import type { RcloneStatus } from "@/lib/types"
 
-type Candidate = {
-  source: "system" | "managed" | "custom"
-  path: string
-  version: string | null
-  valid: boolean
-  managed: boolean
-  error: string | null
-}
-
-type Release = { version: string; filename: string; url: string }
-
-type DownloadSnapshot = {
-  id: string
-  version: string
-  status:
-    | "queued"
-    | "downloading"
-    | "verifying"
-    | "extracting"
-    | "completed"
-    | "failed"
-    | "cancelled"
-  bytes: number
-  total_bytes: number | null
-  error?: string
-}
-
+/**
+ * 概览页聚焦 rclone 连接状态：启停、版本与系统信息。
+ * rclone 二进制的扫描、下载与切换在 设置 → rclone 二进制。
+ */
 export function OverviewPage() {
   const { t, i18n } = useTranslation()
   const status = useRcloneStore((state) => state.status)
   const rcloneBusy = useRcloneStore((state) => state.busy)
   const startRclone = useRcloneStore((state) => state.start)
   const stopRclone = useRcloneStore((state) => state.stop)
-  const [settings, setSettings] = useState<SettingsDocument | null>(null)
-  const [candidates, setCandidates] = useState<Candidate[]>([])
-  const [releases, setReleases] = useState<Release[]>([])
-  const [busy, setBusy] = useState(false)
-  const [downloadVersion, setDownloadVersion] = useState("")
-  const [downloads, setDownloads] = useState<DownloadSnapshot[]>([])
-
-  const load = useCallback(async () => {
-    try {
-      setSettings(await call<SettingsDocument>("/api/settings"))
-      const scan = await call<{ candidates: Candidate[] }>("/api/rclone/scan", {
-        method: "POST",
-        body: {},
-      })
-      setCandidates(scan.candidates.filter((c) => c.valid))
-      try {
-        const data = await call<{ releases: Release[] }>("/api/rclone/releases")
-        setReleases(data.releases)
-      } catch {
-        setReleases([])
-      }
-    } catch {
-      // call() 已经弹出错误提示。
-    }
-  }, [])
-
-  useEffect(() => {
-    const run = async () => {
-      await load()
-    }
-    void run()
-  }, [load])
-
-  const fire = async (
-    path: string,
-    next: { method?: HttpMethod; body?: unknown }
-  ) => {
-    setBusy(true)
-    try {
-      await call(path, next)
-      await load()
-    } catch {
-      // call() 已经弹出错误提示。
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const startDownload = async () => {
-    const version = downloadVersion.trim() || releases[0]?.version
-    if (!version) {
-      toast.error(t("overview.noVersions"))
-      return
-    }
-    setBusy(true)
-    try {
-      const snapshot = await call<DownloadSnapshot>("/api/rclone/downloads", {
-        method: "POST",
-        body: { version },
-      })
-      setDownloads((current) => [
-        snapshot,
-        ...current.filter((d) => d.id !== snapshot.id),
-      ])
-      await load()
-    } catch {
-      // call() 已经弹出错误提示。
-    } finally {
-      setBusy(false)
-    }
-  }
 
   return (
     <PageContainer>
@@ -194,121 +93,15 @@ export function OverviewPage() {
               </div>
             ))}
           </dl>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("overview.binaryTitle")}</CardTitle>
-          <CardDescription>{t("overview.binaryDescription")}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          {candidates.length === 0 ? (
-            <EmptyHint>{t("overview.noBinary")}</EmptyHint>
-          ) : (
-            candidates.map((candidate) => {
-              const selected =
-                settings?.rclone_bin === candidate.path ||
-                (settings?.rclone_source === "system" &&
-                  candidate.source === "system" &&
-                  !settings?.rclone_bin)
-              return (
-                <div
-                  key={`${candidate.source}:${candidate.path}`}
-                  className={cn(
-                    "flex flex-wrap items-center gap-2 rounded-lg bg-muted/50 px-3 py-2.5 text-sm",
-                    selected && "ring-1 ring-primary/40"
-                  )}
-                >
-                  <Badge variant="outline">
-                    {translateOr(
-                      i18n,
-                      `overview.source.${candidate.source}`,
-                      candidate.source
-                    )}
-                  </Badge>
-                  <span className="min-w-0 flex-1 truncate font-mono text-xs">
-                    {candidate.path}
-                  </span>
-                  {candidate.version ? (
-                    <Badge variant="secondary">{candidate.version}</Badge>
-                  ) : null}
-                  <Button
-                    size="sm"
-                    variant={selected ? "secondary" : "outline"}
-                    disabled={busy}
-                    onClick={() =>
-                      void fire("/api/rclone/select", {
-                        method: "POST",
-                        body: {
-                          source: candidate.source,
-                          path: candidate.path,
-                          version: candidate.version ?? undefined,
-                        },
-                      })
-                    }
-                  >
-                    {selected ? t("common.current") : t("common.choose")}
-                  </Button>
-                </div>
-              )
-            })
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("overview.managedTitle")}</CardTitle>
-          <CardDescription>{t("overview.managedDescription")}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-end gap-2">
-            <SelectField
-              label={t("overview.downloadVersion")}
-              className="w-48"
-              value={
-                releases.some((r) => r.version === downloadVersion)
-                  ? downloadVersion
-                  : ""
-              }
-              placeholder={releases[0]?.version ?? t("overview.noReleases")}
-              options={releases.map((r) => ({
-                value: r.version,
-                label: r.version,
-              }))}
-              onChange={setDownloadVersion}
-              disabled={releases.length === 0}
-            />
-            <Button
-              size="sm"
-              disabled={busy || releases.length === 0}
-              onClick={() => void startDownload()}
+          <p className="text-xs text-muted-foreground">
+            {t("overview.binaryMovedHint")}{" "}
+            <Link
+              to="/settings/binary"
+              className="font-medium text-foreground underline underline-offset-2 hover:no-underline"
             >
-              <DownloadIcon data-icon="inline-start" />
-              {t("overview.download")}
-            </Button>
-          </div>
-          {downloads.map((download) => (
-            <div
-              key={download.id}
-              className="flex flex-wrap items-center gap-2 rounded-lg bg-muted/50 px-3 py-2.5 text-sm"
-            >
-              <Badge variant="outline">{download.version}</Badge>
-              <StatusChip status={download.status} />
-              <span className="text-xs text-muted-foreground">
-                {formatBytes(download.bytes)}
-                {download.total_bytes
-                  ? ` / ${formatBytes(download.total_bytes)}`
-                  : ""}
-              </span>
-              {download.error ? (
-                <span className="text-xs text-destructive">
-                  {download.error}
-                </span>
-              ) : null}
-            </div>
-          ))}
+              {t("nav.settings")}
+            </Link>
+          </p>
         </CardContent>
       </Card>
     </PageContainer>

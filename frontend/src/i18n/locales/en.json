@@ -114,15 +114,7 @@
     "beta": "beta",
     "connectionDescription": "rclone is not started automatically. Once connected, the version, system and address show up here.",
     "startOrConnect": "Start / connect",
-    "binaryTitle": "rclone binary",
-    "binaryDescription": "Choose which rclone executable to use for this session.",
-    "noBinary": "No usable rclone found. Install or download one, then retry.",
-    "managedTitle": "Managed versions",
-    "managedDescription": "Download official rclone releases and activate them locally.",
-    "downloadVersion": "Version to download",
-    "noReleases": "No releases available",
-    "download": "Download",
-    "noVersions": "No versions available",
+    "binaryMovedHint": "rclone binary management has moved to",
     "mode": {
       "spawned": "Managed locally",
       "attached": "External RC"
@@ -130,11 +122,6 @@
     "link": {
       "static": "Static linking",
       "dynamic": "Dynamic linking"
-    },
-    "source": {
-      "system": "System PATH",
-      "managed": "Managed download",
-      "custom": "Custom path"
     },
     "factBinary": "Executable",
     "factRcAddress": "RC address",
@@ -313,6 +300,7 @@
     "categories": "Settings categories",
     "sections": {
       "connection": "Connection",
+      "binary": "rclone binary",
       "shortcuts": "Shortcuts",
       "runtime": "Runtime"
     },
@@ -329,6 +317,30 @@
     "binaryDescription": "Current source {{source}}. When empty, rclone from the system PATH is used.",
     "binaryPath": "Executable path",
     "binSaved": "rclone path saved",
+    "binarySwitchHint": "Switching takes effect for rclone processes started afterwards.",
+    "scanTitle": "Available binaries",
+    "scanDescription": "Found in the system PATH, the managed directory and the custom path. Select one to use for new rclone processes.",
+    "noBinary": "No usable rclone found. Install or download one, then retry.",
+    "source": {
+      "system": "System PATH",
+      "managed": "Managed download",
+      "custom": "Custom path"
+    },
+    "binarySelected": "rclone executable updated",
+    "activate": "Activate",
+    "activated": "Activated {{version}}",
+    "deleteVersionTitle": "Delete managed version",
+    "deleteVersionWarning": "This permanently deletes the local copy of rclone {{version}} from disk. If it is currently in use, Ourboros falls back to the rclone in the system PATH.",
+    "versionDeleted": "Deleted {{version}}",
+    "downloadTitle": "Download official release",
+    "downloadDescription": "Download the official rclone release for this platform. Progress updates in real time; activate a completed download right from its row.",
+    "currentVersion": "Running version",
+    "upgradeHint": "New release available: {{version}}",
+    "downloadVersion": "Version to download",
+    "noReleases": "No releases available",
+    "releasesUnavailable": "Start rclone first to fetch the official releases.",
+    "download": "Download",
+    "noVersions": "No versions available",
     "shortcutsTitle": "Keyboard shortcuts",
     "shortcutsDescription": "Active while an Ourboros window is focused. Use a format like CmdOrCtrl+Shift+O. Leave blank to restore the default.",
     "shortcutActions": {

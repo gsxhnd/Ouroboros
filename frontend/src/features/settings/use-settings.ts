@@ -4,7 +4,7 @@ import { call } from "@/lib/http/client"
 import type { SettingsDocument, SettingsPatchBody } from "@/lib/types"
 
 /**
- * 设置文档的加载与更新：设置页三个分区各自独立使用，
+ * 设置文档的加载与更新：设置页各分区（含 rclone 二进制分区）各自独立使用，
  * patch 成功后直接持有服务端返回的最新文档。
  */
 export function useSettingsDocument() {

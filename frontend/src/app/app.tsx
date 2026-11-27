@@ -8,6 +8,7 @@ import {
   RuntimeSection,
   ShortcutsSection,
 } from "@/features/settings/sections"
+import { BinarySection } from "@/features/settings/binary-section"
 import { isTrayView } from "@/lib/platform"
 import { ApiPlaygroundPage } from "@/features/api-playground/api-playground-page"
 import { FilesPage } from "@/features/files/files-page"
@@ -18,7 +19,7 @@ import { SyncPage } from "@/features/sync/sync-page"
 
 /**
  * 路由即视图：侧边栏分组与命令面板共用 lib/nav 中的路径。
- * `/` 重定向到任务首页；设置页内部分为三个子路由。
+ * `/` 重定向到任务首页；设置页内部分为四个子路由。
  * 托盘小面板（?view=tray）是独立入口，不进入路由。
  */
 export function App() {
@@ -39,6 +40,7 @@ export function App() {
             <Route path="settings" element={<SettingsPage />}>
               <Route index element={<Navigate to="connection" replace />} />
               <Route path="connection" element={<ConnectionSection />} />
+              <Route path="binary" element={<BinarySection />} />
               <Route path="shortcuts" element={<ShortcutsSection />} />
               <Route path="runtime" element={<RuntimeSection />} />
             </Route>
