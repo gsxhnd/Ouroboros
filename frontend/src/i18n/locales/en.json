@@ -68,6 +68,7 @@
     "stopRclone": "Stop rclone",
     "collapseSidebar": "Collapse sidebar",
     "expandSidebar": "Expand sidebar",
+    "openMenu": "Open menu",
     "toLight": "Switch to light theme",
     "toDark": "Switch to dark theme",
     "offline": "Service offline",

@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next"
 import {
+  MenuIcon,
   MoonIcon,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
@@ -29,24 +30,29 @@ const headerHeight = isDesktop
   : "h-14 md:h-12"
 
 /**
- * 顶栏：左侧是侧边栏展开 / 收起开关，右侧一簇快捷控制（命令面板、
- * 主题切换）。品牌不占顶栏（窗口身份交给系统标题栏），rclone 启停归
- * 概览页与命令面板，服务状态常驻侧边栏底部，语言切换收进命令面板。
- * 顶栏与主区同底色（bg-muted/40），底边一条分隔线把工具行和内容分开，
- * 中间留白即窗口拖拽区。
+ * 顶栏：左侧是侧边栏开关（桌面折叠 / 展开，移动端唤出抽屉），右侧一簇
+ * 快捷控制（命令面板、主题切换）。品牌不占顶栏（窗口身份交给系统标题栏），
+ * rclone 启停归概览页与命令面板，服务状态常驻侧边栏底部，语言切换收进
+ * 命令面板。顶栏与主区同底色（bg-muted/40），底边一条分隔线把工具行和
+ * 内容分开，中间留白即窗口拖拽区。
  */
 export function AppHeader({
   sidebarCollapsed,
   onToggleSidebar,
+  mobile = false,
 }: {
   sidebarCollapsed: boolean
   onToggleSidebar: () => void
+  /** 移动端（md 以下）：侧边栏开关变成唤出抽屉的菜单按钮。 */
+  mobile?: boolean
 }) {
   const { t } = useTranslation()
   const { theme, setTheme } = useTheme()
-  const sidebarLabel = sidebarCollapsed
-    ? t("shell.expandSidebar")
-    : t("shell.collapseSidebar")
+  const sidebarLabel = mobile
+    ? t("shell.openMenu")
+    : sidebarCollapsed
+      ? t("shell.expandSidebar")
+      : t("shell.collapseSidebar")
 
   return (
     <header
@@ -65,7 +71,13 @@ export function AppHeader({
         title={sidebarLabel}
         onClick={onToggleSidebar}
       >
-        {sidebarCollapsed ? <PanelLeftOpenIcon /> : <PanelLeftCloseIcon />}
+        {mobile ? (
+          <MenuIcon />
+        ) : sidebarCollapsed ? (
+          <PanelLeftOpenIcon />
+        ) : (
+          <PanelLeftCloseIcon />
+        )}
       </Button>
       <div className="flex shrink-0 items-center gap-1 [--wails-draggable:no-drag]">
         <CommandPalette />
