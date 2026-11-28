@@ -107,7 +107,8 @@
     "partial_failed": "部分失败",
     "stopped": "已停止",
     "cancelled": "已取消",
-    "expired": "已过期"
+    "expired": "已过期",
+    "interrupted": "已中断"
   },
   "overview": {
     "connectionTitle": "rclone 连接",
@@ -248,7 +249,22 @@
     "speedTitle": "传输速度",
     "speedDescription": "运行中任务的实时吞吐。",
     "speedWaiting": "任务开始运行后，速度会画在这里。",
-    "speedAria": "最近几分钟的传输速度"
+    "speedAria": "最近几分钟的传输速度",
+    "viewRuns": "查看运行记录",
+    "runsTitle": "运行记录",
+    "runsDescription": "该任务在本地数据库里的每次同步执行记录。",
+    "triggerManual": "手动",
+    "triggerScheduled": "计划",
+    "totalRuns_other": "共 {{count}} 次执行",
+    "loadMore": "加载更多",
+    "noRuns": "还没有执行记录，首次运行后会在这里显示。",
+    "loadingRuns": "正在加载执行记录…",
+    "backToList": "返回任务列表",
+    "taskNotFound": "任务不存在，可能已被删除。",
+    "checks": "检查",
+    "speed": "速度",
+    "duration": "耗时",
+    "runId": "运行 ID"
   },
   "mounts": {
     "new": "新建挂载",
@@ -474,6 +490,8 @@
       "sync-tasks-run": "按任务保存的参数运行。双向同步首次运行需要 resync=true。",
       "sync-jobs-list": "列出任务快照与进度。",
       "sync-jobs-stop": "停止运行中的任务。",
+      "sync-task-runs": "任务的执行记录，limit/offset 分页，最新在前。",
+      "sync-runs-latest": "每个任务最近一次执行的记录（任务概览）。",
       "remotes-delete": "从 rclone 配置中删除 remote。仍被同步任务引用时返回 409。",
       "storage-local-create": "创建本地存储节点（名称 + 绝对目录）。",
       "storage-local-delete": "删除本地存储节点。仍被同步任务引用时返回 409。"

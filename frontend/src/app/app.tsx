@@ -17,6 +17,7 @@ import { OverviewPage } from "@/features/overview/overview-page"
 import { SettingsPage } from "@/features/settings/settings-page"
 import { StoragesPage } from "@/features/storages/storages-page"
 import { SyncPage } from "@/features/sync/sync-page"
+import { TaskDetailPage } from "@/features/sync/task-detail-page"
 
 /**
  * 路由即视图：侧边栏分组与命令面板共用 lib/nav 中的路径。
@@ -35,6 +36,7 @@ export function App() {
           <Route element={<AppShell />}>
             <Route index element={<Navigate to="/tasks" replace />} />
             <Route path="tasks" element={<SyncPage />} />
+            <Route path="tasks/:taskId" element={<TaskDetailPage />} />
             <Route path="files" element={<FilesPage />} />
             <Route path="mounts" element={<MountsPage />} />
             <Route path="storages" element={<StoragesPage />} />

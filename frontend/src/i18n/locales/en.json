@@ -110,7 +110,8 @@
     "partial_failed": "Partially failed",
     "stopped": "Stopped",
     "cancelled": "Cancelled",
-    "expired": "Expired"
+    "expired": "Expired",
+    "interrupted": "Interrupted"
   },
   "overview": {
     "connectionTitle": "rclone connection",
@@ -252,7 +253,23 @@
     "speedTitle": "Transfer speed",
     "speedDescription": "Live throughput of running tasks.",
     "speedWaiting": "Speed appears here once a task is running.",
-    "speedAria": "Transfer speed over the last few minutes"
+    "speedAria": "Transfer speed over the last few minutes",
+    "viewRuns": "View runs",
+    "runsTitle": "Run history",
+    "runsDescription": "Every recorded sync execution of this task, kept in the local history database.",
+    "triggerManual": "Manual",
+    "triggerScheduled": "Scheduled",
+    "totalRuns_one": "{{count}} run recorded",
+    "totalRuns_other": "{{count}} runs recorded",
+    "loadMore": "Load more",
+    "noRuns": "No runs recorded yet. Runs appear here after the first execution.",
+    "loadingRuns": "Loading run history…",
+    "backToList": "Back to tasks",
+    "taskNotFound": "Task not found. It may have been deleted.",
+    "checks": "Checks",
+    "speed": "Speed",
+    "duration": "Duration",
+    "runId": "Run ID"
   },
   "mounts": {
     "new": "New mount",
@@ -480,6 +497,8 @@
       "sync-tasks-run": "Run a sync task with the saved limits. Two-way tasks need resync=true on the first run.",
       "sync-jobs-list": "List job snapshots with progress.",
       "sync-jobs-stop": "Stop a running job.",
+      "sync-task-runs": "Run history of a task, paginated with limit/offset, newest first.",
+      "sync-runs-latest": "Latest run per sync task (used by the task overview).",
       "remotes-delete": "Delete a remote from the rclone configuration. Rejected with 409 while sync tasks reference it.",
       "storage-local-create": "Create a local storage node (label + absolute directory).",
       "storage-local-delete": "Delete a local storage node. Rejected with 409 while sync tasks reference it."

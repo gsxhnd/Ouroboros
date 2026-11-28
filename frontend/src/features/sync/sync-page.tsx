@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { useNavigate } from "react-router"
 import { PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -21,6 +22,7 @@ import { SyncCharts } from "@/features/sync/components/sync-charts"
 import { TaskCard } from "@/features/sync/components/task-card"
 import { Stagger } from "@/components/motion/reveal"
 import { bisyncNeedsResync } from "@/features/sync/labels"
+import { useRunsStore } from "@/features/sync/runs-store"
 import { call } from "@/lib/http/client"
 import type { RemoteInfo, SyncTask } from "@/lib/types"
 import { useRcloneStore } from "@/stores/rclone-store"
@@ -32,6 +34,7 @@ import {
 
 export function SyncPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const tasks = useSyncStore((state) => state.tasks)
   const loaded = useSyncStore((state) => state.loaded)
   const jobs = useSyncStore((state) => state.jobs)
@@ -40,6 +43,8 @@ export function SyncPage() {
   const patchTask = useSyncStore((state) => state.patchTask)
   const runTask = useSyncStore((state) => state.runTask)
   const stopJob = useSyncStore((state) => state.stopJob)
+  const latestRuns = useRunsStore((state) => state.latest)
+  const loadLatest = useRunsStore((state) => state.loadLatest)
   const rcloneRunning = useRcloneStore(
     (state) => state.status?.running ?? false
   )
@@ -53,11 +58,12 @@ export function SyncPage() {
 
   useEffect(() => {
     void load()
+    void loadLatest()
     void call<{ remotes: RemoteInfo[] }>("/api/remotes")
       .then((data) => setRemotes(data.remotes))
       .catch(() => setRemotes([]))
     return subscribeSyncJobs()
-  }, [load])
+  }, [load, loadLatest])
 
   const activeJobs = useMemo(
     () => jobs.filter((job) => !TERMINAL_JOB_STATUSES.has(job.status)),
@@ -168,6 +174,8 @@ export function SyncPage() {
                 key={task.id}
                 task={task}
                 jobs={jobs}
+                latest={latestRuns[task.id] ?? null}
+                onOpen={() => navigate(`/tasks/${task.id}`)}
                 onRun={() => requestRun(task)}
                 onEdit={() => {
                   setEditing(task)

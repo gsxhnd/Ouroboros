@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next"
 import {
   ArrowRightIcon,
   ClockIcon,
+  HistoryIcon,
   PencilIcon,
   PlayIcon,
   RefreshCcwIcon,
@@ -21,14 +22,19 @@ import {
   operationLabel,
   scheduleLabel,
 } from "@/features/sync/labels"
-import type { JobSnapshot, SyncTask } from "@/lib/types"
-import { formatTime } from "@/lib/format"
+import type { JobSnapshot, SyncRun, SyncTask } from "@/lib/types"
+import { formatBytes, formatTime, runDuration } from "@/lib/format"
 import { TERMINAL_JOB_STATUSES } from "@/features/sync/sync-store"
 
-/** 单个同步任务卡片：徽标、端点、计划、最近结果与操作。 */
+/**
+ * 单个同步任务卡片（任务页概览）：徽标、端点、计划、最近一次执行与操作。
+ * 点击卡片进入该任务的执行记录页；开关与按钮区阻断冒泡保持原交互。
+ */
 export function TaskCard({
   task,
   jobs,
+  latest,
+  onOpen,
   onRun,
   onEdit,
   onDelete,
@@ -38,6 +44,8 @@ export function TaskCard({
 }: {
   task: SyncTask
   jobs: JobSnapshot[]
+  latest?: SyncRun | null
+  onOpen: () => void
   onRun: () => void
   onEdit: () => void
   onDelete: () => void
@@ -54,10 +62,17 @@ export function TaskCard({
   const lastResult = task.last_result
 
   return (
-    <Card className="py-0">
+    <Card
+      className="cursor-pointer py-0 transition-colors hover:border-foreground/20"
+      onClick={onOpen}
+      title={t("sync.viewRuns")}
+    >
       <CardContent className="flex flex-col px-0">
         <div className="flex flex-col gap-3 px-4 py-4">
-          <div className="flex items-start justify-between gap-3">
+          <div
+            className="flex items-start justify-between gap-3"
+            onClick={(event) => event.stopPropagation()}
+          >
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
               <span className="truncate text-sm font-medium">{task.name}</span>
               <Badge variant="outline" className="font-normal">
@@ -110,6 +125,12 @@ export function TaskCard({
             <span className="flex min-w-0 items-center gap-1">
               {t("sync.lastResult")}
               <StatusChip status={lastResult?.status ?? null} />
+              {latest ? (
+                <span className="whitespace-nowrap">
+                  · {runDuration(latest.started_at, latest.finished_at)}
+                  {latest.stats ? ` · ${formatBytes(latest.stats.bytes)}` : ""}
+                </span>
+              ) : null}
               {lastResult?.status === "failed" || lastResult?.error ? (
                 <span className="max-w-56 truncate" title={lastResult.error}>
                   {lastResult.error}
@@ -122,7 +143,10 @@ export function TaskCard({
         </div>
 
         <Separator />
-        <div className="flex flex-wrap items-center gap-2 px-4 py-3">
+        <div
+          className="flex flex-wrap items-center gap-2 px-4 py-3"
+          onClick={(event) => event.stopPropagation()}
+        >
           <Button size="xs" disabled={running || !task.enabled} onClick={onRun}>
             <PlayIcon data-icon="inline-start" />
             {t("sync.runNow")}
@@ -140,6 +164,15 @@ export function TaskCard({
             </Button>
           ) : null}
           <span className="ms-auto flex items-center gap-1">
+            <Button
+              size="icon-xs"
+              variant="ghost"
+              aria-label={t("sync.viewRuns")}
+              title={t("sync.viewRuns")}
+              onClick={onOpen}
+            >
+              <HistoryIcon />
+            </Button>
             <Button
               size="icon-xs"
               variant="ghost"

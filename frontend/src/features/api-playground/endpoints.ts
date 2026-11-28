@@ -197,6 +197,22 @@ export const ENDPOINTS: Endpoint[] = [
     body: json({}),
   },
   {
+    id: "sync-task-runs",
+    group: "Sync",
+    name: "Task run history",
+    method: "GET",
+    path: "/api/sync/tasks/{id}/runs?limit=50&offset=0",
+    descriptionKey: "api.endpoints.sync-task-runs",
+  },
+  {
+    id: "sync-runs-latest",
+    group: "Sync",
+    name: "Latest run per task",
+    method: "GET",
+    path: "/api/sync/runs/latest",
+    descriptionKey: "api.endpoints.sync-runs-latest",
+  },
+  {
     id: "remotes-list",
     group: "Remotes",
     name: "List remotes",

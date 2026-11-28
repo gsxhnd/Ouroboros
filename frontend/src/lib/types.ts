@@ -258,6 +258,7 @@ export type JobSnapshot = {
   operation: string
   status: JobStatus
   destructive: boolean
+  trigger?: RunTrigger
   source: JobLocator
   target: JobLocator
   impact: string
@@ -265,6 +266,36 @@ export type JobSnapshot = {
   error?: string
   started_at: string
   finished_at?: string
+}
+
+export type RunTrigger = "manual" | "scheduled"
+
+/** 一次执行的最终统计（rclone core/stats 末次快照）。 */
+export type SyncRunStats = {
+  bytes: number
+  transfers: number
+  checks: number
+  errors: number
+  percentage: number
+  speed: number
+}
+
+/**
+ * 一次同步执行的记录（后端 bbolt 历史库）。
+ * interrupted 状态表示服务重启，未能观察到该次运行的结局。
+ */
+export type SyncRun = {
+  id: string
+  task_id: string
+  operation: string
+  trigger: RunTrigger
+  status: string
+  started_at: string
+  finished_at?: string
+  error?: string
+  source: JobLocator
+  target: JobLocator
+  stats?: SyncRunStats
 }
 
 export type MountStatus =

@@ -53,6 +53,16 @@ export function bisyncNeedsResync(
   return task.operation === "bisync" && task.last_result?.status !== "succeeded"
 }
 
+/** 执行记录的触发来源文案：手动 / 计划。 */
+export function triggerLabel(
+  trigger: string | null | undefined,
+  t: (key: string) => string
+): string {
+  return trigger === "scheduled"
+    ? t("sync.triggerScheduled")
+    : t("sync.triggerManual")
+}
+
 /** 任务快照端点的可读显示，与后端 Locator.Display() 一致。 */
 export function locatorLabel(locator: JobLocator): string {
   if (locator.kind === "remote") {

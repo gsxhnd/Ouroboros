@@ -4,6 +4,7 @@ import i18n from "@/i18n"
 import { call, callQuiet } from "@/lib/http/client"
 import { openEventSource, parseEventPayload } from "@/lib/http/sse"
 import type { JobSnapshot, SyncTask, TaskEndpoint } from "@/lib/types"
+import { useRunsStore } from "@/features/sync/runs-store"
 
 export type SyncTaskInput = {
   name: string
@@ -197,6 +198,10 @@ export function subscribeSyncJobs(): () => void {
         useSyncStore.setState({
           jobs: upsertJob(useSyncStore.getState().jobs, snapshot),
         })
+        // 一次运行落定后刷新“每任务最近一次执行”，任务卡片的概览随之更新。
+        if (TERMINAL_JOB_STATUSES.has(snapshot.status)) {
+          void useRunsStore.getState().loadLatest()
+        }
       } else {
         void useSyncStore.getState().loadJobs()
       }
