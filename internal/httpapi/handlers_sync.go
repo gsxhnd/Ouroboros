@@ -83,6 +83,31 @@ func (a *api) syncJobs(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"jobs": a.svc.SyncTasks.ListJobs()})
 }
 
+// syncTaskRuns 返回一个同步任务的执行记录（最新在前，分页）。
+func (a *api) syncTaskRuns(w http.ResponseWriter, r *http.Request) {
+	limit, offset, err := limitOffset(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	runs, total, err := a.svc.SyncTasks.ListRuns(r.PathValue("id"), limit, offset)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"runs": runs, "total": total})
+}
+
+// syncRunsLatest 返回每个任务最近一次执行的记录，任务页概览使用。
+func (a *api) syncRunsLatest(w http.ResponseWriter, _ *http.Request) {
+	runs, err := a.svc.SyncTasks.LatestRuns()
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"runs": runs})
+}
+
 func (a *api) syncEvents(w http.ResponseWriter, r *http.Request) {
 	streamEvents(w, r, a.svc.Events(), func(ev events.Event) bool { return ev.Name == events.NameJob })
 }

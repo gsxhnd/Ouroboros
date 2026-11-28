@@ -47,6 +47,8 @@ func Handler(svcs *service.Services, webDir string) http.Handler {
 	mux.HandleFunc("PATCH /api/sync/tasks/{id}", api.syncTasksPatch)
 	mux.HandleFunc("DELETE /api/sync/tasks/{id}", api.syncTasksDelete)
 	mux.HandleFunc("POST /api/sync/tasks/{id}/run", api.syncRun)
+	mux.HandleFunc("GET /api/sync/tasks/{id}/runs", api.syncTaskRuns)
+	mux.HandleFunc("GET /api/sync/runs/latest", api.syncRunsLatest)
 	mux.HandleFunc("GET /api/sync/jobs", api.syncJobs)
 	mux.HandleFunc("GET /api/sync/jobs/events", api.syncEvents)
 	mux.HandleFunc("POST /api/sync/jobs/{job_id}/stop", api.syncStop)

@@ -53,6 +53,7 @@ func appConfig(args cli.ServerArgs) app.Config {
 		BindHost:     args.Host,
 		BindPort:     args.Port,
 		AuthToken:    args.AuthToken,
+		HistoryPath:  args.HistoryDB,
 		RcloneBin:    args.RcloneBin,
 		RcloneURL:    args.RcloneURL,
 		RcloneConfig: args.RcloneConfig,

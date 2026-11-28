@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gsxhnd/ourboros/internal/netutil"
+	"github.com/gsxhnd/ourboros/internal/persist"
 )
 
 type Command struct {
@@ -21,12 +22,16 @@ type ServerArgs struct {
 	WebDirExplicit bool
 	DataDir        string
 	AuthToken      string
-	RcloneBin      string
-	RcloneURL      string
-	RcloneUser     string
-	RclonePass     string
-	RcloneConfig   string
-	NoAutoRclone   bool
+	// HistoryDB 是同步执行历史的 bbolt 文件路径；空表示数据目录下的 ourboros.db。
+	HistoryDB string
+	// LogDir 是进程日志目录；空表示数据目录下的 log 文件夹。
+	LogDir       string
+	RcloneBin    string
+	RcloneURL    string
+	RcloneUser   string
+	RclonePass   string
+	RcloneConfig string
+	NoAutoRclone bool
 }
 
 func Parse(args []string) (Command, error) {
@@ -83,6 +88,8 @@ var valueFlags = []struct {
 	}},
 	{[]string{"--data-dir"}, func(a *ServerArgs, v string) error { a.DataDir = v; return nil }},
 	{[]string{"--auth-token"}, func(a *ServerArgs, v string) error { a.AuthToken = v; return nil }},
+	{[]string{"--history-db"}, func(a *ServerArgs, v string) error { a.HistoryDB = v; return nil }},
+	{[]string{"--log-dir"}, func(a *ServerArgs, v string) error { a.LogDir = v; return nil }},
 	{[]string{"--rclone-bin"}, func(a *ServerArgs, v string) error { a.RcloneBin = v; return nil }},
 	{[]string{"--rclone-url"}, func(a *ServerArgs, v string) error { a.RcloneURL = v; return nil }},
 	{[]string{"--rclone-user"}, func(a *ServerArgs, v string) error { a.RcloneUser = v; return nil }},
@@ -102,6 +109,12 @@ func ParseServerArgs(args []string) (ServerArgs, error) {
 		RcloneUser:   os.Getenv("RCLONE_RC_USER"),
 		RclonePass:   os.Getenv("RCLONE_RC_PASS"),
 		RcloneConfig: os.Getenv("RCLONE_CONFIG"),
+	}
+	if env := os.Getenv("OURBOROS_HISTORY_DB"); env != "" {
+		parsed.HistoryDB = env
+	}
+	if env := os.Getenv("OURBOROS_LOG_DIR"); env != "" {
+		parsed.LogDir = env
 	}
 	if parsed.WebDir != "" {
 		parsed.WebDirExplicit = true
@@ -130,6 +143,10 @@ func ParseServerArgs(args []string) (ServerArgs, error) {
 		if err := flag.set(&parsed, value); err != nil {
 			return ServerArgs{}, err
 		}
+	}
+	// 数据目录在此定死，供运行时布局（workspace/settings/历史库/日志）统一解析。
+	if parsed.DataDir == "" {
+		parsed.DataDir = persist.DefaultDataDir()
 	}
 	return parsed, nil
 }
@@ -185,8 +202,10 @@ Flags:
   --host ADDR          Bind address (default 127.0.0.1; non-loopback requires --auth-token)
   --port, -p PORT      Bind port (default 8080)
   --webui, --web-dir   Directory containing index.html (env OURBOROS_WEB_DIR)
-  --data-dir DIR       Workspace and settings directory (env OURBOROS_DATA_DIR)
+  --data-dir DIR       Workspace, settings, run history and logs directory (env OURBOROS_DATA_DIR)
   --auth-token TOKEN   Require a bearer token on /api (env OURBOROS_TOKEN); needed when binding non-loopback (Docker)
+  --history-db PATH    Sync run history database file (default <data-dir>/ourboros.db; env OURBOROS_HISTORY_DB)
+  --log-dir DIR        Process log directory (default <data-dir>/log; env OURBOROS_LOG_DIR)
   --rclone-bin PATH    rclone executable (env RCLONE_BIN)
   --rclone-url URL     Attach to an existing RC URL (env RCLONE_RC_URL)
   --rclone-user USER   RC username when attaching (env RCLONE_RC_USER)

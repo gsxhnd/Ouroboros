@@ -82,7 +82,7 @@ func TestTickContinuesPastBrokenUnit(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = tick(ws, jobs.New(context.Background(), events.New(), nil, nil))
+	err = tick(ws, jobs.New(context.Background(), events.New(), nil, nil, nil))
 	if err == nil {
 		t.Fatal("expected error about edge bad")
 	}

@@ -85,7 +85,7 @@ func runPoll(t *testing.T, rc *rclone.Supervisor, rcloneJobID int64, limitBytes 
 	t.Helper()
 	var mu sync.Mutex
 	var got *finished
-	store := New(context.Background(), events.New(), rc, func(edge string, snapshot Snapshot) {
+	store := New(context.Background(), events.New(), rc, nil, func(edge string, snapshot Snapshot) {
 		mu.Lock()
 		defer mu.Unlock()
 		got = &finished{edge, snapshot}
@@ -248,7 +248,7 @@ func TestPollKeepsCancelledStatusWhenJobFinishesAfterCancel(t *testing.T) {
 	f.on("job/status", jobStatus(true, false, map[string]any{"error": "context canceled"}))
 	rc := attach(t, f)
 
-	store := New(context.Background(), events.New(), rc, nil)
+	store := New(context.Background(), events.New(), rc, nil, nil)
 	rcloneJobID := int64(7)
 	store.jobs["j"] = &record{
 		snapshot:    Snapshot{ID: "j", EdgeID: "e", Status: StatusCancelling},

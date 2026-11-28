@@ -6,9 +6,11 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"github.com/gsxhnd/ourboros/internal/cli"
+	"github.com/gsxhnd/ourboros/internal/logs"
 	"github.com/gsxhnd/ourboros/internal/serve"
 	"github.com/gsxhnd/ourboros/internal/version"
 )
@@ -46,6 +48,18 @@ func main() {
 func run(args cli.ServerArgs) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	// 日志落到数据目录的 log 文件夹，同时保留 stderr；打不开就降级为仅 stderr。
+	logDir := args.LogDir
+	if logDir == "" {
+		logDir = filepath.Join(args.DataDir, "log")
+	}
+	logFile, err := logs.Setup(logDir)
+	if err != nil {
+		slog.Warn("log file is disabled, keeping stderr only", "dir", logDir, "err", err)
+	} else {
+		slog.SetDefault(slog.New(slog.NewTextHandler(logFile, nil)))
+		defer func() { _ = logFile.Close() }()
+	}
 	running, err := serve.Run(ctx, args)
 	if err != nil {
 		return err

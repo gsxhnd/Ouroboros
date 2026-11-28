@@ -49,6 +49,7 @@ func tick(ws *workspace.Store, jobStore *jobs.Store) error {
 			options: jobs.Options{
 				BWLimit:     edge.Sync.BWLimit,
 				MaxTransfer: edge.Sync.MaxTransfer,
+				Trigger:     jobs.TriggerScheduled,
 			},
 			endpoints: func() (paths.Locator, paths.Locator, error) {
 				source, err := doc.NodeLocator(edge.Source, ws.Home())

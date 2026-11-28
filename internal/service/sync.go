@@ -2,8 +2,10 @@ package service
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/gsxhnd/ourboros/internal/core"
+	"github.com/gsxhnd/ourboros/internal/history"
 	"github.com/gsxhnd/ourboros/internal/jobs"
 	"github.com/gsxhnd/ourboros/internal/workspace"
 )
@@ -34,7 +36,15 @@ func (s *SyncTasks) Delete(id string, revision uint64) (workspace.Document, erro
 	if err := s.ensureIdle([]string{id}); err != nil {
 		return workspace.Document{}, err
 	}
-	return s.state.Workspace.DeleteSyncTask(id, revision)
+	doc, err := s.state.Workspace.DeleteSyncTask(id, revision)
+	if err != nil {
+		return workspace.Document{}, err
+	}
+	// 任务没了，它的执行历史也一并清掉；失败不影响删除本身。
+	if err := s.state.History.DeleteTask(id); err != nil {
+		slog.Warn("could not delete run history", "task", id, "err", err)
+	}
+	return doc, nil
 }
 
 // Run validates the saved task and starts it with its persisted limits. A
@@ -69,6 +79,7 @@ func (s *SyncTasks) Run(_ context.Context, taskID string, resync bool) (jobs.Sna
 		BWLimit:     edge.Sync.BWLimit,
 		MaxTransfer: edge.Sync.MaxTransfer,
 		Resync:      resync,
+		Trigger:     jobs.TriggerManual,
 	})
 }
 
@@ -78,4 +89,27 @@ func (s *SyncTasks) ListJobs() []jobs.Snapshot {
 
 func (s *SyncTasks) StopJob(jobID string) (jobs.Snapshot, error) {
 	return s.state.Jobs.Stop(jobID)
+}
+
+// syncTaskExists 校验任务存在且是同步任务；历史记录只属于同步任务。
+func (s *SyncTasks) syncTaskExists(taskID string) error {
+	doc := s.state.Workspace.Get()
+	edge := doc.Edge(taskID)
+	if edge == nil || edge.Kind != workspace.EdgeSync {
+		return core.NotFound("sync task " + taskID)
+	}
+	return nil
+}
+
+// ListRuns 返回任务的执行记录（最新在前，分页），total 为记录总数。
+func (s *SyncTasks) ListRuns(taskID string, limit, offset int) ([]history.Run, int, error) {
+	if err := s.syncTaskExists(taskID); err != nil {
+		return nil, 0, err
+	}
+	return s.state.History.List(taskID, limit, offset)
+}
+
+// LatestRuns 返回每个任务最近一次执行的记录（任务页概览用）。
+func (s *SyncTasks) LatestRuns() ([]history.Run, error) {
+	return s.state.History.LatestByTask()
 }

@@ -24,6 +24,7 @@ func (s *Store) Start(taskID string, operation workspace.Operation, source, targ
 		Operation:   operation,
 		Status:      StatusRunning,
 		Destructive: operation.Destructive(),
+		Trigger:     opts.Trigger,
 		Impact:      operation.Impact(source.Display(), target.Display()),
 		Source:      source,
 		Target:      target,
@@ -34,6 +35,7 @@ func (s *Store) Start(taskID string, operation workspace.Operation, source, targ
 	s.jobs[id] = &record{snapshot: snapshot, bwlimit: opts.BWLimit, limitBytes: limitBytes, limitDisplay: limitDisplay}
 	s.mu.Unlock()
 	s.emit(snapshot)
+	s.notifyStarted(snapshot)
 	s.reapplyBwLimit()
 
 	body := buildJobBody(operation, source, target, opts, snapshot.ID)

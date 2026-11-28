@@ -17,7 +17,7 @@ func unixTime(unix int) time.Time {
 // overwrite the cancelled status, nor release the edge lock that a newer job
 // on the same edge now holds.
 func TestFinishIsIdempotentAndKeepsNewerEdgeLock(t *testing.T) {
-	store := New(context.Background(), events.New(), nil, nil)
+	store := New(context.Background(), events.New(), nil, nil, nil)
 	const edge = "edge-1"
 
 	store.jobs["old"] = &record{snapshot: Snapshot{ID: "old", EdgeID: edge, Status: StatusRunning}}
@@ -45,7 +45,7 @@ func TestFinishIsIdempotentAndKeepsNewerEdgeLock(t *testing.T) {
 
 // 多余的已完成任务裁剪掉最旧的一批，且永远不会裁掉正在运行的任务。
 func TestPruneFinishedKeepsNewestAndRunning(t *testing.T) {
-	store := New(context.Background(), events.New(), nil, nil)
+	store := New(context.Background(), events.New(), nil, nil, nil)
 	const edge = "edge-1"
 
 	// 3 finished jobs beyond the cap plus one that is still running and older.
@@ -100,7 +100,7 @@ func TestReconcileCancel(t *testing.T) {
 
 // waitForTerminal 在任务运行期间超时返回 false；任务终态后立即返回快照。
 func TestWaitForTerminal(t *testing.T) {
-	store := New(context.Background(), events.New(), nil, nil)
+	store := New(context.Background(), events.New(), nil, nil, nil)
 	store.jobs["j"] = &record{snapshot: Snapshot{ID: "j", EdgeID: "e", Status: StatusRunning}}
 
 	if _, ok := store.waitForTerminal("j", 50*time.Millisecond); ok {
@@ -117,7 +117,7 @@ func TestWaitForTerminal(t *testing.T) {
 // waitForTerminal 感知 context 取消，避免关停时阻塞 cancelWait。
 func TestWaitForTerminalHonorsContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	store := New(ctx, events.New(), nil, nil)
+	store := New(ctx, events.New(), nil, nil, nil)
 	store.jobs["j"] = &record{snapshot: Snapshot{ID: "j", Status: StatusRunning}}
 	cancel()
 	if _, ok := store.waitForTerminal("j", 5*time.Second); ok {
@@ -130,7 +130,7 @@ func TestStopFastPathWithoutRcloneJobID(t *testing.T) {
 	bus := events.New()
 	sub, done := bus.Subscribe()
 	defer done()
-	store := New(context.Background(), bus, nil, nil)
+	store := New(context.Background(), bus, nil, nil, nil)
 	store.jobs["j"] = &record{snapshot: Snapshot{ID: "j", EdgeID: "e", Status: StatusRunning}}
 	store.runningEdges["e"] = struct{}{}
 
@@ -161,7 +161,7 @@ func TestStopFastPathWithoutRcloneJobID(t *testing.T) {
 // 记录存在 rclone 任务 ID 时，Stop 等待 poller 收尾；这里只覆盖 awaitJobID
 // 的竞态窗口行为（完整链路需要真实 rclone）。
 func TestAwaitJobID(t *testing.T) {
-	store := New(context.Background(), events.New(), nil, nil)
+	store := New(context.Background(), events.New(), nil, nil, nil)
 	const id int64 = 42
 	store.jobs["j"] = &record{snapshot: Snapshot{ID: "j", EdgeID: "e", Status: StatusRunning}}
 	store.runningEdges["e"] = struct{}{}
@@ -274,7 +274,7 @@ func TestMaxTransferLimit(t *testing.T) {
 func TestNotifyFinishedCallsOnFinish(t *testing.T) {
 	var gotEdge string
 	var got Snapshot
-	store := New(context.Background(), events.New(), nil, func(edgeID string, snapshot Snapshot) {
+	store := New(context.Background(), events.New(), nil, nil, func(edgeID string, snapshot Snapshot) {
 		gotEdge, got = edgeID, snapshot
 	})
 	store.notifyFinished("edge-1", Snapshot{ID: "j1", Status: StatusSucceeded})
@@ -284,6 +284,6 @@ func TestNotifyFinishedCallsOnFinish(t *testing.T) {
 }
 
 func TestNotifyFinishedToleratesNilCallback(t *testing.T) {
-	store := New(context.Background(), events.New(), nil, nil)
+	store := New(context.Background(), events.New(), nil, nil, nil)
 	store.notifyFinished("edge-1", Snapshot{ID: "j1"}) // must not panic
 }

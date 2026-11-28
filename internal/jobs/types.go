@@ -45,6 +45,7 @@ type Snapshot struct {
 	Operation   workspace.Operation `json:"operation"`
 	Status      Status              `json:"status"`
 	Destructive bool                `json:"destructive"`
+	Trigger     Trigger             `json:"trigger,omitempty"`
 	Source      paths.Locator       `json:"source"`
 	Target      paths.Locator       `json:"target"`
 	Impact      string              `json:"impact"`
@@ -53,6 +54,14 @@ type Snapshot struct {
 	StartedAt   time.Time           `json:"started_at"`
 	FinishedAt  *time.Time          `json:"finished_at,omitempty"`
 }
+
+// Trigger 说明一次运行由谁触发，写入执行历史。
+type Trigger string
+
+const (
+	TriggerManual    Trigger = "manual"
+	TriggerScheduled Trigger = "scheduled"
+)
 
 // Options 携带一次同步运行的参数。
 type Options struct {
@@ -65,4 +74,6 @@ type Options struct {
 	MaxTransfer string
 	// Resync 仅对 bisync 有意义：执行重新初始化运行，建立两侧基线。
 	Resync bool
+	// Trigger 触发来源（手动 / 计划），随快照写入执行历史。
+	Trigger Trigger
 }

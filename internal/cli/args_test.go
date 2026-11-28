@@ -3,12 +3,14 @@ package cli
 import (
 	"strings"
 	"testing"
+
+	"github.com/gsxhnd/ourboros/internal/persist"
 )
 
 func clearEnv(t *testing.T) {
 	t.Helper()
 	for _, name := range []string{
-		"OURBOROS_WEB_DIR", "OURBOROS_DATA_DIR", "OURBOROS_TOKEN",
+		"OURBOROS_WEB_DIR", "OURBOROS_DATA_DIR", "OURBOROS_TOKEN", "OURBOROS_HISTORY_DB", "OURBOROS_LOG_DIR",
 		"RCLONE_BIN", "RCLONE_RC_URL", "RCLONE_RC_USER", "RCLONE_RC_PASS", "RCLONE_CONFIG",
 	} {
 		t.Setenv(name, "")
@@ -41,6 +43,8 @@ func TestParseServerArgsValueFlagsAcceptBothForms(t *testing.T) {
 		{"--host", func(a ServerArgs) string { return a.Host }},
 		{"--data-dir", func(a ServerArgs) string { return a.DataDir }},
 		{"--auth-token", func(a ServerArgs) string { return a.AuthToken }},
+		{"--history-db", func(a ServerArgs) string { return a.HistoryDB }},
+		{"--log-dir", func(a ServerArgs) string { return a.LogDir }},
 		{"--rclone-bin", func(a ServerArgs) string { return a.RcloneBin }},
 		{"--rclone-url", func(a ServerArgs) string { return a.RcloneURL }},
 		{"--rclone-user", func(a ServerArgs) string { return a.RcloneUser }},
@@ -122,7 +126,7 @@ func TestParseServerArgsFlagBeatsEnv(t *testing.T) {
 func TestParseServerArgsEnvFillsEveryField(t *testing.T) {
 	clearEnv(t)
 	for k, v := range map[string]string{
-		"OURBOROS_DATA_DIR": "/d", "OURBOROS_TOKEN": "t", "RCLONE_BIN": "/b",
+		"OURBOROS_DATA_DIR": "/d", "OURBOROS_TOKEN": "t", "OURBOROS_HISTORY_DB": "/h/history.db", "OURBOROS_LOG_DIR": "/l", "RCLONE_BIN": "/b",
 		"RCLONE_RC_URL": "http://127.0.0.1:1", "RCLONE_RC_USER": "u", "RCLONE_RC_PASS": "p", "RCLONE_CONFIG": "/c",
 	} {
 		t.Setenv(k, v)
@@ -132,11 +136,40 @@ func TestParseServerArgsEnvFillsEveryField(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := ServerArgs{
-		Host: "127.0.0.1", Port: 8080, DataDir: "/d", AuthToken: "t", RcloneBin: "/b",
+		Host: "127.0.0.1", Port: 8080, DataDir: "/d", AuthToken: "t", HistoryDB: "/h/history.db", LogDir: "/l", RcloneBin: "/b",
 		RcloneURL: "http://127.0.0.1:1", RcloneUser: "u", RclonePass: "p", RcloneConfig: "/c",
 	}
 	if got != want {
 		t.Fatalf("got %+v\nwant %+v", got, want)
+	}
+}
+
+// 历史库与日志默认跟随数据目录；显式路径覆盖默认值。
+func TestParseServerArgsHistoryDBAndLogDirFollowDataDir(t *testing.T) {
+	// 默认为空，运行时解析为 <data-dir>/ourboros.db 与 <data-dir>/log。
+	got := parse(t)
+	if got.HistoryDB != "" || got.LogDir != "" {
+		t.Fatalf("defaults should be empty (follow data dir): %+v", got)
+	}
+	if got.DataDir != persist.DefaultDataDir() {
+		t.Fatalf("data dir should resolve to its default, got %q", got.DataDir)
+	}
+	if got := parse(t, "--history-db", "/tmp/x.db").HistoryDB; got != "/tmp/x.db" {
+		t.Fatalf("history db flag = %q", got)
+	}
+	if got := parse(t, "--log-dir", "/tmp/logs").LogDir; got != "/tmp/logs" {
+		t.Fatalf("log dir flag = %q", got)
+	}
+}
+
+// --data-dir 指定时，历史库与日志都跟随它（运行时解析），CLI 本身保持空。
+func TestParseServerArgsDataDirExplicit(t *testing.T) {
+	got := parse(t, "--data-dir", "/srv/ourboros")
+	if got.DataDir != "/srv/ourboros" {
+		t.Fatalf("data dir = %q", got.DataDir)
+	}
+	if got.HistoryDB != "" || got.LogDir != "" {
+		t.Fatalf("history/log should follow data dir: %+v", got)
 	}
 }
 
@@ -154,7 +187,7 @@ func TestParseServerArgsBoolAndHelp(t *testing.T) {
 
 func TestParseServerArgsErrors(t *testing.T) {
 	clearEnv(t)
-	for _, flag := range []string{"--host", "--port", "-p", "--data-dir", "--auth-token", "--rclone-bin", "--rclone-url", "--rclone-user", "--rclone-pass", "--rclone-config", "--webui", "--web-dir"} {
+	for _, flag := range []string{"--host", "--port", "-p", "--data-dir", "--auth-token", "--history-db", "--log-dir", "--rclone-bin", "--rclone-url", "--rclone-user", "--rclone-pass", "--rclone-config", "--webui", "--web-dir"} {
 		if _, err := ParseServerArgs([]string{flag}); err == nil || !strings.Contains(err.Error(), "requires a value") {
 			t.Errorf("%s with no value: err = %v", flag, err)
 		}

@@ -34,23 +34,33 @@ type Store struct {
 	ctx          context.Context
 	// rc 是共享的 rclone supervisor，用于下发任务与调整进程全局限速。
 	rc *rclone.Supervisor
+	// onStart 在任务启动时被调用（状态 running、RC 调用之前），让调用方
+	// 把执行历史记进自己的持久层。可为 nil。
+	onStart StartFunc
 	// onFinish 在任务以终态收尾后被调用，把结果交给调用方持久化。可为 nil。
 	onFinish FinishFunc
 	// appliedBwLimit 记录当前已应用到 rclone 的限速值，避免重复下发相同设置。
 	appliedBwLimit string
 }
 
+// StartFunc receives a job's initial snapshot (status running) before the
+// rclone call. Callers record the run in their own persistence behind it, so
+// this package never writes history itself. Even a start that fails against
+// RC is reported: finish() fires synchronously right after the failure.
+type StartFunc func(snapshot Snapshot)
+
 // FinishFunc receives a job's final snapshot. The scheduler's persistence
 // lives behind it so this package never writes to the workspace itself.
 type FinishFunc func(edgeID string, snapshot Snapshot)
 
-// New builds a Store that talks to rc. onFinish may be nil.
-func New(ctx context.Context, bus *events.Bus, rc *rclone.Supervisor, onFinish FinishFunc) *Store {
+// New builds a Store that talks to rc. onStart and onFinish may be nil.
+func New(ctx context.Context, bus *events.Bus, rc *rclone.Supervisor, onStart StartFunc, onFinish FinishFunc) *Store {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	return &Store{
 		rc:           rc,
+		onStart:      onStart,
 		onFinish:     onFinish,
 		jobs:         map[string]*record{},
 		runningEdges: map[string]struct{}{},
@@ -154,6 +164,12 @@ func (s *Store) pruneFinished() {
 func (s *Store) notifyFinished(edgeID string, snapshot Snapshot) {
 	if s.onFinish != nil {
 		s.onFinish(edgeID, snapshot)
+	}
+}
+
+func (s *Store) notifyStarted(snapshot Snapshot) {
+	if s.onStart != nil {
+		s.onStart(snapshot)
 	}
 }
 

@@ -2,11 +2,13 @@ package app
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/gsxhnd/ourboros/internal/events"
+	"github.com/gsxhnd/ourboros/internal/history"
 	"github.com/gsxhnd/ourboros/internal/jobs"
 	"github.com/gsxhnd/ourboros/internal/mounts"
 	"github.com/gsxhnd/ourboros/internal/persist"
@@ -28,6 +30,7 @@ type State struct {
 	Workspace         *workspace.Store
 	Settings          *settings.Store
 	Jobs              *jobs.Store
+	History           *history.Store
 	Mounts            *mounts.Supervisor
 	Downloads         *rclone.DownloadManager
 	Events            *events.Bus
@@ -65,7 +68,18 @@ func New(ctx context.Context, cfg Config) (*State, error) {
 
 	bus := events.New()
 	supervisor := rclone.NewSupervisor(rcloneSettings)
-	jobStore := jobs.New(ctx, bus, supervisor, recordJobResult(workspaceStore))
+	// 执行历史是增强功能：数据库打不开（例如目录不可写）只降级为
+	// 无历史记录，服务照常启动。默认与 workspace/settings 同住数据目录。
+	historyPath := cfg.HistoryPath
+	if historyPath == "" {
+		historyPath = filepath.Join(dataDir, "ourboros.db")
+	}
+	hist, err := openHistoryDB(historyPath)
+	if err != nil {
+		slog.Warn("sync run history is disabled", "path", historyPath, "err", err)
+		hist = nil
+	}
+	jobStore := jobs.New(ctx, bus, supervisor, recordJobStart(hist), recordJobResult(workspaceStore, hist))
 	return &State{
 		Version:           version.Version,
 		HomeDir:           home,
@@ -76,6 +90,7 @@ func New(ctx context.Context, cfg Config) (*State, error) {
 		Workspace:         workspaceStore,
 		Settings:          settingsStore,
 		Jobs:              jobStore,
+		History:           hist,
 		Mounts:            mounts.New(bus, supervisor, workspaceStore),
 		Downloads:         rclone.NewDownloadManager(supervisor.Client()),
 		Events:            bus,
@@ -87,6 +102,17 @@ func New(ctx context.Context, cfg Config) (*State, error) {
 }
 
 func (s *State) Context() context.Context { return s.ctx }
+
+// openHistoryDB 创建父目录后打开 bbolt 数据库；bbolt 只建文件不建父目录，
+// 默认布局 <data-dir>/ourboros.db 依赖这里补齐父目录。
+func openHistoryDB(path string) (*history.Store, error) {
+	if dir := filepath.Dir(path); dir != "." && dir != "" {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return nil, err
+		}
+	}
+	return history.Open(path)
+}
 
 func (s *State) VersionsDir() string {
 	return filepath.Join(s.DataDir, "rclone", "versions")
@@ -104,5 +130,8 @@ func (s *State) Close() {
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 		_, _ = s.Rclone.Stop(ctx)
+	}
+	if s.History != nil {
+		_ = s.History.Close()
 	}
 }

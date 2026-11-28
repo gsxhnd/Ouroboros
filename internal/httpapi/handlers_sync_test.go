@@ -1,9 +1,18 @@
 package httpapi
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strconv"
 	"testing"
+	"time"
+
+	"github.com/gsxhnd/ourboros/internal/app"
+	"github.com/gsxhnd/ourboros/internal/history"
+	"github.com/gsxhnd/ourboros/internal/jobs"
 )
 
 func TestEmptyJobsAndMissingRclone(t *testing.T) {
@@ -188,5 +197,118 @@ func TestLegacyEdgeRunRouteStillWorks(t *testing.T) {
 	status, _ := send(handler, http.MethodPost, "/api/sync/"+taskID+"/run", "")
 	if status != http.StatusServiceUnavailable {
 		t.Fatalf("legacy run route should stay available, got %d", status)
+	}
+}
+
+// 执行历史接口：bbolt 写入 → 任务记录分页读取 → 每任务最新一条。
+func TestSyncTaskRunsEndpoint(t *testing.T) {
+	dir := t.TempDir()
+	local := filepath.Join(dir, "local")
+	if err := os.MkdirAll(local, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	state, err := app.New(context.Background(), app.Config{
+		DataDir:     dir,
+		HistoryPath: filepath.Join(dir, "history.db"),
+		RcloneBin:   filepath.Join(dir, "missing-rclone"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler := newTestHandler(state)
+
+	_, body := createTask(t, handler, local, 0, nil)
+	taskID := body["task"].(map[string]any)["id"].(string)
+
+	// 还没有执行记录
+	status, body := send(handler, http.MethodGet, "/api/sync/tasks/"+taskID+"/runs", "")
+	if status != http.StatusOK {
+		t.Fatalf("empty runs: %d %v", status, body)
+	}
+	if runs, _ := body["runs"].([]any); len(runs) != 0 || body["total"].(float64) != 0 {
+		t.Fatalf("expected empty runs, got %v", body)
+	}
+
+	// 写入两次执行：旧的失败、新的成功
+	base := time.Now().UTC().Add(-time.Hour)
+	older := history.Run{
+		ID: "run-old", TaskID: taskID, Operation: "sync", Trigger: "scheduled",
+		Status: history.StatusRunning, StartedAt: base,
+		Source: history.Locator{Kind: "local", FS: local},
+	}
+	if err := state.History.Start(older); err != nil {
+		t.Fatal(err)
+	}
+	if err := state.History.Finish(history.FinishInput{
+		TaskID: taskID, RunID: "run-old", StartedAt: base,
+		Status: string(jobs.StatusFailed), Error: "boom",
+		FinishedAt: base.Add(time.Minute),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	newer := history.Run{
+		ID: "run-new", TaskID: taskID, Operation: "sync", Trigger: "manual",
+		Status: history.StatusRunning, StartedAt: base.Add(time.Hour),
+	}
+	if err := state.History.Start(newer); err != nil {
+		t.Fatal(err)
+	}
+	if err := state.History.Finish(history.FinishInput{
+		TaskID: taskID, RunID: "run-new", StartedAt: base.Add(time.Hour),
+		Status: string(jobs.StatusSucceeded), FinishedAt: base.Add(2 * time.Hour),
+		Stats: &history.RunStats{Bytes: 2048, Transfers: 4},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	status, body = send(handler, http.MethodGet, "/api/sync/tasks/"+taskID+"/runs?limit=1&offset=0", "")
+	if status != http.StatusOK {
+		t.Fatalf("runs: %d %v", status, body)
+	}
+	if body["total"].(float64) != 2 {
+		t.Fatalf("total = %v", body["total"])
+	}
+	runs := body["runs"].([]any)
+	if len(runs) != 1 {
+		t.Fatalf("limit=1 should return one run: %v", body)
+	}
+	first := runs[0].(map[string]any)
+	if first["id"] != "run-new" || first["status"] != "succeeded" || first["trigger"] != "manual" {
+		t.Fatalf("newest-first broken: %v", first)
+	}
+	if first["stats"].(map[string]any)["bytes"].(float64) != 2048 {
+		t.Fatalf("stats missing: %v", first)
+	}
+
+	// 每任务最新一条
+	status, body = send(handler, http.MethodGet, "/api/sync/runs/latest", "")
+	if status != http.StatusOK {
+		t.Fatalf("latest: %d %v", status, body)
+	}
+	latest := body["runs"].([]any)
+	if len(latest) != 1 {
+		t.Fatalf("expected one latest run, got %v", body)
+	}
+	if latest[0].(map[string]any)["id"] != "run-new" {
+		t.Fatalf("latest should be the newest run: %v", latest)
+	}
+
+	// 分页参数非法返回 400；未知任务返回 404
+	if status, _ = send(handler, http.MethodGet, "/api/sync/tasks/"+taskID+"/runs?limit=0", ""); status != http.StatusBadRequest {
+		t.Fatalf("bad limit should 400, got %d", status)
+	}
+	if status, _ = send(handler, http.MethodGet, "/api/sync/tasks/does-not-exist/runs", ""); status != http.StatusNotFound {
+		t.Fatalf("unknown task should 404, got %d", status)
+	}
+
+	// 删除任务会同时清掉它的历史
+	_, listBody := send(handler, http.MethodGet, "/api/sync/tasks", "")
+	rev := int(listBody["revision"].(float64))
+	if status, _ = send(handler, http.MethodDelete, "/api/sync/tasks/"+taskID+"?revision="+strconv.Itoa(rev), ""); status != http.StatusOK {
+		t.Fatalf("delete: %d", status)
+	}
+	remaining, total, err := state.History.List(taskID, 0, 0)
+	if err != nil || total != 0 || len(remaining) != 0 {
+		t.Fatalf("history should be gone after task delete: %d %d %v", total, len(remaining), err)
 	}
 }

@@ -6,11 +6,13 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"sync"
 	"syscall"
 
 	"github.com/gsxhnd/ourboros/internal/cli"
+	"github.com/gsxhnd/ourboros/internal/logs"
 	"github.com/gsxhnd/ourboros/internal/serve"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
@@ -29,6 +31,18 @@ func main() {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	// 日志落到数据目录的 log 文件夹，同时保留 stderr；打不开就降级为仅 stderr。
+	logDir := command.Server.LogDir
+	if logDir == "" {
+		logDir = filepath.Join(command.Server.DataDir, "log")
+	}
+	logFile, err := logs.Setup(logDir)
+	if err != nil {
+		slog.Warn("log file is disabled, keeping stderr only", "dir", logDir, "err", err)
+	} else {
+		slog.SetDefault(slog.New(slog.NewTextHandler(logFile, nil)))
+		defer func() { _ = logFile.Close() }()
+	}
 	running, err := serve.Run(ctx, command.Server)
 	if err != nil {
 		slog.Error("failed to start ourboros", "err", err)
